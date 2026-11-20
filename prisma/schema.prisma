@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Pessoas que acessam o sistema (dono e funcionários).
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+/// Dados da empresa usados no orçamento (linha única, id = 1).
+model Company {
+  id         Int     @id @default(1)
+  name       String  @default("LOCAR EQUIPAMENTOS")
+  subtitle   String  @default("Locação de equipamentos para construção civil")
+  location   String  @default("Pacatuba - CE")
+  instagram  String  @default("@locarequipamento")
+  phone      String  @default("")
+  pixKey     String  @default("")
+  pixName    String  @default("")
+  pixBank    String  @default("")
+  /// Uma observação por linha.
+  quoteNotes String  @default("O prazo contratado deverá ser respeitado; dias excedentes serão cobrados.\nDanos, perdas ou avarias decorrentes de uso inadequado serão cobrados.\nNão é permitida a transferência ou sublocação sem autorização.")
+  footer     String  @default("O senhor firmará as obras das nossas mãos. — Salmos 90:17")
+}
+
+model Customer {
+  id          String   @id @default(cuid())
+  name        String
+  responsible String?
+  phone       String?
+  /// Cliente, Construtora, Mestre de Obra, Encarregado, Pedreiro, Carpinteiro, Serviços
+  type        String   @default("Cliente")
+  /// Ativo, Parceiro, Bloqueado, Inadimplente
+  status      String   @default("Ativo")
+  notes       String?
+  createdAt   DateTime @default(now())
+  sites       Site[]
+  rentals     Rental[]
+
+  @@index([name])
+}
+
+/// Endereços de obra já usados pelo cliente (para sugerir na próxima locação).
+model Site {
+  id         String   @id @default(cuid())
+  customerId String
+  address    String
+  createdAt  DateTime @default(now())
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, address])
+}
+
+model Equipment {
+  id             String        @id @default(cuid())
+  name           String        @unique
+  totalQty       Int           @default(0)
+  maintenanceQty Int           @default(0)
+  /// Valor por unidade por dia em cada faixa de período.
+  priceDaily     Decimal?      @db.Decimal(10, 3)
+  priceWeekly    Decimal?      @db.Decimal(10, 3)
+  priceBiweekly  Decimal?      @db.Decimal(10, 3)
+  priceMonthly   Decimal?      @db.Decimal(10, 3)
+  /// Data da última compra/recontagem do total.
+  countedAt      DateTime?     @db.Date
+  active         Boolean       @default(true)
+  sortOrder      Int           @default(0)
+  items          RentalItem[]
+  stockEntries   StockEntry[]
+}
+
+/// Histórico de compras, recontagens e baixas do estoque.
+model StockEntry {
+  id          String    @id @default(cuid())
+  equipmentId String
+  date        DateTime  @db.Date
+  /// COMPRA, RECONTAGEM, BAIXA, MANUTENCAO
+  kind        String
+  qtyChange   Int
+  totalAfter  Int
+  note        String?
+  createdAt   DateTime  @default(now())
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+}
+
+model Rental {
+  id              String        @id @default(cuid())
+  number          Int           @unique @default(autoincrement())
+  /// ORCAMENTO, ATIVA, ENCERRADA, CANCELADA
+  stage           String        @default("ORCAMENTO")
+  customerId      String
+  siteAddress     String        @default("")
+  startDate       DateTime      @db.Date
+  expectedEndDate DateTime?     @db.Date
+  discount        Decimal       @default(0) @db.Decimal(12, 2)
+  negotiating     Boolean       @default(false)
+  notes           String?
+  quoteToken      String        @unique @default(cuid())
+  closedAt        DateTime?     @db.Date
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  customer        Customer      @relation(fields: [customerId], references: [id])
+  items           RentalItem[]
+  extras          RentalExtra[]
+  payments        Payment[]
+
+  @@index([stage])
+  @@index([customerId])
+}
+
+model RentalItem {
+  id           String       @id @default(cuid())
+  rentalId     String
+  equipmentId  String
+  qty          Int
+  /// Valor por unidade por dia.
+  unitPrice    Decimal      @db.Decimal(10, 3)
+  /// DIARIA, SEMANAL, QUINZENAL, MENSAL, ESPECIAL
+  period       String       @default("DIARIA")
+  /// Dias cobrados manualmente para a parte que ainda não voltou (vazio = automático).
+  daysOverride Int?
+  rental       Rental       @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  equipment    Equipment    @relation(fields: [equipmentId], references: [id])
+  returns      ItemReturn[]
+}
+
+/// Devolução (total ou parcial) de um item. Só aqui o material volta ao estoque.
+model ItemReturn {
+  id          String     @id @default(cuid())
+  itemId      String
+  qty         Int
+  date        DateTime   @db.Date
+  /// Dias cobrados para estas unidades (vazio = da retirada até a devolução).
+  chargedDays Int?
+  note        String?
+  createdAt   DateTime   @default(now())
+  item        RentalItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+}
+
+/// Acréscimos: taxa de entrega, mobilização, cobrança mínima, manutenção...
+model RentalExtra {
+  id          String  @id @default(cuid())
+  rentalId    String
+  description String
+  amount      Decimal @db.Decimal(12, 2)
+  rental      Rental  @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  rentalId  String
+  date      DateTime @db.Date
+  amount    Decimal  @db.Decimal(12, 2)
+  method    String?
+  note      String?
+  createdAt DateTime @default(now())
+  rental    Rental   @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+}
