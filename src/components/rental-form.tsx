@@ -535,7 +535,7 @@ export function RentalForm({
                       <div>
                         <div className="label">R$ un./dia</div>
                         <input
-                          className={`input tnum ${!it.unitPrice ? "ring-amber-400" : ""}`}
+                          className={`input tnum ${!it.unitPrice ? "border-amber-400" : ""}`}
                           inputMode="decimal"
                           value={it.unitPrice}
                           placeholder="0,00"

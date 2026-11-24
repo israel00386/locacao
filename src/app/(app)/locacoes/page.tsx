@@ -2,7 +2,8 @@ import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { AlertTriangle, Archive, FileText, HardHat, Inbox, Layers, Plus, Search, Wallet, X } from "lucide-react";
 import { RentalCard } from "@/components/rental-card";
-import { HeroStat, NavyHero } from "@/components/rental-ui";
+import { HeroStat } from "@/components/rental-ui";
+import { Hero } from "@/components/ui";
 import { CountUp } from "@/components/count-up";
 import { db } from "@/lib/db";
 import { listRentals } from "@/lib/rentals";
@@ -78,35 +79,22 @@ export default async function LocacoesPage({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <NavyHero className="pb-20 lg:pb-20">
-        <div className="flex items-end justify-between gap-3">
-          <div className="min-w-0">
-            <div className="text-[11px] font-semibold tracking-[0.08em] text-accent-300/90 uppercase">Operação</div>
-            <h1 className="mt-1 text-[26px] leading-tight font-bold tracking-[-0.02em] sm:text-[28px]">Locações</h1>
-            <p className="mt-1 text-sm text-white/65">
-              {active.length} {active.length === 1 ? "locação ativa" : "locações ativas"}
-              {overdue > 0 && <span className="text-red-300"> · {overdue} {overdue === 1 ? "atrasada" : "atrasadas"}</span>}
-            </p>
-          </div>
+      <Hero
+        eyebrow="Operação"
+        title="Locações"
+        subtitle={
+          <>
+            {active.length} {active.length === 1 ? "locação ativa" : "locações ativas"}
+            {overdue > 0 && <span className="text-red-300"> · {overdue} {overdue === 1 ? "atrasada" : "atrasadas"}</span>}
+          </>
+        }
+        actions={
           <Link href="/locacoes/nova" className="btn-accent hidden shrink-0 lg:inline-flex">
             <Plus size={18} strokeWidth={2.2} aria-hidden /> Nova locação
           </Link>
-        </div>
-        <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
-          <HeroStat label="Na obra" tone="accent">
-            <CountUp value={active.length} />
-          </HeroStat>
-          <HeroStat label="Atrasadas" tone={overdue ? "red" : undefined}>
-            <CountUp value={overdue} />
-          </HeroStat>
-          <HeroStat label="A receber" tone={receivable > 0 ? "red" : "green"} className="col-span-2 sm:col-span-1">
-            <CountUp value={receivable} format="money" />
-          </HeroStat>
-        </div>
-      </NavyHero>
-
-      {/* Busca + abas, sobrepondo a faixa */}
-      <div className="relative z-10 -mt-12 space-y-3">
+        }
+        overlap={
+      <div className="relative z-10 space-y-3">
         <form className="card rounded-[20px] p-2" role="search">
           <input type="hidden" name="aba" value={tab} />
           <label className="relative block">
@@ -115,7 +103,7 @@ export default async function LocacoesPage({ searchParams }: { searchParams: Pro
             <input
               name="q"
               defaultValue={q}
-              className="input min-h-12 rounded-[14px] pr-11 pl-11 ring-slate-200"
+              className="input pr-11 pl-11"
               placeholder="Cliente, obra ou nº da locação"
               type="search"
               enterKeyHint="search"
@@ -164,9 +152,23 @@ export default async function LocacoesPage({ searchParams }: { searchParams: Pro
           </div>
         </nav>
       </div>
+        }
+      >
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
+          <HeroStat label="Na obra" tone="accent">
+            <CountUp value={active.length} />
+          </HeroStat>
+          <HeroStat label="Atrasadas" tone={overdue ? "red" : undefined}>
+            <CountUp value={overdue} />
+          </HeroStat>
+          <HeroStat label="A receber" tone={receivable > 0 ? "red" : "green"} className="col-span-2 sm:col-span-1">
+            <CountUp value={receivable} format="money" />
+          </HeroStat>
+        </div>
+      </Hero>
 
       {rows.length === 0 ? (
-        <div className="card mt-4 flex flex-col items-center rounded-[20px] px-6 py-12 text-center">
+        <div className="card flex flex-col items-center rounded-[20px] px-6 py-12 text-center">
           <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-500 ring-1 ring-brand-100 ring-inset">
             {q ? <Search size={26} strokeWidth={1.75} aria-hidden /> : <Inbox size={26} strokeWidth={1.75} aria-hidden />}
           </span>
@@ -178,7 +180,7 @@ export default async function LocacoesPage({ searchParams }: { searchParams: Pro
         </div>
       ) : (
         <>
-          <div className="mt-5 mb-2.5 flex items-baseline justify-between gap-3 px-1">
+          <div className="mb-2.5 flex items-baseline justify-between gap-3 px-1">
             <span className="text-[13px] font-medium text-slate-500">
               {rows.length} {rows.length === 1 ? "locação" : "locações"}
               {q && <> para “{q}”</>}

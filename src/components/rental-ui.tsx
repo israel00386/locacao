@@ -4,71 +4,21 @@ import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import type { RentalCalc } from "@/lib/calc";
 import { diffDays, inclusiveDays } from "@/lib/dates";
+import { Avatar as BaseAvatar, IconBox } from "./ui";
 
-const AVATAR_TINTS = [
-  "bg-brand-100 text-brand-700 ring-brand-200/70",
-  "bg-sky-100 text-sky-800 ring-sky-200/70",
-  "bg-amber-100 text-amber-800 ring-amber-200/70",
-  "bg-emerald-100 text-emerald-800 ring-emerald-200/70",
-  "bg-violet-100 text-violet-800 ring-violet-200/70",
-  "bg-rose-100 text-rose-800 ring-rose-200/70",
-  "bg-teal-100 text-teal-800 ring-teal-200/70",
-];
-
-const STOP = new Set(["da", "de", "do", "das", "dos", "e", "ltda", "me", "eireli", "s/a", "sa"]);
-
-export function initials(name: string): string {
-  const words = name
-    .trim()
-    .split(/\s+/)
-    .filter((w) => w && !STOP.has(w.toLowerCase()));
-  if (!words.length) return "?";
-  const first = words[0][0];
-  const last = words.length > 1 ? words[words.length - 1][0] : (words[0][1] ?? "");
-  return (first + last).toUpperCase();
-}
-
-function tintFor(name: string) {
-  let h = 0;
-  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  return AVATAR_TINTS[h % AVATAR_TINTS.length];
-}
-
-/** Avatar com as iniciais do cliente (cor fixa por nome). */
+/** Avatar do cliente (usa o Avatar da base; `xl` = maior tamanho da base). */
 export function Avatar({ name, size = "md", className = "" }: { name: string; size?: "sm" | "md" | "lg" | "xl"; className?: string }) {
-  const s = {
-    sm: "h-8 w-8 text-[11px] rounded-[10px]",
-    md: "h-11 w-11 text-sm rounded-[14px]",
-    lg: "h-12 w-12 text-base rounded-2xl",
-    xl: "h-14 w-14 text-lg rounded-[18px]",
-  }[size];
-  return (
-    <span className={`flex shrink-0 items-center justify-center font-bold tracking-tight ring-1 ring-inset ${s} ${tintFor(name)} ${className}`} aria-hidden>
-      {initials(name)}
-    </span>
-  );
+  return <BaseAvatar name={name} size={size === "xl" ? "lg" : size} className={className} />;
 }
 
-const TILE_TONES = {
-  brand: "bg-brand-50 text-brand-600 ring-brand-100",
-  accent: "bg-accent-100 text-accent-700 ring-accent-200/70",
-  amber: "bg-amber-50 text-amber-700 ring-amber-200/70",
-  green: "bg-emerald-50 text-emerald-700 ring-emerald-200/70",
-  red: "bg-red-50 text-red-700 ring-red-200/70",
-  sky: "bg-sky-50 text-sky-700 ring-sky-200/70",
-  slate: "bg-slate-100 text-slate-600 ring-slate-200/70",
-  navy: "bg-white/10 text-accent-300 ring-white/15",
-} as const;
-export type TileTone = keyof typeof TILE_TONES;
+export type TileTone = "brand" | "accent" | "amber" | "green" | "red" | "sky" | "slate" | "navy";
 
-/** Ícone dentro de um quadrado arredondado com fundo tinto. */
+/** Ícone lucide dentro do IconBox da base. */
 export function IconTile({ icon: Icon, tone = "brand", size = "md" }: { icon: LucideIcon; tone?: TileTone; size?: "sm" | "md" | "lg" }) {
-  const s = { sm: "h-8 w-8 rounded-[10px]", md: "h-9 w-9 rounded-xl", lg: "h-11 w-11 rounded-[14px]" }[size];
-  const i = { sm: 16, md: 18, lg: 20 }[size];
   return (
-    <span className={`flex shrink-0 items-center justify-center ring-1 ring-inset ${s} ${TILE_TONES[tone]}`} aria-hidden>
-      <Icon size={i} strokeWidth={1.9} />
-    </span>
+    <IconBox tone={tone} size={size}>
+      <Icon />
+    </IconBox>
   );
 }
 
@@ -93,7 +43,7 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <section id={id} className={`card scroll-mt-24 overflow-hidden rounded-[20px] ${className}`}>
+    <section id={id} className={`card scroll-mt-24 overflow-hidden ${className}`}>
       <header className="flex items-center gap-3 px-5 pt-4 pb-3">
         <IconTile icon={icon} tone={tone} />
         <div className="min-w-0 flex-1">
@@ -111,14 +61,9 @@ export function Panel({
 export function NavyHero({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <div
-      className={`on-navy relative isolate -mx-4 -mt-5 overflow-hidden bg-gradient-to-br from-brand-900 via-brand-900 to-brand-800 px-4 pt-5 text-white lg:mx-0 lg:mt-0 lg:rounded-[28px] lg:px-8 lg:pt-7 lg:shadow-[0_20px_50px_-24px_rgb(8_8_42/.6)] ${className}`}
+      className={`on-navy hero-bg relative isolate -mx-4 -mt-5 overflow-hidden px-4 pt-5 text-white lg:mx-0 lg:mt-0 lg:rounded-[28px] lg:px-8 lg:pt-7 ${className}`}
     >
-      <div className="pointer-events-none absolute -top-24 -right-16 -z-10 h-72 w-72 rounded-full bg-[radial-gradient(closest-side,rgb(248_200_10/.16),transparent)]" aria-hidden />
-      <div className="pointer-events-none absolute -bottom-32 -left-20 -z-10 h-80 w-80 rounded-full bg-[radial-gradient(closest-side,rgb(58_71_158/.55),transparent)]" aria-hidden />
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.07] [background-image:linear-gradient(rgb(255_255_255/.6)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255/.6)_1px,transparent_1px)] [background-size:28px_28px] [mask-image:linear-gradient(to_bottom,black,transparent_85%)]"
-        aria-hidden
-      />
+      <div className="scaffold-grid pointer-events-none absolute inset-0 -z-10" aria-hidden />
       {children}
     </div>
   );
