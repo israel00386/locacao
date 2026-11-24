@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { Badge, PageHeader, Section } from "@/components/ui";
 import { ActionButton, PaymentForm, ReturnForm, ShareQuote } from "@/components/rental-actions";
 import { AddItemsButton } from "@/components/add-items-form";
+import { ExpenseList } from "@/components/expense-list";
+import { getExpenseRentalOptions, getRentalExpenses } from "@/lib/expenses";
 import { itemSituation, paymentStatus, situation } from "@/lib/calc";
 import { fmtDate, fmtDateShort, toISODate, todayISO, weekday } from "@/lib/dates";
 import { addItemsOptions } from "@/lib/form-options";
@@ -42,6 +44,10 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
   const wa = whatsappLink(r.customer.phone, text) ?? `https://wa.me/?text=${encodeURIComponent(text)}`;
   const editable = r.stage === "ORCAMENTO" || r.stage === "ATIVA";
   const addOptions = r.stage === "ATIVA" ? await addItemsOptions(r.customerId) : null;
+  const showExpenses = r.stage === "ATIVA" || r.stage === "ENCERRADA";
+  const [expenses, expenseRentals] = showExpenses
+    ? await Promise.all([getRentalExpenses(r.id), getExpenseRentalOptions([r.id])])
+    : [[], []];
   const initialItems = r.items.flatMap((_, idx) => (c.items[idx].addition ? [] : [idx]));
   const additions = r.items
     .flatMap((_, idx) => (c.items[idx].addition ? [idx] : []))
@@ -253,6 +259,18 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
                 </ul>
               )}
               <PaymentForm action={addPayment.bind(null, r.id)} open={Math.max(0, c.open)} todayISO={todayISO()} />
+            </Section>
+          )}
+
+          {showExpenses && (
+            <Section title="Despesas (frete etc.)">
+              <ExpenseList
+                expenses={expenses}
+                extras={r.extras.map((x) => ({ amount: Number(x.amount) }))}
+                rentalId={r.id}
+                rentals={expenseRentals}
+                todayISO={todayISO()}
+              />
             </Section>
           )}
 
