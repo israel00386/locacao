@@ -22,7 +22,7 @@ export function NavProgress() {
     };
     const onSubmit = (e: SubmitEvent) => {
       const form = e.target as HTMLFormElement;
-      if (form.method?.toLowerCase() === "get") start();
+      if ((form.getAttribute("method") ?? "").toLowerCase() === "get") start();
     };
     document.addEventListener("click", onClick, true);
     document.addEventListener("submit", onSubmit, true);

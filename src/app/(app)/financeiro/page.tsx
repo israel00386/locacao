@@ -99,12 +99,12 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
       </div>
 
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-3">
-        <Stat label={`Recebido em ${name}`} value={money(received)} tone="green" hint={`${payments.length} pagamento${payments.length === 1 ? "" : "s"}`} />
-        <Stat label={`Despesas de ${name}`} value={money(spent)} tone={spent > 0 ? "red" : undefined} hint={`${expenses.length} despesa${expenses.length === 1 ? "" : "s"}`} />
-        <Stat label="Saldo do mês" value={money(balance)} tone={balance > 0 ? "green" : balance < 0 ? "red" : undefined} hint="recebido − despesas" />
-        <Stat label="Total a receber" value={money(totalOpen)} tone={totalOpen > 0 ? "red" : "green"} hint={`${receivable.length} locações`} />
-        <Stat label="Já devolvido e não pago" value={money(overdueOpen)} hint="cobrar primeiro" tone={overdueOpen > 0 ? "red" : undefined} />
-        <Stat label={`Locado em ${name}`} value={money(billed)} hint={`${startedInMonth.length} locações iniciadas`} />
+        <Stat label={`Recebido em ${name}`} value={money(received)} amount={received} format="money" tone="green" hint={`${payments.length} pagamento${payments.length === 1 ? "" : "s"}`} />
+        <Stat label={`Despesas de ${name}`} value={money(spent)} amount={spent} format="money" tone={spent > 0 ? "red" : undefined} hint={`${expenses.length} despesa${expenses.length === 1 ? "" : "s"}`} />
+        <Stat label="Saldo do mês" value={money(balance)} amount={balance} format="money" tone={balance > 0 ? "green" : balance < 0 ? "red" : undefined} hint="recebido − despesas" />
+        <Stat label="Total a receber" value={money(totalOpen)} amount={totalOpen} format="money" tone={totalOpen > 0 ? "red" : "green"} hint={`${receivable.length} locações`} />
+        <Stat label="Já devolvido e não pago" value={money(overdueOpen)} amount={overdueOpen} format="money" hint="cobrar primeiro" tone={overdueOpen > 0 ? "red" : undefined} />
+        <Stat label={`Locado em ${name}`} value={money(billed)} amount={billed} format="money" hint={`${startedInMonth.length} locações iniciadas`} />
       </div>
 
       <div className="grid items-start gap-4 lg:grid-cols-2">

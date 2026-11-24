@@ -103,8 +103,10 @@ h1, h2, h3 { text-wrap: balance; }
 }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
-/* Entrada de tela (src/app/(app)/template.tsx) */
-.page-enter { animation: rise 0.34s var(--ease-out-soft) both; }
+/* Entrada de tela (src/components/page-transition.tsx) */
+/* fill-mode "backwards": depois da animação o transform some. Com "both" o transform ficava aplicado
+   e prendia position: fixed (folhas/diálogos) dentro do card, atrás do cabeçalho. */
+.page-enter { animation: rise 0.34s var(--ease-out-soft) backwards; }
 
 /* Entrada escalonada: cartões da tela e filhos de .stagger */
 .page-enter *:nth-child(1) { --n: 0; }
@@ -117,7 +119,7 @@ h1, h2, h3 { text-wrap: balance; }
 .page-enter *:nth-child(n + 8) { --n: 7; }
 .page-enter .card,
 .stagger > * {
-  animation: rise 0.42s var(--ease-out-soft) both;
+  animation: rise 0.42s var(--ease-out-soft) backwards;
   animation-delay: calc(var(--n, 0) * 45ms + 40ms);
 }
 .stagger > *:nth-child(1) { --n: 0; }

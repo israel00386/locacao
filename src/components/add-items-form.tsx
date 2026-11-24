@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { priceFor, suggestPeriod, suggestUnitPrice } from "@/lib/calc";
 import { addDays, inclusiveDays, parseISODate, toISODate, weekday } from "@/lib/dates";
 import { money, parseMoney, PERIODS, unitMoney, type Period } from "@/lib/format";
@@ -152,7 +153,8 @@ function AddItemsSheet({
     });
   }
 
-  return (
+  // Portal no <body>: fora de containers animados (transform), que prenderiam o position: fixed.
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 sm:items-center" onClick={onClose}>
       <div
         role="dialog"
@@ -347,5 +349,5 @@ function AddItemsSheet({
         </div>
       </div>
     </div>
-  );
+  , document.body);
 }
