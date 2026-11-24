@@ -1,0 +1,9 @@
+/* Movimento das folhas do Financeiro (fill-mode backwards; nunca both/forwards). */
+@keyframes kit-fade {
+  from { opacity: 0; }
+}
+@keyframes kit-rise {
+  from { opacity: 0; transform: translateY(24px); }
+}
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }

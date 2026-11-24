@@ -1,128 +1,44 @@
-import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { ChevronLeft } from "lucide-react";
 import type { ReactNode } from "react";
-import { CountUp, type CountFormat } from "./count-up";
-import { Empty, Section } from "./ui";
+import { CountUp } from "./count-up";
+import { Empty, IconBox } from "./ui";
+import "./finance-motion.css";
 
 /*
- * Peças visuais das telas de Estoque, Clientes e Financeiro.
- * Sem "use client": servem tanto para componentes do servidor quanto do navegador.
+ * Peças das telas de Estoque, Clientes e Financeiro que o design system (ui.tsx) não tem.
+ * O visual base (TopBar, BalanceCard, Stat, Section, TxRow, ProgressRow, Donut, BarChart, SegmentedTabs…)
+ * vem de src/components/ui.tsx. Sem "use client": servem para servidor e navegador.
  */
 
-/** Faixa marinho do topo da tela (no celular encosta no cabeçalho; no computador vira um card arredondado). */
-export function Hero({
-  back,
-  eyebrow,
-  title,
-  subtitle,
-  lead,
-  actions,
-  children,
-}: {
-  back?: { href: string; label?: string };
-  eyebrow?: ReactNode;
-  title: ReactNode;
-  subtitle?: ReactNode;
-  lead?: ReactNode;
-  actions?: ReactNode;
-  children?: ReactNode;
-}) {
-  return (
-    <section className="on-navy hero-bg relative -mx-4 -mt-5 overflow-hidden px-5 pt-5 pb-16 text-white lg:mx-0 lg:mt-0 lg:rounded-[28px] lg:px-9 lg:pt-8 lg:pb-[4.5rem]">
-      <div className="scaffold-grid pointer-events-none absolute inset-0" aria-hidden />
-      <div className="relative">
-        {back && (
-          <Link
-            href={back.href}
-            className="-ml-2 mb-2 inline-flex min-h-10 items-center gap-1 rounded-xl px-2 text-sm font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white"
-          >
-            <ChevronLeft className="size-4" strokeWidth={2} aria-hidden />
-            {back.label ?? "Voltar"}
-          </Link>
-        )}
-        <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
-          <div className="flex min-w-0 max-w-full items-center gap-3.5">
-            {lead}
-            <div className="min-w-0">
-              {eyebrow && <div className="micro mb-2 text-accent-300/90">{eyebrow}</div>}
-              <h1 className="text-[1.75rem] leading-[1.15] font-bold tracking-[-0.02em] break-words sm:text-[2rem]">{title}</h1>
-              {subtitle && <div className="mt-1.5 text-[15px] text-white/65">{subtitle}</div>}
-            </div>
-          </div>
-          {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
-        </div>
-        {children && <div className="mt-6 lg:mt-8">{children}</div>}
-      </div>
-    </section>
-  );
-}
-
-/** Conteúdo que sobe por cima da borda de baixo do Hero (efeito de camadas). */
-export function HeroOverlap({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`relative -mt-10 lg:-mt-12 ${className}`}>{children}</div>;
-}
-
-/** Número grande dentro do Hero. */
-export function HeroStat({
-  label,
-  icon: Icon,
-  amount,
-  value,
-  format = "int",
-  hint,
-  tone = "white",
-  size = "md",
-}: {
-  label: string;
-  icon?: LucideIcon;
-  amount?: number;
-  value?: ReactNode;
-  format?: CountFormat;
-  hint?: ReactNode;
-  tone?: "white" | "green" | "red" | "accent";
-  size?: "md" | "lg";
-}) {
-  const color = { white: "text-white", green: "text-emerald-300", red: "text-rose-300", accent: "text-accent-300" }[tone];
-  return (
-    <div className="min-w-0">
-      <div className="flex items-center gap-1.5 text-[13px] font-medium text-white/60">
-        {Icon && <Icon className="size-3.5 shrink-0" strokeWidth={2} aria-hidden />}
-        <span className="truncate">{label}</span>
-      </div>
-      <div className={`tnum mt-1 leading-none font-bold tracking-[-0.02em] break-words ${color} ${size === "lg" ? "text-[1.75rem] min-[420px]:text-[2rem] sm:text-[2.5rem] tracking-[-0.03em]" : "text-lg min-[420px]:text-xl sm:text-2xl"}`}>
-        {amount != null ? <CountUp value={amount} format={format} /> : value}
-      </div>
-      {hint && <div className="mt-2 text-[13px] text-white/55">{hint}</div>}
-    </div>
-  );
-}
-
-/** Botão translúcido para usar sobre o marinho (utility do design system). */
-export const navyBtn = "btn-glass";
-
-const tileTones = {
-  brand: "bg-brand-50 text-brand-600",
-  sky: "bg-sky-50 text-sky-600",
-  green: "bg-emerald-50 text-emerald-600",
-  red: "bg-rose-50 text-rose-600",
-  amber: "bg-amber-50 text-amber-600",
-  slate: "bg-slate-100 text-slate-500",
-  accent: "bg-accent-100 text-accent-700",
+/** Mesmo visual do <QuickTile> do ui.tsx, para usar em <button> (abre folhas). */
+export const QUICK_TILE_BTN =
+  "tap group flex min-h-[7.5rem] w-full min-w-0 flex-col justify-between gap-3 rounded-3xl bg-gradient-to-br p-4 text-left transition-[transform,filter] hover:brightness-[1.02] sm:min-h-[8.5rem] sm:p-5";
+export const QUICK_TONES = {
+  brand: "from-brand-100/90 to-brand-50 text-brand-700",
+  accent: "from-accent-200/80 to-accent-50 text-accent-800",
+  emerald: "from-emerald-100 to-emerald-50 text-emerald-700",
+  rose: "from-rose-100 to-rose-50 text-rose-700",
+  violet: "from-violet-100 to-violet-50 text-violet-700",
+  sky: "from-sky-100 to-sky-50 text-sky-700",
 } as const;
-export type TileTone = keyof typeof tileTones;
 
-/** Ícone dentro de um quadrado arredondado tingido (36px por padrão). */
-export function IconTile({ icon: Icon, tone = "brand", className = "", size = "md" }: { icon: LucideIcon; tone?: TileTone | string; className?: string; size?: "sm" | "md" | "lg" }) {
-  const box = size === "sm" ? "size-8 rounded-[10px]" : size === "lg" ? "size-11 rounded-[14px]" : "size-9 rounded-xl";
-  const ic = size === "sm" ? "size-4" : size === "lg" ? "size-5" : "size-[18px]";
-  const cls = tone in tileTones ? tileTones[tone as TileTone] : tone;
+export function QuickTileBody({ icon: Icon, label, hint }: { icon: LucideIcon; label: ReactNode; hint?: ReactNode }) {
   return (
-    <span className={`flex shrink-0 items-center justify-center ${box} ${cls} ${className}`} aria-hidden>
-      <Icon className={ic} strokeWidth={1.9} />
-    </span>
+    <>
+      <span className="flex size-11 items-center justify-center rounded-full bg-white shadow-[0_4px_12px_-6px_rgb(15_18_63/.25)]" aria-hidden>
+        <Icon className="size-5" strokeWidth={2} />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-[15px] leading-tight font-semibold text-brand-950">{label}</span>
+        {hint && <span className="mt-0.5 block truncate text-xs text-slate-500">{hint}</span>}
+      </span>
+    </>
   );
 }
+
+/** Botão em pílula com texto, para cabeçalhos (ao lado dos botões redondos). */
+export const PILL_BTN = "btn-primary rounded-full";
+export const PILL_ACCENT = "btn-accent rounded-full";
 
 /** Barra de ocupação do estoque: na obra (azul claro) · manutenção (âmbar) · disponível (verde). */
 export function OccupancyBar({
@@ -143,11 +59,11 @@ export function OccupancyBar({
   const pct = (n: number) => `${(n / base) * 100}%`;
   return (
     <div
-      className={`flex h-2 w-full gap-[2px] overflow-hidden rounded-full ${dark ? "bg-white/10" : "bg-slate-100"} ${className}`}
+      className={`bar-fill flex h-2 w-full gap-[3px] overflow-hidden rounded-full ${dark ? "bg-white/10" : "bg-slate-100"} ${className}`}
       role="img"
       aria-label={`${rented} na obra, ${maintenance} em manutenção, ${free} disponíveis de ${total}`}
     >
-      {rented > 0 && <span className={`h-full rounded-full ${dark ? "bg-sky-300" : "bg-sky-500"}`} style={{ width: pct(rented) }} />}
+      {rented > 0 && <span className={`h-full rounded-full ${dark ? "bg-sky-300" : "bg-sky-400"}`} style={{ width: pct(rented) }} />}
       {maintenance > 0 && <span className={`h-full rounded-full ${dark ? "bg-amber-300" : "bg-amber-400"}`} style={{ width: pct(maintenance) }} />}
       {free > 0 && <span className={`h-full rounded-full ${dark ? "bg-emerald-300" : "bg-emerald-500"}`} style={{ width: pct(free) }} />}
     </div>
@@ -163,7 +79,7 @@ export function LegendDot({ className, children }: { className: string; children
   );
 }
 
-/** Estado vazio dentro de um card/seção (usa o <Empty plain> do design system). */
+/** Estado vazio dentro de um card (usa o <Empty plain> do design system). */
 export function EmptyState({ icon: Icon, title, children, action }: { icon: LucideIcon; title: string; children?: ReactNode; action?: ReactNode }) {
   return (
     <Empty plain icon={<Icon strokeWidth={1.75} />} title={title} action={action}>
@@ -172,31 +88,55 @@ export function EmptyState({ icon: Icon, title, children, action }: { icon: Luci
   );
 }
 
-/** <Section> do design system com ícone lucide e contador opcional. */
-export function Panel({
-  title,
-  icon: Icon,
-  count,
-  actions,
-  children,
-}: {
-  title: string;
-  icon?: LucideIcon;
-  count?: number;
-  actions?: ReactNode;
-  children: ReactNode;
-  className?: string;
-}) {
-  const right =
-    count != null || actions ? (
-      <div className="flex items-center gap-2">
-        {count != null && <span className="tnum rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">{count}</span>}
-        {actions}
-      </div>
-    ) : undefined;
+/** Divisor de dia no extrato ("Hoje", "Ontem", "seg., 18 de nov."). */
+export function DayLabel({ children, right }: { children: ReactNode; right?: ReactNode }) {
   return (
-    <Section title={title} icon={Icon ? <Icon /> : undefined} actions={right}>
-      {children}
-    </Section>
+    <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-1 text-xs font-semibold text-slate-400 sm:px-5">
+      <span className="first-letter:uppercase">{children}</span>
+      {right && <span className="tnum">{right}</span>}
+    </div>
+  );
+}
+
+/**
+ * Igual ao <Stat> do ui.tsx, mas para valores em dinheiro em cards estreitos (2 por linha no celular):
+ * o número encolhe com a tela em vez de quebrar no meio.
+ */
+export function MoneyStat({
+  label,
+  amount,
+  icon,
+  tone,
+  hint,
+}: {
+  label: string;
+  amount: number;
+  icon: ReactNode;
+  tone?: "red" | "green";
+  hint?: ReactNode;
+}) {
+  const color = tone === "red" ? "text-red-600" : tone === "green" ? "text-emerald-700" : "text-brand-950";
+  return (
+    <div className="card relative min-w-0 overflow-hidden p-4 sm:p-5">
+      <IconBox tone={tone === "red" ? "red" : tone === "green" ? "green" : "brand"} className="mb-3 sm:mb-4">
+        {icon}
+      </IconBox>
+      <div className="min-w-0 text-[13px] leading-snug font-medium text-slate-500">{label}</div>
+      <div className={`tnum mt-1 text-[clamp(1rem,5.2vw,1.75rem)] leading-tight font-bold tracking-[-0.025em] whitespace-nowrap lg:text-[clamp(1.125rem,1.7vw,1.75rem)] ${color}`}>
+        <CountUp value={amount} format="money" />
+      </div>
+      {hint && <div className="mt-1 text-xs text-slate-500">{hint}</div>}
+    </div>
+  );
+}
+
+/** Pequeno par rótulo/valor em cima do marinho. */
+export function NavyStat({ label, children, tone = "white" }: { label: string; children: ReactNode; tone?: "white" | "green" | "red" | "accent" }) {
+  const color = { white: "text-white", green: "text-emerald-300", red: "text-rose-300", accent: "text-accent-300" }[tone];
+  return (
+    <div className="min-w-0">
+      <div className="truncate text-[12.5px] font-medium text-white/60">{label}</div>
+      <div className={`tnum mt-0.5 text-[clamp(.875rem,4.2vw,1.125rem)] leading-tight font-bold tracking-[-0.01em] whitespace-nowrap ${color}`}>{children}</div>
+    </div>
   );
 }

@@ -18,7 +18,7 @@ function FormError({ children }: { children?: string }) {
 
 function SubmitButton({ pending, children, pendingText = "Salvando…" }: { pending: boolean; children: React.ReactNode; pendingText?: string }) {
   return (
-    <button className="btn-primary w-full rounded-[14px] sm:min-h-11" disabled={pending}>
+    <button className="btn-primary w-full rounded-full sm:min-h-11" disabled={pending}>
       {pending ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <Check className="size-4" strokeWidth={2.4} aria-hidden />}
       {pending ? pendingText : children}
     </button>
@@ -52,7 +52,7 @@ export function EquipmentForm({
         </div>
       </div>
 
-      <fieldset className="rounded-[18px] bg-slate-50 p-4 ring-1 ring-slate-200/70 ring-inset">
+      <fieldset className="rounded-[20px] bg-slate-50 p-4">
         <legend className="sr-only">Tabela de preços</legend>
         <div className="mb-3 flex items-baseline justify-between gap-2">
           <span className="text-sm font-semibold text-slate-900">Tabela de preços</span>
@@ -111,19 +111,19 @@ export function StockEntryForm({ action, todayISO, total }: { action: Action; to
   const current = KINDS.find((k) => k.v === kind) ?? KINDS[0];
   return (
     <form action={formAction} key={state.ok ?? 0} className="space-y-4 px-4 pt-4 pb-5 sm:px-5">
-      <div className="grid grid-cols-3 gap-1 rounded-[14px] bg-slate-100 p-1 text-sm" role="radiogroup" aria-label="Tipo de lançamento">
+      <div className="grid grid-cols-3 gap-1 rounded-full bg-slate-100 p-1 text-sm" role="radiogroup" aria-label="Tipo de lançamento">
         {KINDS.map((k) => {
           const Icon = k.icon;
           const on = kind === k.v;
           return (
             <label
               key={k.v}
-              className={`flex min-h-10 cursor-pointer items-center justify-center gap-1.5 rounded-[10px] px-1 font-semibold transition-all duration-150 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-600 ${
+              className={`flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-full px-1 font-semibold transition-all duration-150 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-600 ${
                 on ? `bg-white shadow-sm ${k.on}` : "text-slate-500 hover:text-slate-700"
               }`}
             >
               <input type="radio" name="kind" value={k.v} checked={on} onChange={() => setKind(k.v)} className="sr-only" />
-              <Icon className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+              <Icon className="hidden size-4 shrink-0 min-[420px]:block" strokeWidth={2} aria-hidden />
               <span className="truncate">{k.l}</span>
             </label>
           );

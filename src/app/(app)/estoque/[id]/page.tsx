@@ -2,9 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeftRight, Boxes, ChevronRight, ClipboardCheck, HardHat, History, MapPin, Package, PackageMinus, PackagePlus, PackageCheck, Tags, Wrench } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { Avatar, Badge } from "@/components/ui";
+import { Avatar, Badge, BalanceCard, Chip, Section, TopBar } from "@/components/ui";
 import { EquipmentForm, StockEntryForm } from "@/components/equipment-forms";
-import { EmptyState, Hero, HeroOverlap, HeroStat, LegendDot, OccupancyBar, Panel } from "@/components/screen-kit";
+import { EmptyState, LegendDot, NavyStat, OccupancyBar } from "@/components/screen-kit";
 import { db } from "@/lib/db";
 import { fmtDate, todayISO } from "@/lib/dates";
 import { getStock, listRentals } from "@/lib/rentals";
@@ -22,17 +22,10 @@ export default async function EquipamentoPage({ params }: { params: Promise<{ id
   if (id === "novo") {
     return (
       <>
-        <Hero
-          back={{ href: "/estoque", label: "Estoque" }}
-          eyebrow="Novo cadastro"
-          title="Novo equipamento"
-          subtitle="Nome, quantidade e tabela de preços. O estoque inicial entra no histórico."
-        />
-        <HeroOverlap>
-          <div className="card mx-auto max-w-2xl">
-            <EquipmentForm action={saveEquipment.bind(null, null)} />
-          </div>
-        </HeroOverlap>
+        <TopBar back="/estoque" eyebrow="Novo cadastro" title="Novo equipamento" subtitle="Nome, quantidade e tabela de preços. O estoque inicial entra no histórico." />
+        <div className="card mx-auto max-w-2xl">
+          <EquipmentForm action={saveEquipment.bind(null, null)} />
+        </div>
       </>
     );
   }
@@ -49,8 +42,8 @@ export default async function EquipamentoPage({ params }: { params: Promise<{ id
 
   return (
     <>
-      <Hero
-        back={{ href: "/estoque", label: "Estoque" }}
+      <TopBar
+        back="/estoque"
         eyebrow="Equipamento"
         title={eq.name}
         subtitle={
@@ -59,33 +52,50 @@ export default async function EquipamentoPage({ params }: { params: Promise<{ id
             {eq.countedAt ? `Última contagem ou entrada em ${fmtDate(eq.countedAt)}` : "Sem contagem registrada"}
           </span>
         }
-        lead={
-          <span className="hidden size-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-accent-300 ring-1 ring-white/15 ring-inset sm:flex" aria-hidden>
+      />
+
+      <BalanceCard
+        className="mb-4 lg:mb-5"
+        label="Disponível para locar"
+        icon={<PackageCheck />}
+        amount={row.availableQty}
+        format="int"
+        actions={
+          <span className="hidden size-14 items-center justify-center rounded-2xl bg-white/10 text-accent-300 ring-1 ring-white/15 ring-inset sm:flex" aria-hidden>
             <Package className="size-7" strokeWidth={1.6} />
           </span>
         }
+        chips={
+          <>
+            <Chip tone={row.availableQty <= 0 ? "glass-red" : "glass"}>{row.availableQty <= 0 ? "Sem saldo" : `${Math.round((row.availableQty / Math.max(row.totalQty, 1)) * 100)}% livre`}</Chip>
+            <Chip tone="glass-yellow" icon={<HardHat />}>
+              {onSite.length} locaç{onSite.length === 1 ? "ão" : "ões"}
+            </Chip>
+          </>
+        }
       >
-        <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-4">
-          <HeroStat label="Disponível" icon={PackageCheck} amount={row.availableQty} size="lg" tone={row.availableQty <= 0 ? "red" : "green"} />
-          <HeroStat label="Total" icon={Boxes} amount={row.totalQty} size="lg" />
-          <HeroStat label="Na obra" icon={HardHat} amount={row.rentedQty} tone="accent" hint={`${onSite.length} locaç${onSite.length === 1 ? "ão" : "ões"}`} />
-          <HeroStat label="Manutenção" icon={Wrench} amount={row.maintenanceQty} />
+        <OccupancyBar dark total={row.totalQty} rented={row.rentedQty} maintenance={row.maintenanceQty} className="h-2.5" />
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          <NavyStat label="Total">{row.totalQty}</NavyStat>
+          <NavyStat label="Na obra" tone="accent">
+            {row.rentedQty}
+          </NavyStat>
+          <NavyStat label="Manutenção">{row.maintenanceQty}</NavyStat>
         </div>
-        <OccupancyBar dark total={row.totalQty} rented={row.rentedQty} maintenance={row.maintenanceQty} className="mt-5 h-2.5" />
-        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/60">
+        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/60">
           <LegendDot className="bg-sky-300">Na obra</LegendDot>
           <LegendDot className="bg-amber-300">Manutenção</LegendDot>
           <LegendDot className="bg-emerald-300">Disponível</LegendDot>
         </div>
-      </Hero>
+      </BalanceCard>
 
-      <HeroOverlap className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2 lg:gap-5">
         <div className="space-y-4">
-          <Panel title="Movimentar estoque" icon={ArrowLeftRight}>
+          <Section title="Movimentar estoque" icon={<ArrowLeftRight />} iconTone="green">
             <StockEntryForm action={addStockEntry.bind(null, id)} todayISO={todayISO()} total={eq.totalQty} />
-          </Panel>
+          </Section>
 
-          <Panel title="Histórico do total" icon={History} count={eq.stockEntries.length}>
+          <Section title="Histórico do total" icon={<History />} iconTone="violet" description={`${eq.stockEntries.length} lançamento${eq.stockEntries.length === 1 ? "" : "s"}`}>
             {eq.stockEntries.length ? (
               <ol className="px-4 pt-4 pb-4 sm:px-5">
                 {eq.stockEntries.map((s, i) => {
@@ -120,16 +130,16 @@ export default async function EquipamentoPage({ params }: { params: Promise<{ id
                 Entradas, baixas e recontagens aparecem aqui com data e observação.
               </EmptyState>
             )}
-          </Panel>
+          </Section>
         </div>
 
         <div className="space-y-4">
-          <Panel title="Na obra agora" icon={HardHat} count={onSite.length}>
+          <Section title="Na obra agora" icon={<HardHat />} iconTone="sky" description={onSite.length ? `${onSite.length} locaç${onSite.length === 1 ? "ão" : "ões"} ativa${onSite.length === 1 ? "" : "s"}` : undefined}>
             {onSite.length ? (
               <ul className="divide-y divide-slate-100">
                 {onSite.map(({ r, qty }) => (
                   <li key={r.id}>
-                    <Link href={`/locacoes/${r.id}`} className="tap group flex min-h-16 items-center gap-3 px-5 py-3 hover:bg-slate-50 active:bg-slate-100">
+                    <Link href={`/locacoes/${r.id}`} className="tap group flex min-h-16 items-center gap-3 px-4 py-3 hover:bg-slate-50 active:bg-slate-100 sm:px-5">
                       <Avatar name={r.customer.name} />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-semibold text-slate-900">{r.customer.name}</span>
@@ -154,9 +164,9 @@ export default async function EquipamentoPage({ params }: { params: Promise<{ id
                 Quando uma locação ativa levar este equipamento, ela aparece aqui.
               </EmptyState>
             )}
-          </Panel>
+          </Section>
 
-          <Panel title="Dados e preços" icon={Tags}>
+          <Section title="Dados e preços" icon={<Tags />}>
             <EquipmentForm
               action={saveEquipment.bind(null, id)}
               initial={{
@@ -169,9 +179,9 @@ export default async function EquipamentoPage({ params }: { params: Promise<{ id
                 active: eq.active,
               }}
             />
-          </Panel>
+          </Section>
         </div>
-      </HeroOverlap>
+      </div>
     </>
   );
 }

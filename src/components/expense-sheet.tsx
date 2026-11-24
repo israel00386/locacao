@@ -1,10 +1,12 @@
 "use client";
-import { useEffect, useId, useMemo, useState, useTransition, type ReactNode } from "react";
-import { createPortal } from "react-dom";
-import { Check, LoaderCircle, Pencil, Plus, ReceiptText, Search, Trash2, X } from "lucide-react";
-import { categoryIcon } from "@/components/finance-ui";
+import Link from "next/link";
+import { useId, useMemo, useState, useTransition, type ReactNode } from "react";
+import { Check, LoaderCircle, Pencil, Plus, Search, Settings2, Trash2 } from "lucide-react";
 import { addExpense, deleteExpense, updateExpense } from "@/app/(app)/financeiro/actions";
-import { EXPENSE_CATEGORIES, PAYMENT_METHODS } from "@/lib/expense-categories";
+import { colorStyle, PAYMENT_METHODS, selectableCategories, type ExpenseCategoryData } from "@/lib/expense-categories";
+import { InlineCategoryCreator } from "./category-sheet";
+import { iconFor } from "./finance-ui";
+import { FormAlert, Sheet } from "./sheet";
 
 export interface ExpenseFormValues {
   id: string;
@@ -21,79 +23,34 @@ export interface ExpenseRentalOption {
   label: string;
 }
 
-/** Painel que sobe de baixo no celular e fica centralizado no computador. */
-function Sheet({ title, subtitle, onClose, children }: { title: string; subtitle?: string; onClose: () => void; children: ReactNode }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = prev;
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [onClose]);
-  // Portal: fica fora de containers com transform/animação, que quebrariam o position: fixed.
-  return createPortal(
-    <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label={title}>
-      <button
-        type="button"
-        aria-label="Fechar"
-        className="absolute inset-0 animate-[fade-in_.2s_ease-out_backwards] bg-brand-950/45 backdrop-blur-[2px]"
-        onClick={onClose}
-      />
-      <div className="relative flex max-h-[92dvh] w-full animate-[rise_.32s_cubic-bezier(.2,.8,.2,1)_backwards] flex-col rounded-t-[28px] bg-white shadow-[0_-12px_40px_-12px_rgb(8_8_42/.35)] sm:max-w-lg sm:rounded-[24px] sm:shadow-2xl">
-        <div className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-slate-200 sm:hidden" aria-hidden />
-        <div className="flex items-center gap-3 px-5 pt-3 pb-3 sm:pt-5">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600" aria-hidden>
-            <ReceiptText className="size-5" strokeWidth={1.9} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <h2 className="text-lg leading-tight font-bold tracking-[-0.01em] text-slate-900">{title}</h2>
-            {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-800 active:scale-95"
-            aria-label="Fechar"
-          >
-            <X className="size-[18px]" strokeWidth={2.2} />
-          </button>
-        </div>
-        <div className="overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)]">{children}</div>
-      </div>
-    </div>,
-    document.body,
-  );
-}
-
-function ExpenseForm({
-  expense,
-  rentals,
-  todayISO,
-  defaultRentalId,
-  onDone,
-}: {
-  expense?: ExpenseFormValues;
+interface Common {
   rentals: ExpenseRentalOption[];
   todayISO: string;
-  defaultRentalId?: string;
-  onDone: () => void;
-}) {
+  /** Todas as categorias do banco (o formulário mostra as ativas + a atual). */
+  categories: ExpenseCategoryData[];
+}
+
+function ExpenseForm({ expense, rentals, todayISO, categories, defaultRentalId, onDone }: Common & { expense?: ExpenseFormValues; defaultRentalId?: string; onDone: () => void }) {
   const uid = useId();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [category, setCategory] = useState(expense?.category ?? "ENTREGA");
+  // Categorias criadas aqui aparecem antes do servidor devolver a lista nova.
+  const [created, setCreated] = useState<ExpenseCategoryData[]>([]);
+  const list = useMemo(() => {
+    const all = [...categories, ...created.filter((c) => !categories.some((x) => x.id === c.id))];
+    return selectableCategories(all, expense?.category);
+  }, [categories, created, expense?.category]);
+  const [category, setCategory] = useState(expense?.category ?? list[0]?.id ?? "");
+  const [creating, setCreating] = useState(false);
   const [rentalId, setRentalId] = useState(expense?.rentalId ?? defaultRentalId ?? "");
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const list = q ? rentals.filter((r) => r.label.toLowerCase().includes(q)) : rentals;
+    const l = q ? rentals.filter((r) => r.label.toLowerCase().includes(q)) : rentals;
     // A locação escolhida continua na lista mesmo quando não bate com a busca.
     const chosen = rentals.find((r) => r.id === rentalId);
-    return chosen && !list.includes(chosen) ? [chosen, ...list] : list;
+    return chosen && !l.includes(chosen) ? [chosen, ...l] : l;
   }, [rentals, search, rentalId]);
 
   const submit = (form: FormData) => {
@@ -117,32 +74,59 @@ function ExpenseForm({
 
   const id = (s: string) => `${uid}-${s}`;
   return (
-    <form action={submit} className="space-y-5 px-5 pt-1 pb-5">
+    <form action={submit} className="space-y-5 px-5 pt-1 pb-5 sm:px-6">
       <fieldset>
-        <legend className="label">Categoria</legend>
+        <div className="mb-1.5 flex items-center justify-between gap-2">
+          <legend className="label mb-0">Categoria</legend>
+          <Link href="/financeiro/categorias" className="inline-flex min-h-9 items-center gap-1 rounded-full px-2 text-xs font-semibold text-brand-600 hover:bg-brand-50">
+            <Settings2 className="size-3.5" aria-hidden /> Gerenciar
+          </Link>
+        </div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {EXPENSE_CATEGORIES.map((c) => {
-            const Icon = categoryIcon(c.value);
-            const on = category === c.value;
+          {list.map((c) => {
+            const Icon = iconFor(c.icon);
+            const on = category === c.id;
             return (
               <label
-                key={c.value}
-                className={`relative flex min-h-[60px] cursor-pointer items-center gap-2.5 rounded-[14px] px-2.5 py-2 text-sm ring-1 transition duration-150 ring-inset has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-600 active:scale-[.98] ${
-                  on ? "bg-brand-50/70 text-brand-900 ring-2 ring-brand-600" : "bg-white text-slate-700 ring-slate-200 hover:bg-slate-50"
+                key={c.id}
+                className={`relative flex min-h-[56px] cursor-pointer items-center gap-2.5 rounded-[16px] px-2.5 py-2 text-sm transition duration-150 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-600 active:scale-[.98] ${
+                  on ? "bg-brand-50/80 text-brand-950 ring-2 ring-brand-600 ring-inset" : "bg-slate-50 text-slate-700 hover:bg-slate-100"
                 }`}
               >
-                <input type="radio" name="category" value={c.value} checked={on} onChange={() => setCategory(c.value)} className="sr-only" />
-                <span className={`flex size-8 shrink-0 items-center justify-center rounded-[10px] transition-colors ${on ? "bg-brand-600 text-white" : c.tile}`} aria-hidden>
+                <input type="radio" name="category" value={c.id} checked={on} onChange={() => setCategory(c.id)} className="sr-only" />
+                <span className={`flex size-9 shrink-0 items-center justify-center rounded-full transition-colors ${on ? "bg-brand-900 text-accent-300" : colorStyle(c.color).tile}`} aria-hidden>
                   <Icon className="size-4" strokeWidth={2} />
                 </span>
-                <span className="min-w-0">
-                  <span className={`block leading-tight ${on ? "font-semibold" : "font-medium"}`}>{c.label}</span>
-                  {c.hint && <span className="block truncate text-[11px] font-normal text-slate-500">{c.hint}</span>}
+                <span className={`min-w-0 leading-tight break-words ${on ? "font-semibold" : "font-medium"}`}>
+                  {c.name}
+                  {!c.active && <span className="block text-[11px] font-normal text-slate-500">desativada</span>}
                 </span>
               </label>
             );
           })}
+          {!creating && (
+            <button
+              type="button"
+              onClick={() => setCreating(true)}
+              className="flex min-h-[56px] items-center gap-2.5 rounded-[16px] border-2 border-dashed border-slate-200 px-2.5 py-2 text-left text-sm font-semibold text-slate-500 transition hover:border-violet-300 hover:bg-violet-50/50 hover:text-violet-800 active:scale-[.98]"
+            >
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-600" aria-hidden>
+                <Plus className="size-4" strokeWidth={2.4} />
+              </span>
+              Nova categoria
+            </button>
+          )}
         </div>
+        {creating && (
+          <InlineCategoryCreator
+            onCancel={() => setCreating(false)}
+            onCreated={(c) => {
+              setCreated((l) => [...l, c]);
+              setCategory(c.id);
+              setCreating(false);
+            }}
+          />
+        )}
       </fieldset>
 
       <div className="grid grid-cols-2 gap-3">
@@ -207,19 +191,15 @@ function ExpenseForm({
         <p className="mt-1 text-xs text-slate-500">Ligue o frete à locação para ver o lucro do frete (taxa cobrada − gasto).</p>
       </div>
 
-      {error && (
-        <p role="alert" className="rounded-[14px] bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-800 ring-1 ring-red-200 ring-inset">
-          {error}
-        </p>
-      )}
+      <FormAlert>{error}</FormAlert>
 
       <div className="flex flex-col gap-2 border-t border-slate-100 pt-4 sm:flex-row-reverse">
-        <button className="btn-primary w-full rounded-[14px] sm:w-auto sm:flex-1" disabled={pending}>
+        <button className="btn-primary w-full rounded-full sm:w-auto sm:flex-1" disabled={pending || creating}>
           {pending ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <Check className="size-4" strokeWidth={2.4} aria-hidden />}
           {pending ? "Salvando…" : expense ? "Salvar alterações" : "Adicionar despesa"}
         </button>
         {expense && (
-          <button type="button" className="btn-danger w-full rounded-[14px] sm:w-auto" onClick={remove} disabled={pending}>
+          <button type="button" className="btn-danger w-full rounded-full sm:w-auto" onClick={remove} disabled={pending}>
             <Trash2 className="size-4" aria-hidden /> Excluir
           </button>
         )}
@@ -232,6 +212,7 @@ function ExpenseForm({
 export function NewExpenseButton({
   rentals,
   todayISO,
+  categories,
   defaultRentalId,
   className = "btn-primary btn-sm",
   children = (
@@ -239,9 +220,7 @@ export function NewExpenseButton({
       <Plus className="size-4" strokeWidth={2.4} aria-hidden /> Nova despesa
     </>
   ),
-}: {
-  rentals: ExpenseRentalOption[];
-  todayISO: string;
+}: Common & {
   defaultRentalId?: string;
   className?: string;
   children?: ReactNode;
@@ -253,8 +232,8 @@ export function NewExpenseButton({
         {children}
       </button>
       {open && (
-        <Sheet title="Nova despesa" subtitle="Frete, combustível, manutenção, compras…" onClose={() => setOpen(false)}>
-          <ExpenseForm rentals={rentals} todayISO={todayISO} defaultRentalId={defaultRentalId} onDone={() => setOpen(false)} />
+        <Sheet title="Nova despesa" subtitle="Frete, combustível, manutenção, compras…" icon={Plus} iconClass="bg-rose-50 text-rose-600" onClose={() => setOpen(false)}>
+          <ExpenseForm rentals={rentals} todayISO={todayISO} categories={categories} defaultRentalId={defaultRentalId} onDone={() => setOpen(false)} />
         </Sheet>
       )}
     </>
@@ -262,14 +241,14 @@ export function NewExpenseButton({
 }
 
 /** Ações de uma linha da lista: editar (abre o painel) e excluir (com confirmação). */
-export function ExpenseRowActions({ expense, rentals, todayISO }: { expense: ExpenseFormValues; rentals: ExpenseRentalOption[]; todayISO: string }) {
+export function ExpenseRowActions({ expense, rentals, todayISO, categories }: Common & { expense: ExpenseFormValues }) {
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
   return (
     <span className="-mr-2 flex shrink-0 items-center">
       <button
         type="button"
-        className="flex size-9 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 active:scale-95 disabled:opacity-50"
+        className="flex size-10 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 active:scale-95 disabled:opacity-50"
         onClick={() => setOpen(true)}
         disabled={pending}
         aria-label="Editar"
@@ -281,7 +260,7 @@ export function ExpenseRowActions({ expense, rentals, todayISO }: { expense: Exp
         type="button"
         aria-label="Excluir"
         title="Excluir"
-        className="flex size-9 items-center justify-center rounded-full text-slate-400 transition hover:bg-red-50 hover:text-red-700 active:scale-95 disabled:opacity-50"
+        className="flex size-10 items-center justify-center rounded-full text-slate-400 transition hover:bg-red-50 hover:text-red-700 active:scale-95 disabled:opacity-50"
         disabled={pending}
         onClick={() => {
           if (!window.confirm("Excluir esta despesa? Não dá para desfazer.")) return;
@@ -294,10 +273,28 @@ export function ExpenseRowActions({ expense, rentals, todayISO }: { expense: Exp
         {pending ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <Trash2 className="size-4" aria-hidden />}
       </button>
       {open && (
-        <Sheet title="Editar despesa" subtitle="Altere os dados ou exclua o lançamento" onClose={() => setOpen(false)}>
-          <ExpenseForm expense={expense} rentals={rentals} todayISO={todayISO} onDone={() => setOpen(false)} />
+        <Sheet title="Editar despesa" subtitle="Altere os dados ou exclua o lançamento" icon={Pencil} onClose={() => setOpen(false)}>
+          <ExpenseForm expense={expense} rentals={rentals} todayISO={todayISO} categories={categories} onDone={() => setOpen(false)} />
         </Sheet>
       )}
     </span>
+  );
+}
+
+/**
+ * Botão transparente que cobre a linha inteira (o <li> precisa de `relative`) e abre a edição.
+ * Assim a linha usa o <TxRow> do design system sem aninhar elementos interativos.
+ */
+export function ExpenseRowButton({ expense, rentals, todayISO, categories, label }: Common & { expense: ExpenseFormValues; label: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" className="absolute inset-0 z-[1] w-full cursor-pointer" onClick={() => setOpen(true)} aria-haspopup="dialog" aria-label={label} />
+      {open && (
+        <Sheet title="Editar despesa" subtitle="Altere os dados ou exclua o lançamento" icon={Pencil} onClose={() => setOpen(false)}>
+          <ExpenseForm expense={expense} rentals={rentals} todayISO={todayISO} categories={categories} onDone={() => setOpen(false)} />
+        </Sheet>
+      )}
+    </>
   );
 }

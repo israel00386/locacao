@@ -1,15 +1,16 @@
 import Link from "next/link";
 import { ChevronRight, HandCoins, HardHat, MessageCircle, Phone, Search, UserPlus, Users } from "lucide-react";
-import { Avatar, Badge } from "@/components/ui";
-import { EmptyState, Hero, HeroOverlap, HeroStat } from "@/components/screen-kit";
+import { Avatar, Badge, BalanceCard, Chip, SegmentedTabs, Stat, TopBar } from "@/components/ui";
+import { EmptyState } from "@/components/screen-kit";
 import { db } from "@/lib/db";
 import { money, whatsappNumber } from "@/lib/format";
 import { listRentals } from "@/lib/rentals";
 
 export const metadata = { title: "Clientes" };
 
-export default async function ClientesPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  const { q = "" } = await searchParams;
+export default async function ClientesPage({ searchParams }: { searchParams: Promise<{ q?: string; f?: string }> }) {
+  const { q = "", f = "" } = await searchParams;
+  const filter = f === "obra" || f === "aberto" ? f : "todos";
   const term = q.trim();
   const [customers, open] = await Promise.all([
     db.customer.findMany({
@@ -28,50 +29,78 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
   }
   const receivable = [...balance.values()].reduce((a, b) => a + b, 0);
 
+  const shown = customers.filter((c) => (filter === "obra" ? onSite.has(c.id) : filter === "aberto" ? balance.has(c.id) : true));
+  const qs = (ff: string) => {
+    const p = new URLSearchParams();
+    if (term) p.set("q", term);
+    if (ff !== "todos") p.set("f", ff);
+    const t = p.toString();
+    return `/clientes${t ? `?${t}` : ""}`;
+  };
+
   return (
     <>
-      <Hero
-        eyebrow="Clientes"
-        title="Carteira de clientes"
+      <TopBar
+        title="Clientes"
         subtitle={`${customers.length} ${term ? `encontrado${customers.length === 1 ? "" : "s"} para “${term}”` : `cadastrado${customers.length === 1 ? "" : "s"}`}`}
         actions={
-          <Link href="/clientes/novo" className="btn-accent">
+          <Link href="/clientes/novo" className="btn-primary rounded-full">
             <UserPlus className="size-4" strokeWidth={2.2} aria-hidden /> Cliente
           </Link>
         }
-      >
-        <div className="grid grid-cols-2 gap-4 sm:max-w-lg">
-          <HeroStat label="Com material na obra" icon={HardHat} amount={onSite.size} size="lg" tone="accent" />
-          <HeroStat
-            label="A receber"
-            icon={HandCoins}
-            amount={receivable}
-            format="money"
-            size="lg"
-            tone={balance.size ? "red" : "green"}
-            hint={balance.size ? `${balance.size} cliente${balance.size === 1 ? "" : "s"} em aberto` : "nada em aberto"}
-          />
-        </div>
-      </Hero>
+      />
 
-      <HeroOverlap>
-        <form className="relative mb-4" role="search">
+      <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-5">
+        <BalanceCard
+          className="lg:col-span-7"
+          label="A receber dos clientes"
+          icon={<HandCoins />}
+          amount={receivable}
+          chips={
+            <>
+              <Chip tone={balance.size ? "glass-red" : "glass"}>{balance.size ? `${balance.size} cliente${balance.size === 1 ? "" : "s"} em aberto` : "nada em aberto"}</Chip>
+              <Chip tone="glass-yellow" icon={<HardHat />}>
+                {onSite.size} com material na obra
+              </Chip>
+            </>
+          }
+        />
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:col-span-5">
+          <Stat label="Com material na obra" icon={<HardHat />} amount={onSite.size} hint="clientes" />
+          <Stat label="Em aberto" icon={<HandCoins />} tone={balance.size ? "red" : undefined} amount={balance.size} hint="clientes devendo" />
+        </div>
+      </div>
+
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <form className="relative min-w-0 flex-1" role="search">
           <Search className="pointer-events-none absolute top-1/2 left-4 size-[18px] -translate-y-1/2 text-slate-400" aria-hidden />
+          {filter !== "todos" && <input type="hidden" name="f" value={filter} />}
           <input
             name="q"
             defaultValue={term}
-            className="input min-h-[52px] rounded-[18px] pl-11 shadow-[var(--shadow-card)]"
+            className="input min-h-[52px] rounded-full border-transparent bg-white pl-11 shadow-[var(--shadow-card)]"
             type="search"
             placeholder="Buscar por nome, telefone ou responsável…"
             aria-label="Buscar cliente"
           />
         </form>
+        <SegmentedTabs
+          ariaLabel="Filtrar clientes"
+          className="w-full sm:w-fit [&>*]:flex-1 sm:[&>*]:flex-none"
+          items={[
+            { label: "Todos", href: qs("todos") },
+            { label: "Na obra", href: qs("obra"), count: onSite.size },
+            { label: "Em aberto", href: qs("aberto"), count: balance.size },
+          ]}
+          active={qs(filter)}
+        />
+      </div>
 
-        {customers.length === 0 ? (
+        {shown.length === 0 ? (
           <div className="card">
             <EmptyState
               icon={Users}
-              title={term ? "Nenhum cliente encontrado" : "Nenhum cliente ainda"}
+              title={term || filter !== "todos" ? "Nenhum cliente encontrado" : "Nenhum cliente ainda"}
               action={
                 term ? (
                   <Link href="/clientes" className="btn-secondary">Limpar busca</Link>
@@ -86,13 +115,13 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
             </EmptyState>
           </div>
         ) : (
-          <ul className="card stagger divide-y divide-slate-100 overflow-hidden">
-            {customers.map((c) => {
+          <ul className="card divide-y divide-slate-100/80 overflow-hidden lg:grid lg:grid-cols-2 lg:divide-y-0">
+            {shown.map((c) => {
               const wa = whatsappNumber(c.phone);
               const due = balance.get(c.id);
               const sites = onSite.get(c.id);
               return (
-                <li key={c.id} className="tap group relative flex min-h-[72px] items-center gap-3 px-4 py-3 hover:bg-slate-50 active:bg-slate-100 sm:px-5">
+                <li key={c.id} className="tap group relative flex min-h-[76px] items-center gap-3 px-4 py-3 hover:bg-slate-50/70 active:bg-slate-100 sm:px-5 lg:border-b lg:border-slate-100/80">
                   <Avatar name={c.name} />
                   <div className="min-w-0 flex-1">
                     <Link href={`/clientes/${c.id}`} className="block truncate text-[15px] font-semibold text-slate-900 after:absolute after:inset-0 after:content-['']">
@@ -126,7 +155,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
                         href={`https://wa.me/${wa}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="relative z-10 flex size-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200/70 transition hover:bg-emerald-100 active:scale-95"
+                        className="relative z-10 flex size-11 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200/70 transition hover:bg-emerald-100 active:scale-95"
                         aria-label={`WhatsApp de ${c.name}`}
                         title={c.phone ?? undefined}
                       >
@@ -140,7 +169,6 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
             })}
           </ul>
         )}
-      </HeroOverlap>
     </>
   );
 }
