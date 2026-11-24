@@ -1,10 +1,8 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   Ban,
   Banknote,
   CalendarClock,
-  ChevronLeft,
   ChevronRight,
   CornerDownRight,
   FileText,
@@ -230,7 +228,7 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
 
       <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(320px,380px)] lg:items-start lg:gap-5 xl:gap-6">
         {/* Coluna lateral (computador). No celular os blocos entram na ordem da página. */}
-        <div className="contents lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1 lg:flex lg:flex-col lg:gap-4">
+        <div className="contents lg:top-6 lg:[@media(min-height:1080px)]:sticky lg:col-start-2 lg:row-start-1 lg:flex lg:flex-col lg:gap-4">
           {/* CARTÃO-SALDO */}
           <BalanceCard
             className="order-1"
@@ -331,7 +329,7 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
           {/* AÇÕES RÁPIDAS */}
           <section className="order-2" aria-labelledby="quick-title">
             <SectionTitle className="lg:sr-only" title={<span id="quick-title">Ações rápidas</span>} />
-            <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0 md:pb-0 [&::-webkit-scrollbar]:hidden [&>*]:w-[132px] [&>*]:shrink-0 [&>*]:snap-start md:[&>*]:w-auto">
+            <div className="-mx-4 flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0 md:pb-0 [&::-webkit-scrollbar]:hidden [&>*]:w-[132px] [&>*]:shrink-0 [&>*]:snap-start md:[&>*]:w-auto">
               {tiles}
             </div>
           </section>

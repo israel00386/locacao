@@ -37,7 +37,7 @@ export default async function OrcamentoPublico({ params }: { params: Promise<{ t
   const hasPix = !!(company.pixKey || company.pixName || company.pixBank);
 
   return (
-    <div className="min-h-dvh bg-[#eef0f6] px-3 py-4 sm:px-6 sm:py-8 print:bg-white print:p-0">
+    <div className="min-h-dvh bg-[#f3f5fa] px-3 py-4 sm:px-6 sm:py-8 print:bg-white print:p-0">
       <style>{PRINT_CSS}</style>
       <div className="no-print mx-auto mb-3 flex max-w-3xl items-center justify-between gap-2">
         <span className="text-xs font-medium text-slate-500">
@@ -46,7 +46,7 @@ export default async function OrcamentoPublico({ params }: { params: Promise<{ t
         <PrintButton />
       </div>
 
-      <article className="quote-doc mx-auto max-w-3xl overflow-hidden rounded-[24px] bg-white text-[13px] text-slate-800 shadow-[0_1px_2px_rgb(15_18_63/.06),0_24px_60px_-28px_rgb(15_18_63/.35)] ring-1 ring-slate-200/70 print:max-w-none print:rounded-none print:shadow-none print:ring-0">
+      <article className="quote-doc mx-auto max-w-3xl overflow-hidden rounded-[28px] bg-white text-[13px] text-slate-800 shadow-[0_1px_2px_rgb(15_18_63/.04),0_24px_60px_-28px_rgb(15_18_63/.3)] print:max-w-none print:rounded-none print:shadow-none print:ring-0">
         {/* CABEÇALHO */}
         <header className="relative overflow-hidden bg-gradient-to-br from-brand-900 via-brand-900 to-brand-800 px-6 pt-6 pb-6 text-white sm:px-8 print:px-7">
           <div className="pointer-events-none absolute -top-20 -right-12 h-60 w-60 rounded-full bg-[radial-gradient(closest-side,rgb(248_200_10/.18),transparent)]" aria-hidden />
@@ -122,7 +122,7 @@ export default async function OrcamentoPublico({ params }: { params: Promise<{ t
             {r.items.map((it, idx) => {
               const ic = c.items[idx];
               return (
-                <li key={it.id} className="rounded-2xl bg-slate-50 px-4 py-3 ring-1 ring-slate-200/70 ring-inset">
+                <li key={it.id} className="rounded-[20px] bg-slate-50 px-4 py-3">
                   <div className="flex justify-between gap-3">
                     <span className="font-semibold text-slate-900">
                       <span className="tnum text-brand-600">{it.qty}×</span> {it.equipment.name}

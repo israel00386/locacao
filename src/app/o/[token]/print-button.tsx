@@ -4,7 +4,7 @@ import { Check, Copy, Printer } from "lucide-react";
 
 export function PrintButton() {
   return (
-    <button type="button" onClick={() => window.print()} className="btn-primary">
+    <button type="button" onClick={() => window.print()} className="btn-primary rounded-full px-5">
       <Printer size={16} aria-hidden /> Salvar PDF / Imprimir
     </button>
   );
@@ -16,7 +16,7 @@ export function CopyPix({ value }: { value: string }) {
   return (
     <button
       type="button"
-      className="no-print inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-white px-2.5 text-xs font-semibold text-brand-800 ring-1 ring-accent-300 ring-inset hover:bg-accent-100"
+      className="no-print inline-flex min-h-9 items-center gap-1.5 rounded-full bg-white px-3 text-xs font-semibold text-brand-800 ring-1 ring-accent-300 ring-inset hover:bg-accent-100"
       onClick={async () => {
         try {
           await navigator.clipboard.writeText(value);

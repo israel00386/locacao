@@ -249,7 +249,7 @@ function AddItemsSheet({
                 })}
               </div>
               {days > 0 && end && (
-                <span className="tnum shrink-0 rounded-full bg-brand-50 px-2.5 py-1 text-sm font-bold text-brand-700">
+                <span className="tnum hidden shrink-0 rounded-full bg-brand-50 px-2.5 py-1 text-sm font-bold text-brand-700 min-[400px]:inline">
                   {days} {days === 1 ? "dia" : "dias"}
                 </span>
               )}

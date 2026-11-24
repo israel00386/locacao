@@ -286,7 +286,7 @@ export function RentalForm({
               </div>
               <button
                 type="button"
-                className="btn-sm shrink-0 rounded-full bg-white text-slate-700 shadow-sm hover:bg-slate-50"
+                className="btn btn-sm shrink-0 rounded-full bg-white text-slate-700 shadow-sm hover:bg-slate-50"
                 onClick={() => {
                   setCustomerId(undefined);
                   setNewCustomer(null);
