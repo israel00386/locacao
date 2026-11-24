@@ -1,3 +1,4 @@
+import { Logo } from "@/components/logo";
 import { db } from "@/lib/db";
 import { LoginForm } from "./form";
 
@@ -7,16 +8,21 @@ export const metadata = { title: "Entrar" };
 export default async function LoginPage() {
   const setup = (await db.user.count()) === 0;
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-gradient-to-b from-brand-50 to-slate-50 px-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600 text-2xl font-black text-white shadow">L</div>
-          <h1 className="text-xl font-bold">Locação de Equipamentos</h1>
-          <p className="text-sm text-slate-500">{setup ? "Primeiro acesso: crie o usuário do dono" : "Entre para continuar"}</p>
+    <div className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-brand-950 px-4 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]">
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(110%_70%_at_50%_20%,#26317a_0%,#141a52_40%,#08082a_85%)]"
+        aria-hidden
+      />
+      <div className="page-enter relative w-full max-w-sm">
+        <div className="mb-7 text-center">
+          <Logo variant="stacked" markClassName="h-24 w-auto drop-shadow-[0_6px_24px_rgb(248_200_10/.25)]" />
         </div>
-        <div className="card p-5">
+        <div className="card p-5 shadow-2xl shadow-black/30 sm:p-6">
+          <h1 className="text-lg font-bold text-brand-900">{setup ? "Primeiro acesso" : "Entrar"}</h1>
+          <p className="mb-4 text-sm text-slate-500">{setup ? "Crie o usuário do dono para começar." : "Use seu e-mail e senha para continuar."}</p>
           <LoginForm setup={setup} />
         </div>
+        <p className="mt-6 text-center text-xs text-white/50">Locação de equipamentos para obra · Pacatuba-CE</p>
       </div>
     </div>
   );

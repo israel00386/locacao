@@ -21,7 +21,7 @@ export function LoginForm({ setup }: { setup: boolean }) {
         <input id="password" name="password" type="password" className="input" required autoComplete={setup ? "new-password" : "current-password"} minLength={setup ? 6 : undefined} />
       </div>
       {state.error && <p className="text-sm text-red-700">{state.error}</p>}
-      <button className="btn-primary w-full" disabled={pending}>
+      <button className="btn-accent w-full text-base" disabled={pending}>
         {pending ? "Entrando…" : setup ? "Criar acesso e entrar" : "Entrar"}
       </button>
     </form>

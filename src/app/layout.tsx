@@ -1,16 +1,26 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
+import { NavProgress } from "@/components/nav-progress";
+import { SPLASH_SCRIPT, Splash } from "@/components/splash";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "Locação", template: "%s · Locação" },
-  description: "Controle de locação de equipamentos",
+  title: { default: "LOCAR Equipamentos", template: "%s · LOCAR" },
+  description: "Controle de locação de equipamentos — LOCAR Equipamentos, Pacatuba-CE",
+  applicationName: "LOCAR Equipamentos",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "Locação", statusBarStyle: "default" },
-  icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "LOCAR", statusBarStyle: "black-translucent" },
+  icons: {
+    icon: [
+      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: "/icons/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#256743",
+  themeColor: "#0f123f",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -18,8 +28,15 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: SPLASH_SCRIPT }} />
+      </head>
       <body>
+        <Splash />
+        <Suspense fallback={null}>
+          <NavProgress />
+        </Suspense>
         {children}
         <script
           dangerouslySetInnerHTML={{

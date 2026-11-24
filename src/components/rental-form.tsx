@@ -480,7 +480,7 @@ export function RentalForm({
       </div>
 
       {/* RESUMO */}
-      <div className="sticky bottom-20 z-10 lg:bottom-4">
+      <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 lg:bottom-4">
         <div className="card space-y-3 p-4 shadow-lg">
           <div className="flex items-baseline justify-between text-sm">
             <span className="text-slate-500">
