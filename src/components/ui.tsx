@@ -1,13 +1,17 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-type Tone = "gray" | "blue" | "red" | "amber" | "green";
+import type { Tone } from "@/lib/calc";
+
+// Cores de status pedidas pelo cliente.
 const tones: Record<Tone, string> = {
-  gray: "bg-slate-100 text-slate-700 ring-slate-200",
-  blue: "bg-sky-50 text-sky-800 ring-sky-200",
-  red: "bg-red-50 text-red-700 ring-red-200",
+  gray: "bg-slate-100 text-slate-700 ring-slate-200", // A vencer (cinza claro)
+  sky: "bg-sky-100 text-sky-800 ring-sky-200", // Na obra (azul claro)
+  yellow: "bg-yellow-100 text-yellow-800 ring-yellow-200", // Devolvido (amarelo claro)
+  green: "bg-green-600 text-white ring-green-600", // Pago (verde)
+  blue: "bg-blue-600 text-white ring-blue-600", // Finalizado (azul)
+  red: "bg-red-600 text-white ring-red-600", // Atrasado (vermelho)
   amber: "bg-amber-50 text-amber-800 ring-amber-200",
-  green: "bg-brand-50 text-brand-700 ring-brand-100",
 };
 
 export function Badge({ tone = "gray", children }: { tone?: Tone; children: ReactNode }) {

@@ -43,7 +43,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
               <span className="flex shrink-0 flex-col items-end gap-1">
                 {balance.get(c.id) ? <span className="text-xs font-semibold text-red-700 tnum">{money(balance.get(c.id))}</span> : null}
                 <span className="flex gap-1">
-                  {onSite.get(c.id) ? <Badge tone="blue">{onSite.get(c.id)} na obra</Badge> : null}
+                  {onSite.get(c.id) ? <Badge tone="sky">{onSite.get(c.id)} na obra</Badge> : null}
                   {c.status !== "Ativo" && <Badge tone={c.status === "Parceiro" ? "green" : "red"}>{c.status}</Badge>}
                 </span>
               </span>

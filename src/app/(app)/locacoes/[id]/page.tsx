@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge, PageHeader, Section } from "@/components/ui";
 import { ActionButton, PaymentForm, ReturnForm, ShareQuote } from "@/components/rental-actions";
-import { financialLabel, situation } from "@/lib/calc";
+import { paymentStatus, situation } from "@/lib/calc";
 import { fmtDate, inclusiveDays, toISODate, todayISO, weekday } from "@/lib/dates";
 import { money, periodLabel, rentalCode, unitMoney } from "@/lib/format";
 import { getCompany, getRental } from "@/lib/rentals";
@@ -33,7 +33,7 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
   const company = await getCompany();
   const c = r.calc;
   const sit = situation(r.stage, c);
-  const fin = financialLabel(c.financial);
+  const fin = paymentStatus(r.stage, c);
   const url = await quoteUrl(r);
   const text = quoteMessage(r, company.name, url);
   const wa = whatsappLink(r.customer.phone, text) ?? `https://wa.me/?text=${encodeURIComponent(text)}`;

@@ -159,25 +159,58 @@ export function priceFor(eq: PriceTable, period: string): number | null {
   return null;
 }
 
-/** Situação para mostrar ao usuário (combina etapa, atraso e devolução). */
+export type Tone = "gray" | "sky" | "yellow" | "green" | "blue" | "red" | "amber";
+
+/**
+ * Situação do material (cores pedidas pelo cliente):
+ * Na obra = azul claro · Devolvido = amarelo claro · Atrasada = vermelho.
+ */
 export function situation(stage: string, c: Pick<RentalCalc, "overdue" | "allReturned" | "outstandingQty">): {
   label: string;
-  tone: "gray" | "blue" | "red" | "amber" | "green";
+  tone: Tone;
 } {
   if (stage === "ORCAMENTO") return { label: "Orçamento", tone: "gray" };
   if (stage === "CANCELADA") return { label: "Cancelada", tone: "gray" };
-  if (stage === "ENCERRADA") return { label: "Encerrada", tone: "green" };
+  if (stage === "ENCERRADA") return { label: "Devolvido", tone: "yellow" };
   if (c.overdue) return { label: "Atrasada", tone: "red" };
-  if (c.allReturned) return { label: "Devolvida", tone: "amber" };
-  return { label: "Na obra", tone: "blue" };
+  if (c.allReturned) return { label: "Devolvido", tone: "yellow" };
+  return { label: "Na obra", tone: "sky" };
 }
 
-export function financialLabel(f: RentalCalc["financial"]): { label: string; tone: "green" | "amber" | "red" | "gray" } {
+export type PaymentStatus = "A_VENCER" | "PAGO" | "ATRASADO" | "FINALIZADO" | "SEM_VALOR";
+
+/**
+ * Situação do pagamento (cores pedidas pelo cliente):
+ * A vencer = cinza claro · Pago = verde · Em aberto → Atrasado = vermelho · Finalizado = azul.
+ * - Finalizado: locação encerrada e quitada.
+ * - Pago: quitada, mas a locação ainda não foi encerrada.
+ * - Atrasado: tem saldo e já passou do prazo (material atrasado, já devolvido ou locação encerrada).
+ * - A vencer: tem saldo, mas ainda está dentro do prazo.
+ */
+export function paymentStatus(
+  stage: string,
+  c: Pick<RentalCalc, "financial" | "overdue" | "allReturned" | "paid" | "open">,
+): { status: PaymentStatus; label: string; tone: Tone; partial: boolean } {
+  const partial = c.paid > 0 && c.open > 0.009;
+  if (c.financial === "SEM_VALOR") return { status: "SEM_VALOR", label: "Sem valor", tone: "gray", partial: false };
+  if (c.financial === "PAGO") {
+    return stage === "ENCERRADA"
+      ? { status: "FINALIZADO", label: "Finalizado", tone: "blue", partial: false }
+      : { status: "PAGO", label: "Pago", tone: "green", partial: false };
+  }
+  if (stage === "ENCERRADA" || c.overdue || c.allReturned) {
+    return { status: "ATRASADO", label: partial ? "Atrasado · pago em parte" : "Atrasado", tone: "red", partial };
+  }
+  return { status: "A_VENCER", label: partial ? "A vencer · pago em parte" : "A vencer", tone: "gray", partial };
+}
+
+/** @deprecated use paymentStatus(stage, calc) */
+export function financialLabel(f: RentalCalc["financial"]): { label: string; tone: Tone } {
   switch (f) {
     case "PAGO":
       return { label: "Pago", tone: "green" };
     case "PARCIAL":
-      return { label: "Pago em parte", tone: "amber" };
+      return { label: "Pago em parte", tone: "gray" };
     case "SEM_VALOR":
       return { label: "Sem valor", tone: "gray" };
     default:

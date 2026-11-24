@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { Badge } from "./ui";
-import { financialLabel, situation } from "@/lib/calc";
+import { paymentStatus, situation } from "@/lib/calc";
 import { fmtDateShort } from "@/lib/dates";
 import { money, rentalCode } from "@/lib/format";
 import type { RentalWithCalc } from "@/lib/rentals";
 
 export function RentalCard({ r }: { r: RentalWithCalc }) {
   const sit = situation(r.stage, r.calc);
-  const fin = financialLabel(r.calc.financial);
+  const fin = paymentStatus(r.stage, r.calc);
   const itemsText = r.items.map((i) => `${i.qty}× ${i.equipment.name}`).join(", ");
   return (
     <Link href={`/locacoes/${r.id}`} className="block px-4 py-3 hover:bg-slate-50 active:bg-slate-100">
