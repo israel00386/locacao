@@ -54,7 +54,7 @@ export default async function EstoquePage({ searchParams }: { searchParams: Prom
 
       <HeroOverlap>
         {stock.length === 0 ? (
-          <div className="card rounded-[20px]">
+          <div className="card">
             <EmptyState
               icon={Package}
               title="Nenhum equipamento cadastrado"
@@ -75,7 +75,7 @@ export default async function EstoquePage({ searchParams }: { searchParams: Prom
                 <li key={s.id} className={s.active ? "" : "opacity-60"}>
                   <Link
                     href={`/estoque/${s.id}`}
-                    className="tap group card block h-full rounded-[20px] p-4 transition-shadow hover:shadow-[var(--shadow-raised)] sm:p-5"
+                    className="tap group card card-hover block h-full p-4 sm:p-5"
                   >
                     <div className="flex items-start gap-3">
                       <span

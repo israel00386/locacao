@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClipboardList, HandCoins, HardHat, MapPin, MessageCircle, Phone, Plus, Receipt, StickyNote, Trash2, UserRound, Wallet } from "lucide-react";
-import { Badge } from "@/components/ui";
+import { Avatar, Badge } from "@/components/ui";
 import { CustomerForm } from "@/components/customer-form";
 import { RentalCard } from "@/components/rental-card";
 import { ActionButton } from "@/components/rental-actions";
-import { Avatar, EmptyState, Hero, HeroOverlap, HeroStat, IconTile, Panel, navyBtn } from "@/components/screen-kit";
+import { EmptyState, Hero, HeroOverlap, HeroStat, IconTile, Panel, navyBtn } from "@/components/screen-kit";
 import { db } from "@/lib/db";
 import { money, whatsappNumber } from "@/lib/format";
 import { listRentals } from "@/lib/rentals";
@@ -23,7 +23,7 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
           subtitle="Os endereços de obra entram sozinhos ao criar locações."
         />
         <HeroOverlap>
-          <div className="card mx-auto max-w-2xl rounded-[20px]">
+          <div className="card mx-auto max-w-2xl">
             <CustomerForm action={saveCustomer.bind(null, null)} />
           </div>
         </HeroOverlap>
@@ -45,7 +45,7 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
     <>
       <Hero
         back={{ href: "/clientes", label: "Clientes" }}
-        lead={<Avatar name={c.name} size="xl" className="bg-accent-400 text-brand-950 shadow-lg shadow-accent-700/30" />}
+        lead={<Avatar name={c.name} size="lg" tone="accent" className="shadow-lg shadow-accent-700/30" />}
         title={c.name}
         subtitle={
           <span className="mt-1 flex flex-wrap items-center gap-1.5">
@@ -76,8 +76,10 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
           </>
         }
       >
-        <div className="grid grid-cols-3 gap-4 sm:max-w-2xl">
-          <HeroStat label="Na obra" icon={HardHat} amount={onSite} tone="accent" hint={onSite === 1 ? "locação" : "locações"} />
+        <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:max-w-2xl sm:grid-cols-3">
+          <div className="col-span-2 sm:col-span-1">
+            <HeroStat label="Na obra" icon={HardHat} amount={onSite} tone="accent" hint={onSite === 1 ? "locação" : "locações"} />
+          </div>
           <HeroStat label="Já locou" icon={Receipt} amount={billed} format="money" />
           <HeroStat label="Em aberto" icon={HandCoins} amount={open} format="money" tone={open > 0 ? "red" : "green"} />
         </div>
@@ -87,7 +89,7 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
         <div className="space-y-4">
           <Panel title="Locações" icon={ClipboardList} count={rentals.length}>
             {rentals.length ? (
-              <div className="divide-y divide-slate-100 border-t border-slate-100">
+              <div className="divide-y divide-slate-100">
                 {rentals.map((r) => (
                   <RentalCard key={r.id} r={r} />
                 ))}
@@ -110,7 +112,7 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
 
         <div className="space-y-4">
           <Panel title="Resumo financeiro" icon={Wallet}>
-            <div className="px-5 pt-1 pb-5">
+            <div className="px-4 pt-4 pb-5 sm:px-5">
               <div className="flex items-end justify-between gap-3">
                 <div>
                   <div className="text-xs font-medium text-slate-500">Recebido</div>
@@ -143,7 +145,7 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
 
           <Panel title="Obras" icon={MapPin} count={c.sites.length}>
             {c.sites.length ? (
-              <ul className="divide-y divide-slate-100 border-t border-slate-100">
+              <ul className="divide-y divide-slate-100">
                 {c.sites.map((s) => (
                   <li key={s.id} className="flex min-h-14 items-center gap-3 px-5 py-2.5">
                     <IconTile icon={MapPin} tone="sky" size="sm" />
@@ -159,12 +161,12 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
                 ))}
               </ul>
             ) : (
-              <p className="px-5 pb-5 text-sm text-slate-500">Os endereços aparecem aqui ao criar locações.</p>
+              <p className="px-5 py-5 text-sm text-slate-500">Os endereços aparecem aqui ao criar locações.</p>
             )}
           </Panel>
 
           {c.notes && (
-            <div className="card flex gap-3 rounded-[20px] bg-accent-50/60 p-4 ring-accent-200">
+            <div className="card flex gap-3 border-accent-200 bg-accent-50/60 p-4">
               <IconTile icon={StickyNote} tone="accent" size="sm" />
               <p className="min-w-0 text-sm break-words whitespace-pre-line text-slate-700">{c.notes}</p>
             </div>

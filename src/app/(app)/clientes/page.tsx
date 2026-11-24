@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRight, HandCoins, HardHat, MessageCircle, Phone, Search, UserPlus, Users } from "lucide-react";
-import { Badge } from "@/components/ui";
-import { Avatar, EmptyState, Hero, HeroOverlap, HeroStat } from "@/components/screen-kit";
+import { Avatar, Badge } from "@/components/ui";
+import { EmptyState, Hero, HeroOverlap, HeroStat } from "@/components/screen-kit";
 import { db } from "@/lib/db";
 import { money, whatsappNumber } from "@/lib/format";
 import { listRentals } from "@/lib/rentals";
@@ -55,12 +55,12 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
       </Hero>
 
       <HeroOverlap>
-        <form className="card relative mb-4 rounded-[20px] p-2" role="search">
-          <Search className="pointer-events-none absolute top-1/2 left-5 size-[18px] -translate-y-1/2 text-slate-400" aria-hidden />
+        <form className="relative mb-4" role="search">
+          <Search className="pointer-events-none absolute top-1/2 left-4 size-[18px] -translate-y-1/2 text-slate-400" aria-hidden />
           <input
             name="q"
             defaultValue={term}
-            className="input min-h-12 pl-10 ring-0 focus:ring-2"
+            className="input min-h-[52px] rounded-[18px] pl-11 shadow-[var(--shadow-card)]"
             type="search"
             placeholder="Buscar por nome, telefone ou responsável…"
             aria-label="Buscar cliente"
@@ -68,7 +68,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
         </form>
 
         {customers.length === 0 ? (
-          <div className="card rounded-[20px]">
+          <div className="card">
             <EmptyState
               icon={Users}
               title={term ? "Nenhum cliente encontrado" : "Nenhum cliente ainda"}
@@ -86,7 +86,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
             </EmptyState>
           </div>
         ) : (
-          <ul className="card stagger divide-y divide-slate-100 overflow-hidden rounded-[20px]">
+          <ul className="card stagger divide-y divide-slate-100 overflow-hidden">
             {customers.map((c) => {
               const wa = whatsappNumber(c.phone);
               const due = balance.get(c.id);

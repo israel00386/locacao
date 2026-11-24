@@ -49,7 +49,7 @@ export function WeeklyChart({ weeks }: { weeks: WeekBucket[] }) {
   })();
   const ticks = [1, 0.5, 0];
   return (
-    <figure className="px-5 pt-1 pb-5">
+    <figure className="px-4 pt-4 pb-5 sm:px-5">
       <div className="mb-4 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
         <span className="inline-flex items-center gap-1.5">
           <span className="size-2.5 rounded-[4px] bg-emerald-500" aria-hidden /> Recebido
@@ -99,7 +99,7 @@ export function WeeklyChart({ weeks }: { weeks: WeekBucket[] }) {
 export function CategoryBreakdown({ rows, total }: { rows: { value: string; label: string; color: string; total: number; count: number }[]; total: number }) {
   if (!rows.length) return null;
   return (
-    <div className="px-5 pb-4">
+    <div className="px-4 pb-4 sm:px-5">
       <div className="flex h-3 w-full gap-[2px] overflow-hidden rounded-full bg-slate-100" role="img" aria-label="Despesas por categoria">
         {rows.map((c) => (
           <span key={c.value} className={`h-full ${c.color}`} style={{ width: `${(c.total / Math.max(total, 0.01)) * 100}%` }} title={`${c.label}: ${money(c.total)}`} />

@@ -110,7 +110,7 @@ export function StockEntryForm({ action, todayISO, total }: { action: Action; to
   const [kind, setKind] = useState("COMPRA");
   const current = KINDS.find((k) => k.v === kind) ?? KINDS[0];
   return (
-    <form action={formAction} key={state.ok ?? 0} className="space-y-4 px-5 pt-2 pb-5">
+    <form action={formAction} key={state.ok ?? 0} className="space-y-4 px-4 pt-4 pb-5 sm:px-5">
       <div className="grid grid-cols-3 gap-1 rounded-[14px] bg-slate-100 p-1 text-sm" role="radiogroup" aria-label="Tipo de lançamento">
         {KINDS.map((k) => {
           const Icon = k.icon;

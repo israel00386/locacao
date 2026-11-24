@@ -3,8 +3,8 @@ import { ArrowDownLeft, ArrowUpRight, BarChart3, ChevronLeft, ChevronRight, Down
 import { ExpenseItem } from "@/components/expense-list";
 import { ExpenseRowActions, NewExpenseButton } from "@/components/expense-sheet";
 import { CategoryBreakdown, WeeklyChart, type WeekBucket } from "@/components/finance-ui";
-import { Avatar, EmptyState, Hero, HeroOverlap, HeroStat, Panel, navyBtn } from "@/components/screen-kit";
-import { Badge, Stat } from "@/components/ui";
+import { EmptyState, Hero, HeroOverlap, HeroStat, Panel, navyBtn } from "@/components/screen-kit";
+import { Avatar, Badge, Stat } from "@/components/ui";
 import { paymentStatus } from "@/lib/calc";
 import { db } from "@/lib/db";
 import { fmtDate, todayISO } from "@/lib/dates";
@@ -163,7 +163,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
           <Panel title="Despesas por categoria" icon={PieChart}>
             {byCategory.length ? (
               <>
-                <div className="flex items-baseline justify-between gap-3 px-5 pb-3">
+                <div className="flex items-baseline justify-between gap-3 px-4 pt-4 pb-3 sm:px-5">
                   <span className="text-xs font-medium text-slate-500">Total gasto em {name}</span>
                   <span className="text-xl font-bold tracking-tight text-slate-900 tnum">{money(spent)}</span>
                 </div>
@@ -183,7 +183,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
             actions={<NewExpenseButton rentals={rentalOptions} todayISO={today} className="btn-secondary btn-sm" />}
           >
             {expenses.length ? (
-              <ul className="divide-y divide-slate-100 border-t border-slate-100">
+              <ul className="divide-y divide-slate-100">
                 {expenses.map((e) => {
                   const fp = e.rentalId && FREIGHT_CATEGORIES.includes(e.category) && !shownFreight.has(e.rentalId) ? freightByRental.get(e.rentalId) : undefined;
                   if (fp) shownFreight.add(e.rentalId!);
@@ -221,7 +221,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
           <div className="space-y-4">
           <Panel title="Pagamentos recebidos" icon={Wallet} count={payments.length}>
             {payments.length ? (
-              <ul className="divide-y divide-slate-100 border-t border-slate-100">
+              <ul className="divide-y divide-slate-100">
                 {payments.map((p) => (
                   <li key={p.id}>
                     <Link href={`/locacoes/${p.rentalId}`} className="tap flex min-h-16 items-center gap-3 px-4 py-3 hover:bg-slate-50 active:bg-slate-100 sm:px-5">
@@ -249,7 +249,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
 
           <Panel title="A receber por cliente" icon={HandCoins} count={groups.length}>
             {groups.length ? (
-              <ul className="divide-y divide-slate-100 border-t border-slate-100">
+              <ul className="divide-y divide-slate-100">
                 {groups.map((g) => (
                   <li key={g.id} className="px-4 py-3.5 sm:px-5">
                     <div className="flex items-center gap-3">
@@ -292,7 +292,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
 
           <Panel title="Taxas de entrega e extras" icon={Truck} count={charged.length}>
             {charged.length ? (
-              <ul className="divide-y divide-slate-100 border-t border-slate-100">
+              <ul className="divide-y divide-slate-100">
                 {charged.map((x) => (
                   <li key={x.id}>
                     <Link href={`/locacoes/${x.rental.id}`} className="tap flex min-h-16 items-center gap-3 px-4 py-3 hover:bg-slate-50 active:bg-slate-100 sm:px-5">
@@ -311,7 +311,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
                 ))}
               </ul>
             ) : (
-              <p className="border-t border-slate-100 px-5 py-6 text-center text-sm text-slate-500">Nenhuma taxa cobrada nas locações iniciadas neste mês.</p>
+              <p className="px-5 py-6 text-center text-sm text-slate-500">Nenhuma taxa cobrada nas locações iniciadas neste mês.</p>
             )}
             <dl className="space-y-1.5 border-t border-slate-100 bg-slate-50/70 px-5 py-4 text-sm">
               <div className="flex justify-between gap-3">

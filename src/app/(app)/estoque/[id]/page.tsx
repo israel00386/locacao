@@ -2,9 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeftRight, Boxes, ChevronRight, ClipboardCheck, HardHat, History, MapPin, Package, PackageMinus, PackagePlus, PackageCheck, Tags, Wrench } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { Badge } from "@/components/ui";
+import { Avatar, Badge } from "@/components/ui";
 import { EquipmentForm, StockEntryForm } from "@/components/equipment-forms";
-import { Avatar, EmptyState, Hero, HeroOverlap, HeroStat, LegendDot, OccupancyBar, Panel } from "@/components/screen-kit";
+import { EmptyState, Hero, HeroOverlap, HeroStat, LegendDot, OccupancyBar, Panel } from "@/components/screen-kit";
 import { db } from "@/lib/db";
 import { fmtDate, todayISO } from "@/lib/dates";
 import { getStock, listRentals } from "@/lib/rentals";
@@ -29,7 +29,7 @@ export default async function EquipamentoPage({ params }: { params: Promise<{ id
           subtitle="Nome, quantidade e tabela de preços. O estoque inicial entra no histórico."
         />
         <HeroOverlap>
-          <div className="card mx-auto max-w-2xl rounded-[20px]">
+          <div className="card mx-auto max-w-2xl">
             <EquipmentForm action={saveEquipment.bind(null, null)} />
           </div>
         </HeroOverlap>
@@ -87,7 +87,7 @@ export default async function EquipamentoPage({ params }: { params: Promise<{ id
 
           <Panel title="Histórico do total" icon={History} count={eq.stockEntries.length}>
             {eq.stockEntries.length ? (
-              <ol className="px-5 pt-2 pb-4">
+              <ol className="px-4 pt-4 pb-4 sm:px-5">
                 {eq.stockEntries.map((s, i) => {
                   const k = KIND[s.kind] ?? KIND.RECONTAGEM;
                   const Icon = k.icon;
@@ -126,7 +126,7 @@ export default async function EquipamentoPage({ params }: { params: Promise<{ id
         <div className="space-y-4">
           <Panel title="Na obra agora" icon={HardHat} count={onSite.length}>
             {onSite.length ? (
-              <ul className="divide-y divide-slate-100 border-t border-slate-100">
+              <ul className="divide-y divide-slate-100">
                 {onSite.map(({ r, qty }) => (
                   <li key={r.id}>
                     <Link href={`/locacoes/${r.id}`} className="tap group flex min-h-16 items-center gap-3 px-5 py-3 hover:bg-slate-50 active:bg-slate-100">
