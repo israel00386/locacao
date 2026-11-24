@@ -1,8 +1,12 @@
 import type { Metadata, Viewport } from "next";
+import { Onest } from "next/font/google";
 import { Suspense } from "react";
 import { NavProgress } from "@/components/nav-progress";
 import { SPLASH_SCRIPT, Splash } from "@/components/splash";
 import "./globals.css";
+
+// Fonte da marca, servida pelo próprio site (next/font baixa no build e hospeda junto).
+const onest = Onest({ subsets: ["latin"], display: "swap", variable: "--font-onest" });
 
 export const metadata: Metadata = {
   title: { default: "LOCAR Equipamentos", template: "%s · LOCAR" },
@@ -28,7 +32,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang="pt-BR" className={onest.variable} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: SPLASH_SCRIPT }} />
       </head>
