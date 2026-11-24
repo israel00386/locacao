@@ -94,7 +94,7 @@ export function HeroStat({
         {Icon && <Icon className="size-3.5 shrink-0" strokeWidth={2} aria-hidden />}
         <span className="truncate">{label}</span>
       </div>
-      <div className={`tnum mt-1 leading-none font-bold tracking-[-0.02em] break-words ${color} ${size === "lg" ? "text-[30px] sm:text-[36px]" : "text-xl sm:text-2xl"}`}>
+      <div className={`tnum mt-1 leading-none font-bold tracking-[-0.02em] break-words ${color} ${size === "lg" ? "text-[26px] min-[420px]:text-[30px] sm:text-[36px]" : "text-lg min-[420px]:text-xl sm:text-2xl"}`}>
         {amount != null ? <CountUp value={amount} format={format} /> : value}
       </div>
       {hint && <div className="mt-1.5 text-xs text-white/50">{hint}</div>}

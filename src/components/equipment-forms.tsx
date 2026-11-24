@@ -62,7 +62,7 @@ export function EquipmentForm({
           {(
             [
               ["priceDaily", "Diária", initial?.priceDaily],
-              ["priceWeekly", "Semana (7+ dias)", initial?.priceWeekly],
+              ["priceWeekly", "Semana (7+)", initial?.priceWeekly],
               ["priceBiweekly", "Quinzena (15+)", initial?.priceBiweekly],
               ["priceMonthly", "Mês (30+)", initial?.priceMonthly],
             ] as const

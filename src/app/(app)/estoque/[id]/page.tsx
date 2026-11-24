@@ -79,7 +79,7 @@ export default async function EquipamentoPage({ params }: { params: Promise<{ id
         </div>
       </Hero>
 
-      <HeroOverlap className="grid items-start gap-4 lg:grid-cols-2">
+      <HeroOverlap className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
         <div className="space-y-4">
           <Panel title="Movimentar estoque" icon={ArrowLeftRight}>
             <StockEntryForm action={addStockEntry.bind(null, id)} todayISO={todayISO()} total={eq.totalQty} />

@@ -83,7 +83,7 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
         </div>
       </Hero>
 
-      <HeroOverlap className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <HeroOverlap className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-4">
           <Panel title="Locações" icon={ClipboardList} count={rentals.length}>
             {rentals.length ? (

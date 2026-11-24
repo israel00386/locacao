@@ -68,7 +68,7 @@ export default async function EstoquePage({ searchParams }: { searchParams: Prom
             </EmptyState>
           </div>
         ) : (
-          <ul className="stagger grid gap-3 lg:grid-cols-2">
+          <ul className="stagger grid grid-cols-1 gap-3 lg:grid-cols-2">
             {stock.map((s) => {
               const out = s.availableQty <= 0;
               return (

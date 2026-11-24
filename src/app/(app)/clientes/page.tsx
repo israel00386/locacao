@@ -106,8 +106,9 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
                         </span>
                       )}
                     </div>
-                    {(sites || c.status !== "Ativo") && (
-                      <div className="mt-1.5 flex flex-wrap gap-1">
+                    {(sites || due || c.status !== "Ativo") && (
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                        {due ? <span className="mr-1 text-xs font-bold text-red-700 tnum sm:hidden">{money(due)} em aberto</span> : null}
                         {sites ? <Badge tone="sky">{sites} na obra</Badge> : null}
                         {c.status !== "Ativo" && <Badge tone={c.status === "Parceiro" ? "green" : "red"}>{c.status}</Badge>}
                       </div>
@@ -115,7 +116,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     {due ? (
-                      <span className="text-right">
+                      <span className="hidden text-right sm:block">
                         <span className="block text-sm font-bold text-red-700 tnum">{money(due)}</span>
                         <span className="block text-[11px] text-slate-500">em aberto</span>
                       </span>

@@ -155,7 +155,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
           </div>
         </div>
 
-        <div className="grid items-start gap-4 lg:grid-cols-2">
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
           <Panel title="Movimento por semana" icon={BarChart3}>
             <WeeklyChart weeks={weeks} />
           </Panel>

@@ -105,7 +105,7 @@ export function CategoryBreakdown({ rows, total }: { rows: { value: string; labe
           <span key={c.value} className={`h-full ${c.color}`} style={{ width: `${(c.total / Math.max(total, 0.01)) * 100}%` }} title={`${c.label}: ${money(c.total)}`} />
         ))}
       </div>
-      <ul className="mt-4 grid gap-x-6 gap-y-3 sm:grid-cols-2">
+      <ul className="mt-4 grid gap-y-3">
         {rows.map((c) => (
           <li key={c.value} className="flex items-center gap-3">
             <CategoryTile category={c.value} size="sm" />
