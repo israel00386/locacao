@@ -17,7 +17,7 @@ export default async function ImportarPage() {
   return (
     <>
       <PageHeader title="Importar planilha" back="/config" subtitle="No Google Sheets: Arquivo → Fazer download → Microsoft Excel (.xlsx)." />
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-5">
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-5">
         <Section title="Como funciona" icon={<Sheet />} iconTone="green" description="Abas lidas: Clientes, Estoque, Locações Ativas e Orçamento">
           <ul className="space-y-4 p-4 sm:p-5">
             {rules.map((r, i) => (

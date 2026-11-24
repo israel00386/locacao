@@ -15,7 +15,7 @@ export default async function ConfigPage() {
   return (
     <>
       <PageHeader title="Configurações" subtitle="Dados da empresa, orçamento, acessos e importação." />
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-5">
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-5">
         <Section title="Empresa e orçamento" icon={<Building2 />} description="Aparece no orçamento enviado ao cliente">
           <CompanyForm company={company} />
         </Section>

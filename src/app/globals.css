@@ -97,7 +97,7 @@ h1, h2, h3 { text-wrap: balance; }
   &:active { filter: brightness(0.96); }
 }
 @utility btn-secondary {
-  @apply btn bg-white text-slate-800 ring-1 ring-slate-200 ring-inset hover:bg-slate-50 hover:ring-slate-300 active:bg-slate-100;
+  @apply btn border border-slate-200 bg-white text-slate-800 hover:border-slate-300 hover:bg-slate-50 active:bg-slate-100;
   box-shadow: 0 1px 2px rgb(15 18 63 / 0.05);
 }
 @utility btn-danger { @apply btn bg-white text-red-700 ring-1 ring-red-200 ring-inset hover:bg-red-50 active:bg-red-100; }
@@ -110,9 +110,12 @@ h1, h2, h3 { text-wrap: balance; }
 
 /* ---------- Campos (48px no celular) ---------- */
 @utility input {
-  @apply block min-h-12 w-full rounded-[14px] border-0 bg-white px-3.5 py-2.5 text-base text-slate-900 ring-1 ring-slate-200 ring-inset outline-none transition-[box-shadow,background-color] duration-150 placeholder:text-slate-400 hover:ring-slate-300 focus:ring-2 focus:ring-brand-600 disabled:bg-slate-50 disabled:text-slate-500 sm:min-h-11 sm:text-sm;
+  @apply block min-h-12 w-full rounded-[14px] border border-slate-200 bg-white px-3.5 py-2.5 text-base text-slate-900 outline-none transition-[border-color,box-shadow,background-color] duration-150 placeholder:text-slate-400 hover:border-slate-300 disabled:bg-slate-50 disabled:text-slate-500 sm:min-h-11 sm:text-sm;
   box-shadow: 0 1px 2px rgb(15 18 63 / 0.04);
-  &:focus { box-shadow: 0 0 0 5px rgb(248 200 10 / 0.35); }
+  &:focus {
+    border-color: var(--color-brand-600);
+    box-shadow: 0 0 0 1px var(--color-brand-600), 0 0 0 5px rgb(248 200 10 / 0.35);
+  }
 }
 @utility label { @apply mb-1.5 block text-[13px] font-medium text-slate-600; }
 /* Micro-rótulo: único caso de maiúsculas */
@@ -120,7 +123,7 @@ h1, h2, h3 { text-wrap: balance; }
 
 /* ---------- Superfícies ---------- */
 @utility card {
-  @apply rounded-[20px] bg-white ring-1 ring-slate-200/70;
+  @apply rounded-[20px] border border-slate-200/70 bg-white;
   box-shadow: var(--shadow-card);
 }
 @utility card-hover {

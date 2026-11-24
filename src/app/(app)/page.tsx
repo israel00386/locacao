@@ -167,10 +167,10 @@ export default async function PainelPage() {
           Ainda não há locações. Crie uma agora ou traga tudo da planilha que você já usa.
         </Empty>
       ) : (
-        <div className="grid items-start gap-4 lg:grid-cols-2 lg:gap-5">
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2 lg:gap-5">
           {/* Celular: Atrasadas → Devolvem → A receber → resto. Desktop: duas colunas independentes. */}
-          <div className="contents lg:flex lg:flex-col lg:gap-5">
-            <div className="order-1 lg:order-none">
+          <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-5">
+            <div className="order-1 min-w-0 lg:order-none">
               <Section
                 title="Atrasadas"
                 icon={<AlarmClock />}
@@ -198,7 +198,7 @@ export default async function PainelPage() {
               </Section>
             </div>
 
-            <div className="order-3 lg:order-none">
+            <div className="order-3 min-w-0 lg:order-none">
               <Section
                 title="A receber"
                 icon={<HandCoins />}
@@ -231,8 +231,8 @@ export default async function PainelPage() {
             </div>
           </div>
 
-          <div className="contents lg:flex lg:flex-col lg:gap-5">
-            <div className="order-2 lg:order-none">
+          <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-5">
+            <div className="order-2 min-w-0 lg:order-none">
               <Section
                 title="Devolvem em breve"
                 icon={<CalendarClock />}
@@ -263,7 +263,7 @@ export default async function PainelPage() {
               </Section>
             </div>
 
-            <div className="order-4 grid gap-4 lg:order-none lg:gap-5">
+            <div className="order-4 grid min-w-0 gap-4 lg:order-none lg:gap-5">
               {returnedNotClosed.length > 0 && (
                 <Section title="Devolvido, falta encerrar" icon={<PackageCheck />} iconTone="amber" description="Material voltou; confira valores e encerre">
                   <div className="stagger divide-y divide-slate-100">
