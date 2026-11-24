@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   description: "Controle de locação de equipamentos — LOCAR Equipamentos, Pacatuba-CE",
   applicationName: "LOCAR Equipamentos",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "LOCAR", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "LOCAR", statusBarStyle: "default" },
   icons: {
     icon: [
       { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f123f",
+  themeColor: "#f3f5fa",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",

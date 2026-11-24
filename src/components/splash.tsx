@@ -2,8 +2,9 @@
 import { useEffect, useState } from "react";
 import { Logo } from "./logo";
 
-const MIN_MS = 1200;
-const MAX_MS = 3000;
+// Curto de propósito (desempenho): no máximo ~0,9 s contando o fade, e só na 1ª abertura da sessão.
+const MIN_MS = 560;
+const MAX_MS = 700;
 
 /**
  * Tela de abertura. É renderizada no HTML do servidor (root layout), então aparece antes de qualquer conteúdo.
@@ -19,14 +20,14 @@ export function Splash() {
       return;
     }
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const min = reduce ? 300 : MIN_MS;
+    const min = reduce ? 200 : MIN_MS;
     let done = false;
     const timers: number[] = [];
     const leave = () => {
       if (done) return;
       done = true;
       setPhase("leaving");
-      timers.push(window.setTimeout(() => setPhase("gone"), 500));
+      timers.push(window.setTimeout(() => setPhase("gone"), 220));
     };
     // performance.now() = ms desde o início da navegação: o mínimo e o máximo contam da abertura da página.
     const ready = () => timers.push(window.setTimeout(leave, Math.max(0, min - performance.now())));
@@ -43,11 +44,6 @@ export function Splash() {
   return (
     <div id="splash" className={phase === "leaving" ? "is-leaving" : undefined} role="status" aria-label="Carregando LOCAR Equipamentos">
       <Logo variant="stacked" markClassName="" />
-      <div className="splash-dots" aria-hidden>
-        <span />
-        <span />
-        <span />
-      </div>
     </div>
   );
 }
