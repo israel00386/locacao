@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { NavyHero } from "@/components/rental-ui";
+import { RoundLink } from "@/components/rental-ui";
 import { RentalForm, type InitialRental } from "@/components/rental-form";
 import { rentalFormOptions } from "@/lib/form-options";
 import { getRental } from "@/lib/rentals";
@@ -38,20 +37,18 @@ export default async function EditarLocacaoPage({ params }: { params: Promise<{ 
   };
   return (
     <>
-      <NavyHero className="pb-16 lg:pb-16">
-        <Link
-          href={`/locacoes/${r.id}`}
-          className="-ml-2 inline-flex min-h-10 items-center gap-1 rounded-xl px-2 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white"
-        >
-          <ChevronLeft size={18} aria-hidden /> {rentalCode(r.number)}
-        </Link>
-        <div className="mt-2 text-[11px] font-semibold tracking-[0.08em] text-accent-300/90 uppercase">
-          Editar {r.stage === "ORCAMENTO" ? "orçamento" : "locação"} · {rentalCode(r.number)}
+      <header className="mb-5 flex items-center gap-3 lg:mb-7">
+        <RoundLink href={`/locacoes/${r.id}`} label={`Voltar para ${rentalCode(r.number)}`}>
+          <ChevronLeft aria-hidden />
+        </RoundLink>
+        <div className="min-w-0">
+          <p className="tnum text-[13px] font-medium text-slate-500">
+            Editar {r.stage === "ORCAMENTO" ? "orçamento" : "locação"} · {rentalCode(r.number)}
+          </p>
+          <h1 className="truncate text-[26px] leading-[1.1] font-bold tracking-[-0.025em] text-brand-950 sm:text-[30px]">{r.customer.name}</h1>
         </div>
-        <h1 className="mt-1 text-[26px] leading-tight font-bold tracking-[-0.02em] break-words sm:text-[28px]">{r.customer.name}</h1>
-        <p className="mt-1 max-w-xl text-sm text-white/65">Altere cliente, obra, prazo, equipamentos e valores. Devoluções e pagamentos ficam na página da locação.</p>
-      </NavyHero>
-      <div className="relative z-10 -mt-10">
+      </header>
+      <div>
         <RentalForm customers={customers} equipment={equipment} initial={initial} todayISO={todayISO()} />
       </div>
     </>

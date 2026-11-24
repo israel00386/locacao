@@ -29,7 +29,7 @@ import { inclusiveDays, parseISODate, toISODate, addDays, weekday } from "@/lib/
 import { money, parseMoney, PERIODS, unitMoney, type Period } from "@/lib/format";
 import { saveRental, type RentalPayload } from "@/app/(app)/locacoes/actions";
 import { Badge } from "./ui";
-import { Avatar } from "./rental-ui";
+import { Avatar, BalanceCard, SOFT } from "./rental-ui";
 
 export interface CustomerOption {
   id: string;
@@ -248,16 +248,16 @@ export function RentalForm({
     <div className="flex gap-2 lg:flex-col-reverse">
       {!initial ? (
         <>
-          <button type="button" className="btn-secondary min-w-0 flex-1 px-3 lg:flex-none" disabled={pending} onClick={() => submit(false)}>
+          <button type="button" className="btn-secondary min-w-0 flex-1 rounded-full px-3 lg:min-h-12 lg:flex-none lg:border-white/15 lg:bg-white/10 lg:text-white lg:shadow-none lg:hover:bg-white/15" disabled={pending} onClick={() => submit(false)}>
             <FileText size={16} aria-hidden /> Salvar orçamento
           </button>
-          <button type="button" className="btn-accent min-w-0 flex-1 px-3 lg:flex-none" disabled={pending} onClick={() => submit(true)}>
+          <button type="button" className="btn-accent min-w-0 flex-1 rounded-full px-3 lg:min-h-12 lg:flex-none" disabled={pending} onClick={() => submit(true)}>
             {pending ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Truck size={16} aria-hidden />}
             {pending ? "Salvando…" : "Confirmar locação"}
           </button>
         </>
       ) : (
-        <button type="button" className="btn-primary flex-1" disabled={pending} onClick={() => submit(false)}>
+        <button type="button" className="btn-accent flex-1 rounded-full lg:min-h-12" disabled={pending} onClick={() => submit(false)}>
           {pending ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Check size={16} aria-hidden />}
           {pending ? "Salvando…" : "Salvar alterações"}
         </button>
@@ -265,18 +265,18 @@ export function RentalForm({
     </div>
   );
   const errorBox = error && (
-    <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-800 ring-1 ring-red-200 ring-inset">
+    <p role="alert" className="rounded-2xl bg-red-50 px-3.5 py-2.5 text-sm text-red-800 ring-1 ring-red-200 ring-inset">
       {error}
     </p>
   );
 
   return (
-    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-6">
+    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
       <div className="min-w-0 space-y-4">
         {/* 1. CLIENTE */}
         <Step n={1} title="Cliente" icon={UserRound} done={steps[0].done}>
           {customer || newCustomer ? (
-            <div className="flex items-center gap-3 rounded-2xl bg-brand-50/70 p-3 ring-1 ring-brand-100 ring-inset">
+            <div className="flex items-center gap-3 rounded-[20px] bg-gradient-to-br from-brand-50 to-accent-50/60 p-3">
               <Avatar name={customer?.name ?? newCustomer?.name ?? "?"} />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-semibold text-slate-900">{customer?.name ?? newCustomer?.name}</div>
@@ -286,7 +286,7 @@ export function RentalForm({
               </div>
               <button
                 type="button"
-                className="btn-ghost btn-sm shrink-0"
+                className="btn-sm shrink-0 rounded-full bg-white text-slate-700 shadow-sm hover:bg-slate-50"
                 onClick={() => {
                   setCustomerId(undefined);
                   setNewCustomer(null);
@@ -300,7 +300,7 @@ export function RentalForm({
             <div className="relative">
               <Search size={18} className="pointer-events-none absolute top-[0.85rem] left-3.5 text-slate-400 sm:top-3" aria-hidden />
               <input
-                className="input pl-11"
+                className="input rounded-full pl-11"
                 placeholder="Digite o nome do cliente…"
                 value={customerQuery}
                 onChange={(e) => setCustomerQuery(e.target.value)}
@@ -308,12 +308,12 @@ export function RentalForm({
                 aria-label="Buscar cliente"
               />
               {customerQuery.trim() && (
-                <div className="absolute inset-x-0 top-full z-20 mt-2 max-h-80 overflow-auto rounded-2xl bg-white p-1.5 shadow-[var(--shadow-raised)] ring-1 ring-slate-200">
+                <div className="absolute inset-x-0 top-full z-20 mt-2 max-h-80 overflow-auto rounded-[22px] bg-white p-1.5 shadow-[0_24px_48px_-20px_rgb(15_18_63/.35),0_0_0_1px_rgb(15_18_63/.05)]">
                   {matches.map((c) => (
                     <button
                       key={c.id}
                       type="button"
-                      className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left hover:bg-slate-50 active:bg-slate-100"
+                      className="flex min-h-12 w-full items-center gap-3 rounded-2xl px-2.5 py-2 text-left hover:bg-slate-50 active:bg-slate-100"
                       onClick={() => {
                         setCustomerId(c.id);
                         if (c.sites.length && !siteAddress) setSiteAddress(c.sites[0]);
@@ -328,10 +328,10 @@ export function RentalForm({
                   ))}
                   <button
                     type="button"
-                    className={`flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left text-sm font-semibold text-brand-700 hover:bg-brand-50 ${matches.length ? "mt-1 border-t border-slate-100" : ""}`}
+                    className={`flex min-h-12 w-full items-center gap-3 rounded-2xl px-2.5 py-2.5 text-left text-sm font-semibold text-brand-700 hover:bg-brand-50 ${matches.length ? "mt-1 border-t border-slate-100" : ""}`}
                     onClick={() => setNewCustomer({ name: customerQuery.trim(), phone: "" })}
                   >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-brand-600 text-white" aria-hidden>
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-900 text-accent-300" aria-hidden>
                       <UserPlus size={16} />
                     </span>
                     Cadastrar “{customerQuery.trim()}”
@@ -371,8 +371,8 @@ export function RentalForm({
                       type="button"
                       onClick={() => setSiteAddress(s)}
                       aria-pressed={on}
-                      className={`inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-xl px-3 text-xs font-medium ring-1 ring-inset transition-colors ${
-                        on ? "bg-brand-600 text-white ring-brand-600" : "bg-white text-slate-700 ring-slate-300 hover:bg-slate-50"
+                      className={`inline-flex min-h-10 max-w-full items-center gap-1.5 rounded-full px-3.5 text-[12.5px] font-medium transition-colors ${
+                        on ? "bg-brand-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200/70"
                       }`}
                     >
                       {on ? <Check size={13} className="shrink-0" aria-hidden /> : <MapPin size={13} className="shrink-0 text-slate-400" aria-hidden />}
@@ -393,7 +393,7 @@ export function RentalForm({
           done={steps[2].done}
           aside={
             days > 0 && (
-              <span className="tnum rounded-lg bg-brand-50 px-2 py-1 text-sm font-bold text-brand-700">
+              <span className="tnum rounded-full bg-brand-50 px-3 py-1 text-sm font-bold text-brand-700">
                 {days} {days === 1 ? "dia" : "dias"}
               </span>
             )
@@ -415,7 +415,7 @@ export function RentalForm({
               {end && <p className={`mt-1 text-xs ${endIsSunday ? "font-medium text-amber-700" : "text-slate-500"}`}>{weekday(end)}</p>}
             </div>
           </div>
-          <div className="mt-3 grid grid-cols-4 gap-1 rounded-2xl bg-slate-100 p-1" role="group" aria-label="Prazo rápido">
+          <div className="mt-4 grid grid-cols-4 gap-1 rounded-full bg-slate-100 p-1" role="group" aria-label="Prazo rápido">
             {[1, 7, 15, 30].map((d) => {
               const on = days === d && !!end;
               return (
@@ -423,8 +423,8 @@ export function RentalForm({
                   key={d}
                   type="button"
                   aria-pressed={on}
-                  className={`min-h-10 rounded-xl text-[13px] font-semibold transition-[background-color,color,box-shadow] duration-150 ${
-                    on ? "bg-white text-brand-800 shadow-[var(--shadow-card)] ring-1 ring-slate-200" : "text-slate-600 hover:text-slate-900"
+                  className={`min-h-10 rounded-full text-[13px] font-semibold transition-[background-color,color,box-shadow] duration-150 active:scale-[.97] ${
+                    on ? "bg-brand-900 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"
                   }`}
                   onClick={() => start && onDatesChange(startDate, toISODate(addDays(start, d - 1)))}
                 >
@@ -444,14 +444,14 @@ export function RentalForm({
           flush
           aside={
             items.length > 0 && (
-              <button type="button" className="btn-primary btn-sm" onClick={() => setPicker(true)}>
+              <button type="button" className="btn-primary btn-sm rounded-full px-3.5" onClick={() => setPicker(true)}>
                 <Plus size={15} aria-hidden /> Adicionar
               </button>
             )
           }
         >
           {hasAdditions && (
-            <p className="mx-5 mb-3 flex gap-2 rounded-xl bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-900 ring-1 ring-amber-200/80 ring-inset">
+            <p className="mx-4 mb-3 flex gap-2 rounded-2xl bg-amber-50 sm:mx-5 px-3 py-2.5 text-xs leading-relaxed text-amber-900 ring-1 ring-amber-200/80 ring-inset">
               <Info size={15} className="mt-px shrink-0 text-amber-600" aria-hidden />
               <span>
                 Os acréscimos mantêm as próprias datas de retirada e previsão (não mudam com as datas acima). Equipamento adicionado aqui entra com as datas da locação; para outra data, use “Acréscimo de equipamento” na página da locação.
@@ -459,13 +459,13 @@ export function RentalForm({
             </p>
           )}
           {items.length === 0 ? (
-            <div className="px-5 pb-5">
+            <div className="px-4 pb-5 sm:px-5">
               <button
                 type="button"
                 onClick={() => setPicker(true)}
-                className="flex w-full flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 px-4 py-8 text-center transition-colors hover:border-brand-300 hover:bg-brand-50/40"
+                className="flex w-full flex-col items-center gap-2 rounded-[22px] border-2 border-dashed border-slate-200 bg-slate-50/50 px-4 py-8 text-center transition-colors hover:border-brand-300 hover:bg-brand-50/40"
               >
-                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-lg shadow-brand-900/20" aria-hidden>
+                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-600 to-brand-900 text-accent-300 shadow-lg shadow-brand-900/25" aria-hidden>
                   <PackagePlus size={22} />
                 </span>
                 <span className="text-sm font-semibold text-slate-900">Adicionar equipamentos</span>
@@ -473,17 +473,17 @@ export function RentalForm({
               </button>
             </div>
           ) : (
-            <ul className="divide-y divide-slate-100 border-t border-slate-100">
+            <ul className="space-y-2 px-3 pb-3 sm:px-4">
               {items.map((it) => {
                 const eq = eqById.get(it.equipmentId);
                 const avail = eq?.availableQty ?? 0;
                 const over = it.qty > avail;
                 return (
-                  <li key={it.key} className={`space-y-3 px-5 py-4 ${it.addition ? "bg-amber-50/40" : ""}`}>
+                  <li key={it.key} className={`space-y-3 rounded-[20px] px-3.5 py-3.5 sm:px-4 ${it.addition ? "bg-amber-50/70" : "bg-slate-50"}`}>
                     <div className="flex items-start gap-3">
                       <span
-                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset ${
-                          it.addition ? "bg-amber-50 text-amber-700 ring-amber-200/70" : "bg-slate-100 text-slate-600 ring-slate-200/70"
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white shadow-[0_2px_8px_-4px_rgb(15_18_63/.25)] ${
+                          it.addition ? "text-amber-600" : "text-brand-600"
                         }`}
                         aria-hidden
                       >
@@ -581,8 +581,8 @@ export function RentalForm({
                   </li>
                 );
               })}
-              <li className="px-5 py-3">
-                <button type="button" onClick={() => setPicker(true)} className="btn-ghost btn-sm -ml-2 text-brand-700">
+              <li>
+                <button type="button" onClick={() => setPicker(true)} className="flex min-h-12 w-full items-center justify-center gap-1.5 rounded-[20px] border-2 border-dashed border-slate-200 text-[13px] font-semibold text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-50/40">
                   <Plus size={15} aria-hidden /> Adicionar outro equipamento
                 </button>
               </li>
@@ -612,7 +612,7 @@ export function RentalForm({
                 />
                 <button
                   type="button"
-                  className="btn-ghost shrink-0 px-2.5 text-slate-400 hover:text-red-600"
+                  className="btn-ghost shrink-0 rounded-full px-2.5 text-slate-400 hover:text-red-600"
                   aria-label="Remover taxa"
                   onClick={() => setExtras((l) => l.filter((x) => x.key !== ex.key))}
                 >
@@ -626,7 +626,7 @@ export function RentalForm({
               <button
                 key={p}
                 type="button"
-                className="inline-flex min-h-9 items-center gap-1 rounded-xl bg-white px-3 text-xs font-medium text-slate-700 ring-1 ring-slate-300 ring-inset hover:bg-slate-50"
+                className="inline-flex min-h-10 items-center gap-1 rounded-full bg-slate-100 px-3.5 text-[12.5px] font-medium text-slate-700 transition-colors hover:bg-slate-200/70 active:scale-[.97]"
                 onClick={() => setExtras((l) => [...l, { key: newKey(), description: p, amount: "" }])}
               >
                 <Plus size={13} className="text-slate-400" aria-hidden /> {p}
@@ -646,74 +646,71 @@ export function RentalForm({
         </Step>
       </div>
 
-      {/* RESUMO — computador */}
+      {/* RESUMO — computador: cartão em degradê fixo na lateral */}
       <aside className="hidden lg:sticky lg:top-6 lg:block">
-        <div className="card overflow-hidden rounded-[20px]">
-          <div className="on-navy relative bg-gradient-to-br from-brand-900 to-brand-800 px-5 pt-4 pb-5 text-white">
-            <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-[radial-gradient(closest-side,rgb(248_200_10/.18),transparent)]" aria-hidden />
-            <div className="text-[11px] font-semibold tracking-[0.08em] text-accent-300/90 uppercase">Resumo</div>
-            <div className="tnum mt-1 text-[30px] leading-tight font-bold tracking-[-0.02em]">{money(total)}</div>
-            <div className="tnum mt-0.5 text-xs text-white/65">
-              {units} {units === 1 ? "unidade" : "unidades"} · {days || 1} {days === 1 || !days ? "dia" : "dias"}
-            </div>
+        <BalanceCard className="p-6!">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-[13px] font-medium text-white/70">{initial ? "Total" : "Total estimado"}</div>
+            <span className="tnum rounded-full bg-white/10 px-2.5 py-1 text-[12px] font-semibold text-white/85 ring-1 ring-white/15 ring-inset">
+              {units} un. · {days || 1} {days === 1 || !days ? "dia" : "dias"}
+            </span>
           </div>
-          <ol className="space-y-2 px-5 pt-4 text-sm">
-            {steps.map((s, i) => (
-              <li key={s.label} className="flex items-center gap-2.5">
-                <span
-                  className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
-                    s.done ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500 ring-1 ring-slate-200 ring-inset"
-                  }`}
-                  aria-hidden
-                >
-                  {s.done ? <Check size={12} strokeWidth={3} /> : i + 1}
+          <div className="tnum mt-1.5 text-[36px] leading-none font-bold tracking-[-0.03em] break-words">{money(total)}</div>
+
+          <ol className="mt-5 grid grid-cols-4 gap-1.5" aria-label="Etapas">
+            {steps.map((st) => (
+              <li key={st.label} className="min-w-0">
+                <span className={`block h-1.5 rounded-full ${st.done ? "bg-accent-400" : "bg-white/15"}`} aria-hidden />
+                <span className={`mt-1.5 block truncate text-[11px] font-medium ${st.done ? "text-white/85" : "text-white/45"}`}>
+                  {st.done && <Check size={10} strokeWidth={3} className="mr-0.5 inline align-[-1px]" aria-hidden />}
+                  {st.label}
                 </span>
-                <span className={s.done ? "text-slate-700" : "text-slate-500"}>{s.label}</span>
               </li>
             ))}
           </ol>
-          <dl className="mx-5 mt-4 space-y-1.5 border-t border-slate-100 pt-4 text-sm">
+
+          <dl className="mt-5 space-y-2 rounded-[20px] bg-white/[.07] p-4 text-[13px] ring-1 ring-white/10 ring-inset">
             <div className="flex justify-between gap-3">
-              <dt className="text-slate-500">Equipamentos</dt>
-              <dd className="tnum font-medium text-slate-800">{money(itemsTotal)}</dd>
+              <dt className="text-white/60">Equipamentos</dt>
+              <dd className="tnum font-semibold">{money(itemsTotal)}</dd>
             </div>
             {extrasTotal > 0 && (
               <div className="flex justify-between gap-3">
-                <dt className="text-slate-500">Taxas</dt>
-                <dd className="tnum font-medium text-slate-800">{money(extrasTotal)}</dd>
+                <dt className="text-white/60">Taxas</dt>
+                <dd className="tnum font-semibold">{money(extrasTotal)}</dd>
               </div>
             )}
             {discountValue > 0 && (
               <div className="flex justify-between gap-3">
-                <dt className="text-slate-500">Desconto</dt>
-                <dd className="tnum font-medium text-emerald-700">− {money(discountValue)}</dd>
+                <dt className="text-white/60">Desconto</dt>
+                <dd className="tnum font-semibold text-emerald-300">− {money(discountValue)}</dd>
               </div>
             )}
-            <div className="flex justify-between gap-3 border-t border-dashed border-slate-200 pt-2">
-              <dt className="font-semibold text-slate-800">Total</dt>
-              <dd className="tnum font-bold text-brand-900">{money(total)}</dd>
+            <div className="flex justify-between gap-3 border-t border-dashed border-white/15 pt-2">
+              <dt className="font-semibold text-white/85">Total</dt>
+              <dd className="tnum font-bold text-accent-300">{money(total)}</dd>
             </div>
           </dl>
-          <div className="space-y-3 p-5">
+          <div className="mt-5 space-y-3">
             {errorBox}
             {buttons}
-            {!initial && <p className="text-center text-[11px] leading-relaxed text-slate-400">Orçamento não tira nada do estoque. Confirme quando o material sair.</p>}
+            {!initial && <p className="text-center text-[11.5px] leading-relaxed text-white/50">Orçamento não tira nada do estoque. Confirme quando o material sair.</p>}
           </div>
-        </div>
+        </BalanceCard>
       </aside>
 
-      {/* RESUMO — celular (fixo acima da navegação inferior) */}
-      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-10 mt-4 lg:hidden">
-        <div className="space-y-2.5 rounded-[20px] bg-white/95 p-3 shadow-[0_10px_30px_-10px_rgb(15_18_63/.35),0_0_0_1px_rgb(15_18_63/.07)] backdrop-blur-md">
-          <div className="flex items-center justify-between gap-3 px-1">
+      {/* RESUMO — celular (fixo acima da barra inferior flutuante) */}
+      <div className="sticky bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-10 mt-4 lg:hidden">
+        <div className="space-y-2.5 rounded-[26px] bg-white/95 p-2.5 shadow-[0_14px_36px_-14px_rgb(15_18_63/.45),0_0_0_1px_rgb(15_18_63/.05)] backdrop-blur-md">
+          <div className="flex items-center justify-between gap-3 px-2 pt-0.5">
             <div className="min-w-0">
-              <div className="text-[11px] font-medium text-slate-500">Total</div>
-              <div className="tnum truncate text-xs text-slate-500">
+              <div className="text-[12px] font-medium text-slate-500">Total</div>
+              <div className="tnum truncate text-[11.5px] text-slate-400">
                 {items.length} {items.length === 1 ? "item" : "itens"} · {days || 1} {days === 1 || !days ? "dia" : "dias"}
                 {extrasTotal > 0 && ` · taxas ${money(extrasTotal)}`}
               </div>
             </div>
-            <span className="tnum text-xl font-bold tracking-[-0.02em] text-brand-900">{money(total)}</span>
+            <span className="tnum text-[22px] font-bold tracking-[-0.02em] text-brand-950">{money(total)}</span>
           </div>
           {errorBox}
           {buttons}
@@ -746,18 +743,18 @@ function Step({
   children: React.ReactNode;
 }) {
   return (
-    <section className="card rounded-[20px]" aria-labelledby={`step-${n}`}>
-      <header className="flex items-center gap-3 px-5 pt-4 pb-3">
+    <section className={SOFT} aria-labelledby={`step-${n}`}>
+      <header className="flex items-center gap-3 px-4 pt-4 pb-3 sm:px-5 sm:pt-5">
         <span
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[13px] font-bold transition-colors duration-200 ${
-            done ? "bg-emerald-500 text-white shadow-sm shadow-emerald-700/30" : "bg-brand-50 text-brand-700 ring-1 ring-brand-100 ring-inset"
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[14px] font-bold transition-colors duration-200 ${
+            done ? "bg-emerald-500 text-white shadow-sm shadow-emerald-700/30" : "bg-brand-50 text-brand-700"
           }`}
           aria-hidden
         >
           {done ? <Check size={16} strokeWidth={2.75} /> : n}
         </span>
         <div className="min-w-0 flex-1">
-          <h2 id={`step-${n}`} className="flex items-center gap-1.5 text-[15px] leading-tight font-semibold tracking-[-0.01em] text-slate-900">
+          <h2 id={`step-${n}`} className="flex items-center gap-1.5 text-base leading-tight font-semibold tracking-[-0.01em] text-brand-950">
             <Icon size={16} className="text-slate-400" aria-hidden />
             {title}
           </h2>
@@ -765,7 +762,7 @@ function Step({
         </div>
         {aside}
       </header>
-      <div className={flush ? "" : "px-5 pb-5"}>{children}</div>
+      <div className={flush ? "" : "px-4 pb-5 sm:px-5"}>{children}</div>
     </section>
   );
 }
@@ -786,8 +783,8 @@ function Stepper({
   onBlur: () => void;
 }) {
   return (
-    <div className="flex h-12 items-center rounded-[14px] bg-white ring-1 ring-slate-300 ring-inset sm:h-10">
-      <button type="button" className="flex h-full w-10 items-center justify-center rounded-l-[14px] text-slate-600 hover:bg-slate-50 active:bg-slate-100" aria-label="Diminuir" onClick={onMinus}>
+    <div className="flex h-12 items-center rounded-full bg-white ring-1 ring-slate-200 ring-inset sm:h-11">
+      <button type="button" className="flex h-full w-10 items-center justify-center rounded-l-full text-slate-600 hover:bg-slate-50 active:bg-slate-100" aria-label="Diminuir" onClick={onMinus}>
         <Minus size={16} aria-hidden />
       </button>
       <input
@@ -798,7 +795,7 @@ function Stepper({
         onChange={(e) => onChange(Math.max(0, Number(e.target.value.replace(/\D/g, "")) || 0))}
         onBlur={onBlur}
       />
-      <button type="button" className="flex h-full w-10 items-center justify-center rounded-r-[14px] text-slate-600 hover:bg-slate-50 active:bg-slate-100" aria-label="Aumentar" onClick={onPlus}>
+      <button type="button" className="flex h-full w-10 items-center justify-center rounded-r-full text-slate-600 hover:bg-slate-50 active:bg-slate-100" aria-label="Aumentar" onClick={onPlus}>
         <Plus size={16} aria-hidden />
       </button>
     </div>
@@ -834,45 +831,45 @@ function EquipmentPicker({
 
   // Portal no <body>: fora de containers animados (transform), que prenderiam o position: fixed.
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-brand-950/45 backdrop-blur-[2px] sm:items-center sm:p-6" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-brand-950/45 transition-opacity duration-200 starting:opacity-0 sm:items-center sm:p-6" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="picker-title"
-        className="flex max-h-[88dvh] w-full max-w-lg flex-col rounded-t-[28px] bg-white pb-[env(safe-area-inset-bottom)] shadow-2xl sm:rounded-[28px]"
+        className="flex max-h-[88dvh] w-full max-w-lg translate-y-0 flex-col overflow-hidden rounded-t-[32px] bg-[#f6f7fb] pb-[env(safe-area-inset-bottom)] shadow-2xl transition-[translate,opacity] duration-300 ease-out starting:translate-y-10 starting:opacity-0 motion-reduce:transition-none sm:rounded-[32px]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mx-auto mt-2.5 h-1.5 w-10 rounded-full bg-slate-200 sm:hidden" aria-hidden />
-        <div className="flex items-center justify-between gap-3 px-5 pt-3 pb-2">
-          <h2 id="picker-title" className="text-lg font-bold tracking-[-0.01em] text-slate-900">Escolher equipamentos</h2>
-          <button type="button" className="btn-ghost h-10 w-10 shrink-0 rounded-full p-0" aria-label="Fechar" onClick={onClose}>
+        <div className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-slate-300/80 sm:hidden" aria-hidden />
+        <div className="flex items-center justify-between gap-3 px-5 pt-3 pb-3 sm:pt-5">
+          <h2 id="picker-title" className="text-xl font-bold tracking-[-0.02em] text-brand-950">Escolher equipamentos</h2>
+          <button type="button" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-[0_2px_8px_-4px_rgb(15_18_63/.3)] hover:text-slate-900 active:scale-95" aria-label="Fechar" onClick={onClose}>
             <X size={20} aria-hidden />
           </button>
         </div>
         <div className="px-5 pb-3">
           <div className="relative">
             <Search size={18} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" aria-hidden />
-            <input className="input pl-11" placeholder="Buscar equipamento…" value={q} onChange={(e) => setQ(e.target.value)} autoFocus aria-label="Buscar equipamento" />
+            <input className="input rounded-full border-0 pl-11 shadow-[0_1px_2px_rgb(15_18_63/.05)]" placeholder="Buscar equipamento…" value={q} onChange={(e) => setQ(e.target.value)} autoFocus aria-label="Buscar equipamento" />
           </div>
         </div>
-        <ul className="flex-1 divide-y divide-slate-100 overflow-auto border-t border-slate-100 px-2">
+        <ul className="mx-3 mb-3 flex-1 divide-y divide-slate-100 overflow-auto rounded-[24px] bg-white px-1.5 shadow-[0_1px_2px_rgb(15_18_63/.04)] sm:mx-4">
           {list.map((e) => {
             const c = count(e.id);
             const price = e.priceDaily ?? e.priceWeekly ?? e.priceBiweekly ?? e.priceMonthly;
             return (
               <li key={e.id}>
-                <button type="button" className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left hover:bg-slate-50 active:bg-slate-100" onClick={() => onAdd(e.id)}>
-                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${c > 0 ? "bg-brand-600 text-white" : "bg-slate-100 text-slate-500"}`} aria-hidden>
+                <button type="button" className="flex min-h-16 w-full items-center gap-3 rounded-2xl px-2.5 py-2.5 text-left hover:bg-slate-50 active:bg-slate-100" onClick={() => onAdd(e.id)}>
+                  <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors ${c > 0 ? "bg-brand-900 text-accent-300" : "bg-slate-100 text-slate-500"}`} aria-hidden>
                     <Package size={18} />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-medium text-slate-900">{e.name}</span>
+                    <span className="block text-[14.5px] font-semibold text-brand-950">{e.name}</span>
                     <span className={`tnum block text-xs ${e.availableQty > 0 ? "text-slate-500" : "font-medium text-amber-700"}`}>
                       {e.availableQty} disponíveis{price != null ? ` · ${unitMoney(price)}/dia` : ""}
                     </span>
                   </span>
                   {c > 0 ? (
-                    <span className="tnum flex h-8 min-w-8 items-center justify-center rounded-full bg-brand-600 px-2 text-xs font-bold text-white">{c}</span>
+                    <span className="tnum flex h-8 min-w-8 items-center justify-center rounded-full bg-accent-400 px-2 text-xs font-bold text-brand-950">{c}</span>
                   ) : (
                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand-600" aria-hidden>
                       <Plus size={18} />
@@ -884,8 +881,8 @@ function EquipmentPicker({
           })}
           {list.length === 0 && <li className="p-8 text-center text-sm text-slate-500">Nenhum equipamento encontrado.</li>}
         </ul>
-        <div className="border-t border-slate-100 p-4">
-          <button type="button" className="btn-primary w-full" onClick={onClose}>
+        <div className="rounded-t-[28px] bg-white p-4 shadow-[0_-8px_24px_-16px_rgb(15_18_63/.25)]">
+          <button type="button" className="btn-primary btn-lg w-full rounded-full" onClick={onClose}>
             <Check size={17} aria-hidden /> {totalChosen > 0 ? `Pronto · ${totalChosen} ${totalChosen === 1 ? "unidade" : "unidades"}` : "Pronto"}
           </button>
         </div>
