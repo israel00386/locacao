@@ -230,10 +230,10 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
           {isQuote ? (
             <>
-              <HeroStat label="Total" tone="accent">
+              <HeroStat label="Total" tone="accent" className="col-span-2 sm:col-span-1">
                 <CountUp value={c.total} format="money" />
               </HeroStat>
               <HeroStat label="Unidades">{units}</HeroStat>
@@ -241,7 +241,7 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
             </>
           ) : (
             <>
-              <HeroStat label="Total" tone="accent">
+              <HeroStat label="Total" tone="accent" className="col-span-2 sm:col-span-1">
                 <CountUp value={c.total} format="money" />
               </HeroStat>
               <HeroStat label="Pago" tone="green">
@@ -384,7 +384,7 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
           )}
         </div>
 
-        <div className="min-w-0 space-y-4 lg:sticky lg:top-6">
+        <div className="min-w-0 space-y-4">
           <Panel title="Valores" icon={Receipt}>
             <dl className="space-y-2 px-5 pb-4 text-sm">
               <Row label="Equipamentos">{money(c.itemsTotal)}</Row>

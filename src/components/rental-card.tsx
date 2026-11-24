@@ -31,7 +31,7 @@ export function RentalCard({ r, variant = "row" }: { r: RentalWithCalc; variant?
       : "px-4 py-4 hover:bg-slate-50/80 active:bg-slate-100/80";
 
   return (
-    <Link href={`/locacoes/${r.id}`} className={`tap group block ${shell}`} aria-label={`${r.customer.name}, ${rentalCode(r.number)}, ${sit.label}`}>
+    <Link href={`/locacoes/${r.id}`} className={`tap group block min-w-0 ${shell}`} aria-label={`${r.customer.name}, ${rentalCode(r.number)}, ${sit.label}`}>
       <div className="flex items-start gap-3">
         <Avatar name={r.customer.name} />
         <div className="min-w-0 flex-1">

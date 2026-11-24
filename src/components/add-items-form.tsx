@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
+import { Check, Loader2, Minus, Package, PackagePlus, Plus, Search, Sparkles, Trash2, X } from "lucide-react";
 import { priceFor, suggestPeriod, suggestUnitPrice } from "@/lib/calc";
 import { addDays, inclusiveDays, parseISODate, toISODate, weekday } from "@/lib/dates";
 import { money, parseMoney, PERIODS, unitMoney, type Period } from "@/lib/format";
@@ -42,9 +43,13 @@ export function AddItemsButton({
   return (
     <>
       <button type="button" className="btn-secondary" onClick={() => { setDone(false); setOpen(true); }}>
-        + Acréscimo de equipamento
+        <PackagePlus size={17} aria-hidden /> Acréscimo de equipamento
       </button>
-      {done && <span className="basis-full text-sm text-brand-700">Acréscimo registrado. O material saiu do estoque.</span>}
+      {done && (
+        <span className="flex basis-full items-center gap-1.5 text-sm text-emerald-700">
+          <Check size={15} aria-hidden /> Acréscimo registrado. O material saiu do estoque.
+        </span>
+      )}
       {open && (
         <AddItemsSheet
           action={action}
@@ -155,25 +160,29 @@ function AddItemsSheet({
 
   // Portal no <body>: fora de containers animados (transform), que prenderiam o position: fixed.
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 sm:items-center" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-brand-950/45 backdrop-blur-[2px] sm:items-center sm:p-6" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-items-title"
-        className="flex h-[94dvh] w-full max-w-lg flex-col rounded-t-3xl bg-white pb-[env(safe-area-inset-bottom)] shadow-xl sm:h-auto sm:max-h-[90dvh] sm:rounded-3xl"
+        className="flex h-[94dvh] w-full max-w-lg flex-col rounded-t-[28px] bg-white pb-[env(safe-area-inset-bottom)] shadow-2xl sm:h-auto sm:max-h-[90dvh] sm:rounded-[28px]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
-          <div>
-            <h2 id="add-items-title" className="text-base font-bold">Acréscimo de equipamento</h2>
-            <p className="text-xs text-slate-500">Datas próprias; cada acréscimo é devolvido separadamente.</p>
+        <div className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-slate-200 sm:hidden" aria-hidden />
+        <div className="flex items-start gap-3 border-b border-slate-100 px-5 pt-3 pb-4">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-200/70 ring-inset" aria-hidden>
+            <PackagePlus size={20} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 id="add-items-title" className="text-lg leading-tight font-bold tracking-[-0.01em] text-slate-900">Acréscimo de equipamento</h2>
+            <p className="mt-0.5 text-xs text-slate-500">Datas próprias; cada acréscimo é devolvido separadamente.</p>
           </div>
-          <button type="button" className="btn-ghost px-3" aria-label="Fechar" onClick={onClose}>
-            ✕
+          <button type="button" className="btn-ghost h-10 w-10 shrink-0 rounded-full p-0" aria-label="Fechar" onClick={onClose}>
+            <X size={20} aria-hidden />
           </button>
         </div>
 
-        <div className="flex-1 space-y-4 overflow-y-auto p-4">
+        <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">
           {/* DATAS */}
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
@@ -202,105 +211,133 @@ function AddItemsSheet({
                 {end && <p className="mt-1 text-xs text-slate-500">{weekday(end)}</p>}
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs text-slate-500">Prazo:</span>
-              {[1, 7, 15, 30].map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  className={`rounded-full px-2.5 py-1 text-xs font-medium ring-1 ${days === d && end ? "bg-brand-600 text-white ring-brand-600" : "bg-white ring-slate-300"}`}
-                  onClick={() => start && onDatesChange(startDate, toISODate(addDays(start, d - 1)))}
-                >
-                  {d === 1 ? "1 dia" : `${d} dias`}
-                </button>
-              ))}
-              {days > 0 && end && <span className="ml-auto text-sm font-semibold tnum">{days} {days === 1 ? "dia" : "dias"}</span>}
+            <div className="flex items-center gap-2">
+              <div className="grid flex-1 grid-cols-4 gap-1 rounded-2xl bg-slate-100 p-1" role="group" aria-label="Prazo rápido">
+                {[1, 7, 15, 30].map((d) => {
+                  const on = days === d && !!end;
+                  return (
+                    <button
+                      key={d}
+                      type="button"
+                      aria-pressed={on}
+                      className={`min-h-10 rounded-xl text-[13px] font-semibold transition-[background-color,color,box-shadow] duration-150 ${
+                        on ? "bg-white text-brand-800 shadow-[var(--shadow-card)] ring-1 ring-slate-200" : "text-slate-600 hover:text-slate-900"
+                      }`}
+                      onClick={() => start && onDatesChange(startDate, toISODate(addDays(start, d - 1)))}
+                    >
+                      {d === 1 ? "1 dia" : `${d} dias`}
+                    </button>
+                  );
+                })}
+              </div>
+              {days > 0 && end && (
+                <span className="tnum shrink-0 rounded-lg bg-brand-50 px-2 py-1 text-sm font-bold text-brand-700">
+                  {days} {days === 1 ? "dia" : "dias"}
+                </span>
+              )}
             </div>
           </div>
 
           {/* ESCOLHIDOS */}
           {rows.length > 0 && (
-            <ul className="divide-y divide-slate-100 rounded-2xl ring-1 ring-slate-200">
-              {rows.map((r) => {
-                const eq = eqById.get(r.equipmentId);
-                const avail = eq?.availableQty ?? 0;
-                const over = r.qty > avail;
-                return (
-                  <li key={r.equipmentId} className="space-y-2 px-3 py-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold">{eq?.name ?? "?"}</div>
-                        <div className={`text-xs ${over ? "font-medium text-red-700" : "text-slate-500"}`}>
-                          {avail} disponíveis{over ? " — acima do estoque" : ""}
+            <div>
+              <div className="mb-2 text-[11px] font-semibold tracking-[0.08em] text-slate-500 uppercase">Escolhidos</div>
+              <ul className="divide-y divide-amber-200/50 overflow-hidden rounded-2xl bg-amber-50/40 ring-1 ring-amber-200/80 ring-inset">
+                {rows.map((r) => {
+                  const eq = eqById.get(r.equipmentId);
+                  const avail = eq?.availableQty ?? 0;
+                  const over = r.qty > avail;
+                  return (
+                    <li key={r.equipmentId} className="space-y-2.5 px-4 py-3.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="text-sm font-semibold text-slate-900">{eq?.name ?? "?"}</div>
+                          <div className={`text-xs ${over ? "font-medium text-red-700" : "text-slate-500"}`}>
+                            {avail} disponíveis{over ? " — acima do estoque" : ""}
+                          </div>
                         </div>
+                        <div className="tnum text-right text-sm font-bold text-slate-900">{money(lineTotal(r))}</div>
                       </div>
-                      <div className="text-right text-sm font-semibold tnum">{money(lineTotal(r))}</div>
-                    </div>
-                    <div className="grid grid-cols-[auto_1fr_1fr] items-end gap-2">
-                      <div>
-                        <div className="label">Qtd.</div>
-                        <div className="flex items-center rounded-xl ring-1 ring-slate-300">
-                          <button
-                            type="button"
-                            className="px-3 py-2 text-lg leading-none"
-                            aria-label="Diminuir"
-                            onClick={() => (r.qty <= 1 ? setRows((l) => l.filter((x) => x !== r)) : update(r.equipmentId, { qty: r.qty - 1 }))}
+                      <div className="grid grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] items-end gap-2">
+                        <div>
+                          <div className="label">Qtd.</div>
+                          <div className="flex h-12 items-center rounded-[14px] bg-white ring-1 ring-slate-300 ring-inset sm:h-10">
+                            <button
+                              type="button"
+                              className="flex h-full w-10 items-center justify-center rounded-l-[14px] text-slate-600 hover:bg-slate-50"
+                              aria-label="Diminuir"
+                              onClick={() => (r.qty <= 1 ? setRows((l) => l.filter((x) => x !== r)) : update(r.equipmentId, { qty: r.qty - 1 }))}
+                            >
+                              {r.qty <= 1 ? <Trash2 size={15} className="text-red-500" aria-hidden /> : <Minus size={16} aria-hidden />}
+                            </button>
+                            <input
+                              className="tnum w-10 border-0 bg-transparent p-0 text-center text-base font-semibold outline-none"
+                              inputMode="numeric"
+                              value={r.qty}
+                              aria-label={`Quantidade de ${eq?.name}`}
+                              onChange={(e) => update(r.equipmentId, { qty: Math.max(0, Number(e.target.value.replace(/\D/g, "")) || 0) })}
+                              onBlur={() => update(r.equipmentId, { qty: Math.max(1, r.qty) })}
+                            />
+                            <button
+                              type="button"
+                              className="flex h-full w-10 items-center justify-center rounded-r-[14px] text-slate-600 hover:bg-slate-50"
+                              aria-label="Aumentar"
+                              onClick={() => update(r.equipmentId, { qty: r.qty + 1 })}
+                            >
+                              <Plus size={16} aria-hidden />
+                            </button>
+                          </div>
+                        </div>
+                        <div>
+                          <div className="label">Período</div>
+                          <select
+                            className="input px-2.5"
+                            value={r.period}
+                            aria-label={`Período de ${eq?.name}`}
+                            onChange={(e) => {
+                              const period = e.target.value as Period;
+                              const price = eq ? priceFor(eq, period) : null;
+                              update(r.equipmentId, { period, auto: false, ...(price != null ? { unitPrice: fmtNum(price), priceSource: "tabela de preços" } : {}) });
+                            }}
                           >
-                            −
-                          </button>
+                            {PERIODS.map((p) => (
+                              <option key={p.value} value={p.value}>{p.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <div className="label">R$ un./dia</div>
                           <input
-                            className="w-12 border-0 bg-transparent p-0 text-center text-base outline-none tnum"
-                            inputMode="numeric"
-                            value={r.qty}
-                            aria-label={`Quantidade de ${eq?.name}`}
-                            onChange={(e) => update(r.equipmentId, { qty: Math.max(0, Number(e.target.value.replace(/\D/g, "")) || 0) })}
-                            onBlur={() => update(r.equipmentId, { qty: Math.max(1, r.qty) })}
+                            className="input tnum"
+                            inputMode="decimal"
+                            value={r.unitPrice}
+                            placeholder="0,00"
+                            aria-label={`Valor por dia de ${eq?.name}`}
+                            onChange={(e) => update(r.equipmentId, { unitPrice: e.target.value, auto: false, priceSource: undefined })}
                           />
-                          <button type="button" className="px-3 py-2 text-lg leading-none" aria-label="Aumentar" onClick={() => update(r.equipmentId, { qty: r.qty + 1 })}>
-                            +
-                          </button>
                         </div>
                       </div>
-                      <div>
-                        <div className="label">Período</div>
-                        <select
-                          className="input"
-                          value={r.period}
-                          onChange={(e) => {
-                            const period = e.target.value as Period;
-                            const price = eq ? priceFor(eq, period) : null;
-                            update(r.equipmentId, { period, auto: false, ...(price != null ? { unitPrice: fmtNum(price), priceSource: "tabela de preços" } : {}) });
-                          }}
-                        >
-                          {PERIODS.map((p) => (
-                            <option key={p.value} value={p.value}>{p.label}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <div className="label">R$ un./dia</div>
-                        <input
-                          className="input tnum"
-                          inputMode="decimal"
-                          value={r.unitPrice}
-                          placeholder="0,00"
-                          aria-label={`Valor por dia de ${eq?.name}`}
-                          onChange={(e) => update(r.equipmentId, { unitPrice: e.target.value, auto: false, priceSource: undefined })}
-                        />
-                      </div>
-                    </div>
-                    {r.priceSource && <p className="text-[11px] text-slate-500">Valor sugerido: {r.priceSource}</p>}
-                    {!r.unitPrice && <p className="text-[11px] font-medium text-amber-700">Informe o valor por dia</p>}
-                  </li>
-                );
-              })}
-            </ul>
+                      {r.priceSource && (
+                        <p className="flex items-center gap-1 text-[11px] text-slate-500">
+                          <Sparkles size={12} className="text-accent-600" aria-hidden /> Valor sugerido: {r.priceSource}
+                        </p>
+                      )}
+                      {!r.unitPrice && <p className="text-[11px] font-medium text-amber-700">Informe o valor por dia</p>}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           )}
 
           {/* LISTA DE EQUIPAMENTOS */}
           <div>
-            <input className="input" placeholder="Buscar equipamento…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Buscar equipamento" />
-            <ul className="mt-2 divide-y divide-slate-100 rounded-2xl ring-1 ring-slate-200">
+            <div className="mb-2 text-[11px] font-semibold tracking-[0.08em] text-slate-500 uppercase">Estoque</div>
+            <div className="relative">
+              <Search size={18} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" aria-hidden />
+              <input className="input pl-11" placeholder="Buscar equipamento…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Buscar equipamento" />
+            </div>
+            <ul className="mt-2 divide-y divide-slate-100 overflow-hidden rounded-2xl ring-1 ring-slate-200 ring-inset">
               {list.map((e) => {
                 const chosen = rows.find((r) => r.equipmentId === e.id)?.qty ?? 0;
                 const price = e.priceDaily ?? e.priceWeekly ?? e.priceBiweekly ?? e.priceMonthly;
@@ -310,20 +347,25 @@ function AddItemsSheet({
                     <button
                       type="button"
                       disabled={none}
-                      className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left active:bg-slate-50 disabled:opacity-50"
+                      className="flex w-full items-center gap-3 px-3 py-3 text-left hover:bg-slate-50 active:bg-slate-100 disabled:opacity-50"
                       onClick={() => add(e.id)}
                     >
-                      <span className="min-w-0">
-                        <span className="block text-sm font-medium">{e.name}</span>
-                        <span className={`block text-xs ${none ? "text-red-700" : "text-slate-500"}`}>
+                      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${chosen > 0 ? "bg-brand-600 text-white" : "bg-slate-100 text-slate-500"}`} aria-hidden>
+                        <Package size={18} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-medium text-slate-900">{e.name}</span>
+                        <span className={`tnum block text-xs ${none ? "text-red-700" : "text-slate-500"}`}>
                           {none ? "sem estoque" : `${e.availableQty} disponíveis`}
                           {price != null ? ` · ${unitMoney(price)}/dia` : ""}
                         </span>
                       </span>
                       {chosen > 0 ? (
-                        <span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-brand-600 px-2 text-xs font-bold text-white">{chosen}</span>
+                        <span className="tnum flex h-8 min-w-8 items-center justify-center rounded-full bg-brand-600 px-2 text-xs font-bold text-white">{chosen}</span>
                       ) : (
-                        <span className="text-xl text-brand-600">+</span>
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand-600" aria-hidden>
+                          <Plus size={18} />
+                        </span>
                       )}
                     </button>
                   </li>
@@ -334,16 +376,17 @@ function AddItemsSheet({
           </div>
         </div>
 
-        <div className="space-y-2 border-t border-slate-100 p-4">
+        <div className="space-y-2.5 border-t border-slate-100 bg-white px-5 pt-3 pb-4">
           <div className="flex items-baseline justify-between text-sm">
-            <span className="text-slate-500">
+            <span className="tnum text-slate-500">
               {rows.reduce((s, r) => s + r.qty, 0)} un. · {days || 1} {days === 1 || !days ? "dia" : "dias"}
             </span>
-            <span className="text-lg font-bold tnum">{money(total)}</span>
+            <span className="tnum text-xl font-bold tracking-[-0.02em] text-brand-900">{money(total)}</span>
           </div>
           {overStock && <p className="text-xs text-red-700">Há quantidade acima do disponível no estoque.</p>}
-          {error && <p className="text-sm text-red-700">{error}</p>}
+          {error && <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-800 ring-1 ring-red-200 ring-inset">{error}</p>}
           <button type="button" className="btn-primary w-full" disabled={pending || !rows.length} onClick={submit}>
+            {pending ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Check size={16} aria-hidden />}
             {pending ? "Salvando…" : "Adicionar à locação"}
           </button>
         </div>

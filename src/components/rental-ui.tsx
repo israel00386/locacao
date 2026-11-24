@@ -125,10 +125,10 @@ export function NavyHero({ children, className = "" }: { children: ReactNode; cl
 }
 
 /** Número-chave dentro da faixa marinho. */
-export function HeroStat({ label, children, tone }: { label: string; children: ReactNode; tone?: "red" | "accent" | "green" }) {
+export function HeroStat({ label, children, tone, className = "" }: { label: string; children: ReactNode; tone?: "red" | "accent" | "green"; className?: string }) {
   const dot = tone === "red" ? "bg-red-400" : tone === "green" ? "bg-emerald-400" : tone === "accent" ? "bg-accent-400" : "bg-white/40";
   return (
-    <div className="min-w-0 rounded-2xl bg-white/[0.06] px-3.5 py-3 ring-1 ring-white/10 backdrop-blur-sm">
+    <div className={`min-w-0 rounded-2xl bg-white/[0.06] px-3.5 py-3 ${className} ring-1 ring-white/10 backdrop-blur-sm`}>
       <div className="flex items-center gap-1.5 text-[11px] font-medium text-white/65">
         <span className={`h-1.5 w-1.5 rounded-full ${dot}`} aria-hidden />
         <span className="truncate">{label}</span>

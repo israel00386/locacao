@@ -245,13 +245,13 @@ export function RentalForm({
   ];
 
   const buttons = (
-    <div className="flex gap-2">
+    <div className="flex gap-2 lg:flex-col-reverse">
       {!initial ? (
         <>
-          <button type="button" className="btn-secondary min-w-0 flex-1 px-3" disabled={pending} onClick={() => submit(false)}>
+          <button type="button" className="btn-secondary min-w-0 flex-1 px-3 lg:flex-none" disabled={pending} onClick={() => submit(false)}>
             <FileText size={16} aria-hidden /> Salvar orçamento
           </button>
-          <button type="button" className="btn-accent min-w-0 flex-1 px-3" disabled={pending} onClick={() => submit(true)}>
+          <button type="button" className="btn-accent min-w-0 flex-1 px-3 lg:flex-none" disabled={pending} onClick={() => submit(true)}>
             {pending ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Truck size={16} aria-hidden />}
             {pending ? "Salvando…" : "Confirmar locação"}
           </button>

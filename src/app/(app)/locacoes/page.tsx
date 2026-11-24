@@ -92,14 +92,14 @@ export default async function LocacoesPage({ searchParams }: { searchParams: Pro
             <Plus size={18} strokeWidth={2.2} aria-hidden /> Nova locação
           </Link>
         </div>
-        <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
           <HeroStat label="Na obra" tone="accent">
             <CountUp value={active.length} />
           </HeroStat>
           <HeroStat label="Atrasadas" tone={overdue ? "red" : undefined}>
             <CountUp value={overdue} />
           </HeroStat>
-          <HeroStat label="A receber" tone={receivable > 0 ? "red" : "green"}>
+          <HeroStat label="A receber" tone={receivable > 0 ? "red" : "green"} className="col-span-2 sm:col-span-1">
             <CountUp value={receivable} format="money" />
           </HeroStat>
         </div>
@@ -187,7 +187,7 @@ export default async function LocacoesPage({ searchParams }: { searchParams: Pro
               {tab === "receber" ? "em aberto" : "total"} <strong className="tnum font-bold text-slate-900">{money(sum)}</strong>
             </span>
           </div>
-          <div className="stagger grid gap-3 lg:grid-cols-2">
+          <div className="stagger grid grid-cols-1 gap-3 lg:grid-cols-2">
             {rows.map((r) => (
               <RentalCard key={r.id} r={r} variant="card" />
             ))}
