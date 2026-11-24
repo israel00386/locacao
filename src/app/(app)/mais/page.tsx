@@ -12,10 +12,10 @@ export default function MaisPage() {
   return (
     <>
       <PageHeader title="Mais" />
-      <div className="card divide-y divide-slate-100">
+      <div className="card stagger divide-y divide-slate-100 overflow-hidden">
         {items.map((i) => (
-          <Link key={i.href} href={i.href} className="flex items-center gap-3 px-4 py-3.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+          <Link key={i.href} href={i.href} className="tap flex min-h-16 items-center gap-3 px-4 py-3.5 hover:bg-slate-50 active:bg-slate-100">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-900 text-accent-400">
               <Icon name={i.icon} />
             </span>
             <span>

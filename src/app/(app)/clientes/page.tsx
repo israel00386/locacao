@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Badge, Empty, PageHeader } from "@/components/ui";
+import { Badge, Empty, PageHeader, Stat } from "@/components/ui";
 import { db } from "@/lib/db";
 import { money } from "@/lib/format";
 import { listRentals } from "@/lib/rentals";
@@ -27,15 +27,19 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
   return (
     <>
       <PageHeader title="Clientes" subtitle={`${customers.length} cadastrados`} actions={<Link href="/clientes/novo" className="btn-primary">+ Cliente</Link>} />
+      <div className="mb-4 grid grid-cols-2 gap-3">
+        <Stat label="Com material na obra" amount={onSite.size} />
+        <Stat label="A receber" amount={[...balance.values()].reduce((a, b) => a + b, 0)} format="money" tone={balance.size ? "red" : "green"} />
+      </div>
       <form className="mb-3">
         <input name="q" defaultValue={term} className="input" type="search" placeholder="Buscar por nome, telefone ou responsável…" />
       </form>
       {customers.length === 0 ? (
         <Empty>Nenhum cliente encontrado.</Empty>
       ) : (
-        <div className="card divide-y divide-slate-100 overflow-hidden">
+        <div className="card stagger divide-y divide-slate-100 overflow-hidden">
           {customers.map((c) => (
-            <Link key={c.id} href={`/clientes/${c.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50">
+            <Link key={c.id} href={`/clientes/${c.id}`} className="tap flex min-h-14 items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50 active:bg-slate-100">
               <span className="min-w-0">
                 <span className="block truncate text-sm font-semibold">{c.name}</span>
                 <span className="block truncate text-xs text-slate-500">{[c.type, c.phone, c.responsible].filter(Boolean).join(" · ")}</span>

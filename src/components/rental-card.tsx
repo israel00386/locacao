@@ -10,7 +10,7 @@ export function RentalCard({ r }: { r: RentalWithCalc }) {
   const fin = paymentStatus(r.stage, r.calc);
   const itemsText = r.items.map((i) => `${i.qty}× ${i.equipment.name}`).join(", ");
   return (
-    <Link href={`/locacoes/${r.id}`} className="block px-4 py-3 hover:bg-slate-50 active:bg-slate-100">
+    <Link href={`/locacoes/${r.id}`} className="tap block px-4 py-3 hover:bg-slate-50 active:bg-slate-100">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">

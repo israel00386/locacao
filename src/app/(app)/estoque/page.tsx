@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PageHeader } from "@/components/ui";
+import { PageHeader, Stat } from "@/components/ui";
 import { fmtDate } from "@/lib/dates";
 import { unitMoney } from "@/lib/format";
 import { getStock } from "@/lib/rentals";
@@ -19,13 +19,19 @@ export default async function EstoquePage({ searchParams }: { searchParams: Prom
         actions={<Link href="/estoque/novo" className="btn-primary">+ Equipamento</Link>}
       />
 
+      <div className="mb-4 grid grid-cols-3 gap-3">
+        <Stat label="Unidades" amount={stock.reduce((t, s) => t + s.totalQty, 0)} />
+        <Stat label="Na obra" amount={stock.reduce((t, s) => t + s.rentedQty, 0)} />
+        <Stat label="Sem estoque" amount={stock.filter((s) => s.active && s.totalQty > 0 && s.availableQty <= 0).length} tone="red" />
+      </div>
+
       {/* Celular: cartões */}
-      <div className="card divide-y divide-slate-100 overflow-hidden lg:hidden">
+      <div className="card stagger divide-y divide-slate-100 overflow-hidden lg:hidden">
         {stock.map((s) => (
-          <Link key={s.id} href={`/estoque/${s.id}`} className={`block px-4 py-3 ${s.active ? "" : "opacity-50"}`}>
+          <Link key={s.id} href={`/estoque/${s.id}`} className={`tap block px-4 py-3 hover:bg-slate-50 active:bg-slate-100 ${s.active ? "" : "opacity-50"}`}>
             <div className="flex items-start justify-between gap-3">
               <span className="text-sm font-semibold">{s.name}</span>
-              <span className={`text-sm font-bold tnum ${s.availableQty <= 0 ? "text-red-700" : "text-brand-700"}`}>{s.availableQty} disp.</span>
+              <span className={`text-sm font-bold tnum ${s.availableQty <= 0 ? "text-red-700" : "text-emerald-700"}`}>{s.availableQty} disp.</span>
             </div>
             <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-slate-500 tnum">
               <span>Total {s.totalQty}</span>
@@ -41,7 +47,7 @@ export default async function EstoquePage({ searchParams }: { searchParams: Prom
       {/* Computador: tabela */}
       <div className="card hidden overflow-x-auto lg:block">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs text-slate-500">
+          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>
               <th className="px-4 py-2 font-medium">Equipamento</th>
               <th className="px-2 py-2 text-right font-medium">Total</th>
@@ -55,7 +61,7 @@ export default async function EstoquePage({ searchParams }: { searchParams: Prom
               <th className="px-4 py-2 text-right font-medium">Contagem</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 tnum">
+          <tbody className="stagger divide-y divide-slate-100 tnum">
             {stock.map((s) => (
               <tr key={s.id} className={`hover:bg-slate-50 ${s.active ? "" : "opacity-50"}`}>
                 <td className="px-4 py-2">
@@ -64,7 +70,7 @@ export default async function EstoquePage({ searchParams }: { searchParams: Prom
                 <td className="px-2 py-2 text-right">{s.totalQty}</td>
                 <td className="px-2 py-2 text-right">{s.rentedQty}</td>
                 <td className="px-2 py-2 text-right">{s.maintenanceQty || ""}</td>
-                <td className={`px-2 py-2 text-right font-semibold ${s.availableQty <= 0 ? "text-red-700" : "text-brand-700"}`}>{s.availableQty}</td>
+                <td className={`px-2 py-2 text-right font-semibold ${s.availableQty <= 0 ? "text-red-700" : "text-emerald-700"}`}>{s.availableQty}</td>
                 <td className="px-2 py-2 text-right">{p(s.priceDaily)}</td>
                 <td className="px-2 py-2 text-right">{p(s.priceWeekly)}</td>
                 <td className="px-2 py-2 text-right">{p(s.priceBiweekly)}</td>
@@ -76,7 +82,7 @@ export default async function EstoquePage({ searchParams }: { searchParams: Prom
         </table>
       </div>
       <div className="mt-3 text-right text-xs">
-        <Link href={showInactive ? "/estoque" : "/estoque?inativos=1"} className="text-slate-500 underline">
+        <Link href={showInactive ? "/estoque" : "/estoque?inativos=1"} className="inline-flex min-h-10 items-center px-2 text-slate-500 underline">
           {showInactive ? "Esconder inativos" : "Mostrar inativos"}
         </Link>
       </div>
