@@ -42,7 +42,7 @@ export function LoginForm({ setup }: { setup: boolean }) {
           <button
             type="button"
             onClick={() => setShow((s) => !s)}
-            className="absolute top-1/2 right-1.5 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+            className="absolute top-1/2 right-1.5 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
             aria-label={show ? "Esconder senha" : "Mostrar senha"}
             aria-pressed={show}
           >
@@ -51,7 +51,7 @@ export function LoginForm({ setup }: { setup: boolean }) {
         </div>
       </div>
       {state.error && (
-        <p className="flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2.5 text-sm text-red-800 ring-1 ring-red-200 ring-inset" role="alert">
+        <p className="flex items-center gap-2 rounded-2xl bg-red-50 px-3.5 py-2.5 text-sm text-red-800" role="alert">
           <CircleAlert className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden /> {state.error}
         </p>
       )}

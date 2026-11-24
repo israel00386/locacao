@@ -803,7 +803,7 @@ export function TxRow({
       </div>
     </>
   );
-  const cls = `flex min-h-[4.25rem] items-center gap-3 px-4 py-3 ${card ? "card rounded-[20px]" : "sm:px-5"} ${className}`;
+  const cls = `flex min-h-[4.25rem] min-w-0 items-center gap-3 px-4 py-3 ${card ? "card rounded-[20px]" : "sm:px-5"} ${className}`;
   return href ? (
     <Link href={href} className={`tap ${cls} hover:bg-slate-50/70 active:bg-slate-100/70`}>
       {body}
@@ -860,7 +860,7 @@ export function ProgressRow({
       </div>
     </>
   );
-  const cls = `block px-4 py-3.5 sm:px-5 ${card ? "card rounded-[20px]" : ""} ${className}`;
+  const cls = `block min-w-0 px-4 py-3.5 sm:px-5 ${card ? "card rounded-[20px]" : ""} ${className}`;
   return href ? (
     <Link href={href} className={`tap ${cls} hover:bg-slate-50/70`}>
       {body}
