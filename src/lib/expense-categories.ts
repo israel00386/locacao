@@ -2,12 +2,12 @@
 import { round2 } from "./format";
 
 export const EXPENSE_CATEGORIES = [
-  { value: "ENTREGA", label: "Entrega", hint: "frete de ida", color: "bg-sky-500", chip: "bg-sky-50 text-sky-800 ring-sky-200" },
-  { value: "RETIRADA", label: "Retirada", hint: "frete de volta", color: "bg-indigo-500", chip: "bg-indigo-50 text-indigo-800 ring-indigo-200" },
-  { value: "COMBUSTIVEL", label: "Combustível", hint: "", color: "bg-amber-500", chip: "bg-amber-50 text-amber-800 ring-amber-200" },
-  { value: "MANUTENCAO", label: "Manutenção", hint: "", color: "bg-rose-500", chip: "bg-rose-50 text-rose-800 ring-rose-200" },
-  { value: "COMPRA", label: "Compra de material", hint: "", color: "bg-emerald-500", chip: "bg-emerald-50 text-emerald-800 ring-emerald-200" },
-  { value: "OUTROS", label: "Outros", hint: "", color: "bg-slate-400", chip: "bg-slate-100 text-slate-700 ring-slate-200" },
+  { value: "ENTREGA", label: "Entrega", hint: "frete de ida", color: "bg-sky-500", chip: "bg-sky-50 text-sky-800 ring-sky-200", tile: "bg-sky-50 text-sky-600" },
+  { value: "RETIRADA", label: "Retirada", hint: "frete de volta", color: "bg-indigo-500", chip: "bg-indigo-50 text-indigo-800 ring-indigo-200", tile: "bg-indigo-50 text-indigo-600" },
+  { value: "COMBUSTIVEL", label: "Combustível", hint: "diesel, gasolina", color: "bg-amber-400", chip: "bg-amber-50 text-amber-800 ring-amber-200", tile: "bg-amber-50 text-amber-600" },
+  { value: "MANUTENCAO", label: "Manutenção", hint: "conserto de equipamento", color: "bg-rose-500", chip: "bg-rose-50 text-rose-800 ring-rose-200", tile: "bg-rose-50 text-rose-600" },
+  { value: "COMPRA", label: "Compra de material", hint: "material novo, peças", color: "bg-emerald-500", chip: "bg-emerald-50 text-emerald-800 ring-emerald-200", tile: "bg-emerald-50 text-emerald-600" },
+  { value: "OUTROS", label: "Outros", hint: "demais gastos", color: "bg-slate-400", chip: "bg-slate-100 text-slate-700 ring-slate-200", tile: "bg-slate-100 text-slate-500" },
 ] as const;
 
 export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number]["value"];
