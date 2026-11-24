@@ -5,10 +5,11 @@ import { requireUser } from "@/lib/auth";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
   return (
-    <div className="min-h-dvh lg:pl-64">
+    <div className="min-h-dvh lg:pl-[260px]">
       <Sidebar userName={user.name} />
       <MobileHeader userName={user.name} />
-      <main className="mx-auto max-w-[1100px] px-4 pt-5 pb-[calc(7rem+env(safe-area-inset-bottom))] lg:px-10 lg:pt-8 lg:pb-12">
+      {/* Celular: espaço embaixo para a barra flutuante (68px + 10px + safe-area). */}
+      <main className="mx-auto max-w-[1320px] px-4 pt-4 pb-[calc(7.25rem+env(safe-area-inset-bottom))] lg:px-8 lg:pt-8 lg:pb-12 2xl:px-10">
         <PageTransition>{children}</PageTransition>
       </main>
       <BottomNav />
