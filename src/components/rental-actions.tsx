@@ -1,7 +1,10 @@
 "use client";
-import { useActionState, useRef, useState, useTransition } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
+import { Check, ChevronDown, CircleCheck, ExternalLink, Link2, Loader2, MessageCircle, Share2, Undo2 } from "lucide-react";
 import type { ActionResult } from "@/app/(app)/locacoes/actions";
-import { fmtDateShort, inclusiveDays, parseISODate } from "@/lib/dates";
+import { fmtDateShort, inclusiveDays, parseISODate, weekday } from "@/lib/dates";
+import { money } from "@/lib/format";
 
 /** Botão que chama uma server action, com confirmação opcional. */
 export function ActionButton({
@@ -23,6 +26,7 @@ export function ActionButton({
         type="button"
         className={className}
         disabled={pending}
+        aria-busy={pending || undefined}
         onClick={() => {
           if (confirm && !window.confirm(confirm)) return;
           setError(null);
@@ -32,11 +36,28 @@ export function ActionButton({
           });
         }}
       >
-        {pending ? "Aguarde…" : children}
+        {pending ? (
+          <>
+            <Loader2 size={16} className="animate-spin" aria-hidden /> Aguarde…
+          </>
+        ) : (
+          children
+        )}
       </button>
       {error && <span className="basis-full text-sm text-red-700">{error}</span>}
     </span>
   );
+}
+
+function FormMessage({ error, ok }: { error?: string; ok?: string | false }) {
+  if (error) return <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-800 ring-1 ring-red-200 ring-inset">{error}</p>;
+  if (ok)
+    return (
+      <p className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800 ring-1 ring-emerald-200 ring-inset">
+        <CircleCheck size={16} className="shrink-0" aria-hidden /> {ok}
+      </p>
+    );
+  return null;
 }
 
 export interface ReturnRow {
@@ -73,62 +94,94 @@ export function ReturnForm({
     return r;
   }, {});
   const open = items.filter((i) => i.outstanding > 0);
-  if (!open.length) return <p className="px-4 py-4 text-sm text-slate-500">Todo o material já voltou.</p>;
+  if (!open.length)
+    return (
+      <div className="flex items-center gap-3 px-5 pb-5 text-sm text-slate-600">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200 ring-inset">
+          <Check size={16} aria-hidden />
+        </span>
+        Todo o material já voltou.
+      </div>
+    );
+  const chosen = open.reduce((s, i) => s + (Number(qty[i.id]) || 0), 0);
+  const allSet = open.every((i) => qty[i.id] === String(i.outstanding));
   return (
-    <form ref={formRef} action={formAction} className="space-y-3 p-4">
-      <div className="flex flex-wrap items-end gap-3">
+    <form ref={formRef} action={formAction} className="space-y-4 px-5 pb-5">
+      <div className="grid grid-cols-[1fr_auto] items-end gap-3">
         <div>
           <label className="label" htmlFor="ret-date">Data da devolução</label>
           <input id="ret-date" type="date" name="date" value={date} onChange={(e) => setDate(e.target.value)} min={startISO} className="input" />
         </div>
         <button
           type="button"
-          className="btn-secondary btn-sm mb-1"
-          onClick={() => setQty(Object.fromEntries(open.map((i) => [i.id, String(i.outstanding)])))}
+          className={`btn-sm mb-0.5 min-h-11 sm:min-h-10 ${allSet ? "btn-primary" : "btn-secondary"}`}
+          onClick={() => setQty(allSet ? {} : Object.fromEntries(open.map((i) => [i.id, String(i.outstanding)])))}
+          aria-pressed={allSet}
         >
+          {allSet ? <Check size={15} aria-hidden /> : <Undo2 size={15} aria-hidden />}
           Devolver tudo
         </button>
       </div>
-      <ul className="divide-y divide-slate-100 rounded-xl ring-1 ring-slate-200">
-        {open.map((i) => (
-          <li key={i.id} className="flex flex-wrap items-center gap-2 px-3 py-2.5">
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium">{i.name}</div>
-              <div className="text-xs text-slate-500">
-                {i.outstanding} na obra
-                {i.addition ? ` · acréscimo, retirada ${fmtDateShort(parseISODate(i.startISO))}` : ""}
+      {retDate && <p className="-mt-2 text-xs text-slate-500">{weekday(retDate)}</p>}
+      <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl ring-1 ring-slate-200 ring-inset">
+        {open.map((i) => {
+          const v = Number(qty[i.id]) || 0;
+          const over = v > i.outstanding;
+          return (
+            <li key={i.id} className={`px-3.5 py-3 transition-colors ${v > 0 ? "bg-brand-50/40" : ""}`}>
+              <div className="flex items-center gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5 text-sm font-semibold text-slate-900">
+                    {i.name}
+                    {i.addition && (
+                      <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-amber-800 uppercase">Acréscimo</span>
+                    )}
+                  </div>
+                  <div className="mt-0.5 text-xs text-slate-500">
+                    <span className="tnum font-medium text-slate-700">{i.outstanding}</span> na obra
+                    {i.addition ? ` · retirada ${fmtDateShort(parseISODate(i.startISO))}` : ""}
+                  </div>
+                </div>
+                <div className={`flex items-center rounded-[14px] bg-white ring-1 ring-inset ${over ? "ring-red-300" : "ring-slate-300"}`}>
+                  <input
+                    name={`qty_${i.id}`}
+                    className="tnum h-11 w-14 rounded-l-[14px] border-0 bg-transparent px-0 text-center text-base font-semibold text-slate-900 outline-none placeholder:font-normal placeholder:text-slate-300"
+                    inputMode="numeric"
+                    placeholder="0"
+                    value={qty[i.id] ?? ""}
+                    onChange={(e) => setQty({ ...qty, [i.id]: e.target.value.replace(/\D/g, "") })}
+                    aria-label={`Quantidade devolvida de ${i.name}`}
+                  />
+                  <span className="tnum pr-3 text-xs text-slate-400">/ {i.outstanding}</span>
+                </div>
               </div>
-            </div>
-            <input
-              name={`qty_${i.id}`}
-              className="input w-20 text-center tnum"
-              inputMode="numeric"
-              placeholder="0"
-              value={qty[i.id] ?? ""}
-              onChange={(e) => setQty({ ...qty, [i.id]: e.target.value.replace(/\D/g, "") })}
-              aria-label={`Quantidade devolvida de ${i.name}`}
-            />
-            <details className="basis-full text-xs text-slate-500">
-              <summary className="cursor-pointer select-none">Cobrar outro nº de dias</summary>
-              <input
-                name={`days_${i.id}`}
-                className="input mt-1 w-28 tnum"
-                inputMode="numeric"
-                placeholder={retDate ? `auto: ${inclusiveDays(parseISODate(i.startISO)!, retDate)}` : "automático"}
-              />
-            </details>
-          </li>
-        ))}
+              <details className="group mt-1.5 text-xs text-slate-500">
+                <summary className="inline-flex min-h-8 cursor-pointer list-none items-center gap-1 select-none hover:text-slate-800 [&::-webkit-details-marker]:hidden">
+                  <ChevronDown size={14} className="transition-transform group-open:rotate-180" aria-hidden />
+                  Cobrar outro nº de dias
+                </summary>
+                <input
+                  name={`days_${i.id}`}
+                  className="input mt-1 w-32 tnum"
+                  inputMode="numeric"
+                  placeholder={retDate ? `auto: ${inclusiveDays(parseISODate(i.startISO)!, retDate)}` : "automático"}
+                />
+              </details>
+            </li>
+          );
+        })}
       </ul>
       <input name="note" className="input" placeholder="Observação (opcional): quem recebeu, avaria…" />
-      {state.error && <p className="text-sm text-red-700">{state.error}</p>}
-      {state.ok && <p className="text-sm text-brand-700">Devolução registrada. O material voltou para o estoque.</p>}
+      <FormMessage error={state.error} ok={!!state.ok && "Devolução registrada. O material voltou para o estoque."} />
       <button className="btn-primary w-full" disabled={pending}>
-        {pending ? "Registrando…" : "Registrar devolução"}
+        {pending ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Undo2 size={16} aria-hidden />}
+        {pending ? "Registrando…" : chosen > 0 ? `Registrar devolução de ${chosen} ${chosen === 1 ? "unidade" : "unidades"}` : "Registrar devolução"}
       </button>
     </form>
   );
 }
+
+const METHODS = ["Pix", "Dinheiro", "Cartão", "Transferência", "Outro"];
 
 export function PaymentForm({
   action,
@@ -149,59 +202,88 @@ export function PaymentForm({
     return r;
   }, {});
   return (
-    <form key={key} action={formAction} className="space-y-3 p-4">
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="label" htmlFor="pay-amount">Valor recebido</label>
+    <form key={key} action={formAction} className="space-y-4 px-5 pt-1 pb-5">
+      <div>
+        <label className="label" htmlFor="pay-amount">Valor recebido</label>
+        <div className="relative">
+          <span className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-sm font-semibold text-slate-400">R$</span>
           <input
             id="pay-amount"
             name="amount"
-            className="input tnum"
+            className="input tnum min-h-12 pl-11 text-lg! font-semibold"
             inputMode="decimal"
             defaultValue={open > 0 ? open.toFixed(2).replace(".", ",") : ""}
             placeholder="0,00"
           />
         </div>
+        {open > 0 && <p className="mt-1 text-xs text-slate-500">Em aberto: {money(open)}</p>}
+      </div>
+      <fieldset>
+        <legend className="label">Forma</legend>
+        <div className="flex flex-wrap gap-1.5">
+          {METHODS.map((m) => (
+            <label key={m} className="cursor-pointer">
+              <input type="radio" name="method" value={m} defaultChecked={m === "Pix"} className="peer sr-only" />
+              <span className="inline-flex min-h-10 items-center rounded-xl bg-white px-3 text-[13px] font-medium text-slate-700 ring-1 ring-slate-300 ring-inset transition-colors peer-checked:bg-brand-600 peer-checked:text-white peer-checked:ring-brand-600 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand-600 hover:bg-slate-50 peer-checked:hover:bg-brand-700">
+                {m}
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="label" htmlFor="pay-date">Data</label>
           <input id="pay-date" type="date" name="date" defaultValue={todayISO} className="input" />
-        </div>
-        <div>
-          <label className="label" htmlFor="pay-method">Forma</label>
-          <select id="pay-method" name="method" className="input" defaultValue="Pix">
-            <option>Pix</option>
-            <option>Dinheiro</option>
-            <option>Cartão</option>
-            <option>Transferência</option>
-            <option>Outro</option>
-          </select>
         </div>
         <div>
           <label className="label" htmlFor="pay-note">Observação</label>
           <input id="pay-note" name="note" className="input" placeholder="opcional" />
         </div>
       </div>
-      {state.error && <p className="text-sm text-red-700">{state.error}</p>}
-      {state.ok && <p className="text-sm text-brand-700">Pagamento registrado.</p>}
+      <FormMessage error={state.error} ok={!!state.ok && "Pagamento registrado."} />
       <button className="btn-primary w-full" disabled={pending}>
+        {pending ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Check size={16} aria-hidden />}
         {pending ? "Salvando…" : "Registrar pagamento"}
       </button>
     </form>
   );
 }
 
-export function ShareQuote({ url, whatsappUrl }: { url: string; whatsappUrl: string | null }) {
+/**
+ * Enviar / ver o orçamento.
+ * `tone="navy"`: botões sobre a faixa marinho. `tone="light"`: sobre fundo claro.
+ */
+export function ShareQuote({
+  url,
+  whatsappUrl,
+  tone = "light",
+  showView = true,
+  className = "",
+  mainClass,
+}: {
+  url: string;
+  whatsappUrl: string | null;
+  tone?: "navy" | "light";
+  showView?: boolean;
+  className?: string;
+  /** Troca o estilo do botão principal (ex.: secundário na barra do celular). */
+  mainClass?: string;
+}) {
   const [copied, setCopied] = useState(false);
+  const main = mainClass ?? (tone === "navy" ? "btn-accent" : "btn-primary");
+  const second =
+    tone === "navy" ? "btn bg-white/10 text-white ring-1 ring-white/20 ring-inset hover:bg-white/15 active:bg-white/20" : "btn-secondary";
   return (
     <>
       {whatsappUrl ? (
-        <a href={whatsappUrl} target="_blank" rel="noreferrer" className="btn-primary">
-          Enviar no WhatsApp
+        <a href={whatsappUrl} target="_blank" rel="noreferrer" className={`${main} ${className}`}>
+          <MessageCircle size={17} aria-hidden /> Enviar no WhatsApp
         </a>
       ) : (
         <button
           type="button"
-          className="btn-primary"
+          className={`${main} ${className}`}
           onClick={async () => {
             if (navigator.share) await navigator.share({ url }).catch(() => {});
             else {
@@ -210,12 +292,33 @@ export function ShareQuote({ url, whatsappUrl }: { url: string; whatsappUrl: str
             }
           }}
         >
+          {copied ? <Link2 size={17} aria-hidden /> : <Share2 size={17} aria-hidden />}
           {copied ? "Link copiado" : "Compartilhar orçamento"}
         </button>
       )}
-      <a href={url} target="_blank" rel="noreferrer" className="btn-secondary">
-        Ver orçamento / PDF
-      </a>
+      {showView && (
+        <a href={url} target="_blank" rel="noreferrer" className={`${second} ${className}`}>
+          <ExternalLink size={16} aria-hidden /> Ver orçamento / PDF
+        </a>
+      )}
     </>
+  );
+}
+
+/**
+ * Barra de ações fixa no celular, logo acima da navegação inferior.
+ * Portal no <body>: fora do container animado da página (transform prende o position: fixed).
+ */
+export function MobileActionBar({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+  return createPortal(
+    <div className="no-print fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 px-3 pb-2 lg:hidden">
+      <div className="mx-auto flex max-w-lg gap-2 rounded-[20px] bg-white/90 p-2 shadow-[0_10px_30px_-10px_rgb(15_18_63/.35),0_0_0_1px_rgb(15_18_63/.06)] backdrop-blur-md [&>*]:min-w-0 [&>*]:flex-1">
+        {children}
+      </div>
+    </div>,
+    document.body,
   );
 }
