@@ -1,10 +1,26 @@
 import "server-only";
+import { cache } from "react";
 import type { Prisma } from "@prisma/client";
 import { db } from "./db";
 import { addDays, toISODate, today } from "./dates";
+import { sortCategories, type ExpenseCategoryData } from "./expense-categories";
 import { rentalCode } from "./format";
 
 export * from "./expense-categories";
+
+/** Todas as categorias (ativas e inativas), na ordem de exibição. Uma consulta por requisição. */
+export const getCategories = cache(async (): Promise<ExpenseCategoryData[]> => {
+  const rows = await db.expenseCategory.findMany({
+    select: { id: true, name: true, color: true, icon: true, isFreight: true, active: true, sortOrder: true },
+  });
+  return sortCategories(rows);
+});
+
+/** Quantas despesas cada categoria tem (para saber se pode excluir). */
+export async function getCategoryUsage(): Promise<Map<string, { count: number; total: number }>> {
+  const rows = await db.expense.groupBy({ by: ["category"], _count: { _all: true }, _sum: { amount: true } });
+  return new Map(rows.map((r) => [r.category, { count: r._count._all, total: Number(r._sum.amount ?? 0) }]));
+}
 
 /** Despesa pronta para tela/cliente (valores em número, datas em AAAA-MM-DD). */
 export interface ExpenseRow {
