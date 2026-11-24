@@ -29,21 +29,8 @@ import {
 import { Badge } from "@/components/ui";
 import { CountUp } from "@/components/count-up";
 import { ActionButton, MobileActionBar, PaymentForm, ReturnForm } from "@/components/rental-actions";
-import {
-  Avatar,
-  BalanceCard,
-  deadlineInfo,
-  Donut,
-  HeroStat,
-  Panel,
-  ProgressBar,
-  QuickTileBody,
-  quickTileClass,
-  RoundLink,
-  SectionTitle,
-  SOFT,
-  TEXT_TONES,
-} from "@/components/rental-ui";
+import { BalanceCard, Donut, QuickTile, RoundButton, SectionTitle, TopBar } from "@/components/ui";
+import { Avatar, deadlineInfo, HeroStat, Panel, ProgressBar, QuickTileBody, quickTileClass, SOFT, TEXT_TONES } from "@/components/rental-ui";
 import { AddItemsButton, AddItemsTile } from "@/components/add-items-form";
 import { ExpenseList } from "@/components/expense-list";
 import { getExpenseRentalOptions, getRentalExpenses } from "@/lib/expenses";
@@ -207,21 +194,17 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
   // Ações rápidas ("Quick Menu")
   const tiles = (
     <>
-      <a href={wa} target="_blank" rel="noreferrer" className={quickTileClass("green")}>
+      <a href={wa} target="_blank" rel="noreferrer" className={quickTileClass("emerald")}>
         <QuickTileBody icon={MessageCircle} label="Enviar no WhatsApp" hint={r.customer.phone ?? "escolher contato"} />
       </a>
       <a href={url} target="_blank" rel="noreferrer" className={quickTileClass("brand")}>
         <QuickTileBody icon={FileText} label={isQuote ? "Orçamento / PDF" : "Ver PDF"} hint="link do cliente" />
       </a>
       {isActive && hasOutstanding && (
-        <a href="#devolucao" className={quickTileClass("accent")}>
-          <QuickTileBody icon={Undo2} label="Devolução" hint={`${c.outstandingQty} un. na obra`} />
-        </a>
+        <QuickTile href="#devolucao" tone="accent" icon={<Undo2 />} label="Devolução" hint={`${c.outstandingQty} un. na obra`} />
       )}
       {isLive && (
-        <a href="#pagamento" className={quickTileClass("sky")}>
-          <QuickTileBody icon={Wallet} label="Pagamento" hint={open > 0.009 ? `falta ${money(open)}` : "quitado"} />
-        </a>
+        <QuickTile href="#pagamento" tone="sky" icon={<Wallet />} label="Pagamento" hint={open > 0.009 ? `falta ${money(open)}` : "quitado"} />
       )}
       {isActive && (
         <AddItemsTile className={quickTileClass("amber")}>
@@ -229,87 +212,99 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
         </AddItemsTile>
       )}
       {editable && (
-        <Link href={`/locacoes/${r.id}/editar`} className={quickTileClass("violet")}>
-          <QuickTileBody icon={Pencil} label={isQuote ? "Editar orçamento" : "Editar"} hint="itens e valores" />
-        </Link>
+        <QuickTile href={`/locacoes/${r.id}/editar`} tone="violet" icon={<Pencil />} label={isQuote ? "Editar orçamento" : "Editar"} hint="itens e valores" />
       )}
     </>
   );
 
   return (
     <>
-      {/* Topo: voltar · título · editar */}
-      <header className="mb-5 flex items-center justify-between gap-3 lg:mb-6">
-        <RoundLink href="/locacoes" label="Voltar para Locações">
-          <ChevronLeft aria-hidden />
-        </RoundLink>
-        <div className="min-w-0 text-center">
-          <h1 className="truncate text-[17px] leading-tight font-semibold tracking-[-0.01em] text-brand-950 sm:text-lg">{STAGE_TITLE[r.stage] ?? "Locação"}</h1>
-          <div className="tnum mt-0.5 font-mono text-[12px] font-semibold tracking-wide text-slate-400">{rentalCode(r.number)}</div>
-        </div>
-        {editable ? (
-          <RoundLink href={`/locacoes/${r.id}/editar`} label="Editar">
-            <Pencil aria-hidden />
-          </RoundLink>
-        ) : (
-          <span className="h-11 w-11 shrink-0" aria-hidden />
-        )}
-      </header>
+      {/* Topo: voltar · cliente · editar */}
+      <TopBar
+        center
+        back="/locacoes"
+        eyebrow={`${STAGE_TITLE[r.stage] ?? "Locação"} · ${rentalCode(r.number)}`}
+        title={r.customer.name}
+        actions={editable ? <RoundButton href={`/locacoes/${r.id}/editar`} label="Editar" icon={<Pencil />} /> : undefined}
+      />
 
       <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(320px,380px)] lg:items-start lg:gap-5 xl:gap-6">
         {/* Coluna lateral (computador). No celular os blocos entram na ordem da página. */}
         <div className="contents lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1 lg:flex lg:flex-col lg:gap-4">
           {/* CARTÃO-SALDO */}
-          <BalanceCard className="order-1">
-            <div className="flex items-start gap-3">
-              <Avatar name={r.customer.name} size="lg" tone="accent" className="shadow-lg shadow-black/20" />
-              <div className="min-w-0 flex-1">
-                <div className="text-[19px] leading-tight font-bold tracking-[-0.02em] break-words">{r.customer.name}</div>
-                <div className="mt-1 flex min-w-0 items-start gap-1.5 text-[12.5px] text-white/70">
-                  <MapPin size={13} className="mt-0.5 shrink-0 text-accent-300/90" aria-hidden />
-                  <span className="break-words">{r.siteAddress || "Sem endereço da obra"}</span>
-                </div>
-              </div>
-            </div>
-            <div className="mt-3 flex flex-wrap items-center gap-1.5">
-              <Badge tone={sit.tone}>
-                {sit.label}
-                {c.overdue ? ` ${c.overdueDays}d` : ""}
-              </Badge>
-              {isLive && <Badge tone={fin.tone}>{fin.label}</Badge>}
-              {r.negotiating && <Badge tone="amber">Em negociação</Badge>}
-            </div>
-
-            <div className="mt-5 flex items-center justify-between gap-4">
-              <div className="min-w-0">
-                <div className="text-[13px] font-medium text-white/70">{isQuote ? "Total do orçamento" : "Total da locação"}</div>
-                <div className="tnum mt-1 text-[32px] leading-none font-bold tracking-[-0.03em] break-words min-[380px]:text-[36px]">
-                  <CountUp value={c.total} format="money" />
-                </div>
-                {isActive && hasOutstanding && <div className="mt-2 text-[12px] text-white/55">muda conforme os dias passam</div>}
-              </div>
-              {isLive ? (
+          <BalanceCard
+            className="order-1"
+            label={isQuote ? "Total do orçamento" : "Total da locação"}
+            amount={c.total}
+            chips={
+              <>
+                <Badge tone={sit.tone}>
+                  {sit.label}
+                  {c.overdue ? ` ${c.overdueDays}d` : ""}
+                </Badge>
+                {isLive && <Badge tone={fin.tone}>{fin.label}</Badge>}
+                {r.negotiating && <Badge tone="amber">Em negociação</Badge>}
+              </>
+            }
+            actions={
+              isLive ? (
                 <Donut
-                  size={88}
-                  stroke={11}
-                  label={`${Math.round(paidPct * 100)}% pago`}
+                  size={92}
+                  thickness={13}
+                  track="rgb(255 255 255 / .14)"
+                  className="w-[84px] sm:w-[92px]"
+                  ariaLabel={`${Math.round(paidPct * 100)}% pago`}
+                  centerValue={`${Math.round(paidPct * 100)}%`}
+                  centerLabel="pago"
                   segments={[
-                    { value: c.paid, color: "#34d399" },
-                    { value: open, color: open > 0.009 ? "#fb7185" : "transparent" },
+                    { value: c.paid, color: "var(--data-emerald)", label: "Pago" },
+                    { value: open > 0.009 ? open : 0, color: "var(--data-rose)", label: "Em aberto" },
                   ]}
-                >
-                  <span className="tnum text-[17px] leading-none font-bold">{Math.round(paidPct * 100)}%</span>
-                  <span className="mt-0.5 text-[10px] font-medium text-white/65">pago</span>
-                </Donut>
+                />
               ) : (
-                <Donut size={88} stroke={11} label={`${units} unidades`} segments={[{ value: 1, color: "var(--color-accent-400)" }]}>
-                  <span className="tnum text-[17px] leading-none font-bold">{units}</span>
-                  <span className="mt-0.5 text-[10px] font-medium text-white/65">{units === 1 ? "unidade" : "unidades"}</span>
-                </Donut>
-              )}
-            </div>
-
-            <div className="mt-5 grid grid-cols-2 gap-3 border-t border-white/10 pt-4">
+                <Donut
+                  size={92}
+                  thickness={13}
+                  track="rgb(255 255 255 / .14)"
+                  className="w-[84px] sm:w-[92px]"
+                  ariaLabel={`${units} unidades`}
+                  centerValue={units}
+                  centerLabel={units === 1 ? "unidade" : "unidades"}
+                  segments={[{ value: 1, color: "var(--data-yellow)", label: "Unidades" }]}
+                />
+              )
+            }
+            footer={
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Avatar name={r.customer.name} size="md" tone="accent" />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[14px] font-semibold">{r.customer.name}</div>
+                    <div className="flex min-w-0 items-start gap-1 text-[12.5px] text-white/65">
+                      <MapPin size={12} className="mt-0.5 shrink-0 text-accent-300/90" aria-hidden />
+                      <span className="break-words">{r.siteAddress || "Sem endereço da obra"}</span>
+                    </div>
+                  </div>
+                </div>
+                {(r.customer.phone || r.customer.responsible) && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {r.customer.phone && (
+                      <a href={`tel:${r.customer.phone.replace(/\D/g, "")}`} className="chip tnum min-h-9 bg-white/12 text-white ring-1 ring-white/15 ring-inset hover:bg-white/20">
+                        <Phone size={13} className="text-accent-300" aria-hidden /> {r.customer.phone}
+                      </a>
+                    )}
+                    {r.customer.responsible && (
+                      <span className="chip min-h-9 bg-white/12 text-white ring-1 ring-white/15 ring-inset">
+                        <UserRound size={13} className="text-accent-300" aria-hidden /> {r.customer.responsible}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {isQuote && <div className="hidden pt-1 lg:block">{confirmBtn("btn-accent w-full", "Confirmar locação (material saiu)")}</div>}
+              </div>
+            }
+          >
+            <div className="grid grid-cols-2 gap-3">
               {isLive ? (
                 <>
                   <HeroStat label="Pago" tone="green">
@@ -330,33 +325,12 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
                 </>
               )}
             </div>
-
-            {(r.customer.phone || r.customer.responsible) && (
-              <div className="mt-4 flex flex-wrap gap-1.5">
-                {r.customer.phone && (
-                  <a
-                    href={`tel:${r.customer.phone.replace(/\D/g, "")}`}
-                    className="tnum inline-flex min-h-9 items-center gap-1.5 rounded-full bg-white/10 px-3 text-[12.5px] font-medium text-white/90 ring-1 ring-white/15 ring-inset hover:bg-white/15"
-                  >
-                    <Phone size={13} className="text-accent-300" aria-hidden /> {r.customer.phone}
-                  </a>
-                )}
-                {r.customer.responsible && (
-                  <span className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-white/10 px-3 text-[12.5px] font-medium text-white/90 ring-1 ring-white/15 ring-inset">
-                    <UserRound size={13} className="text-accent-300" aria-hidden /> {r.customer.responsible}
-                  </span>
-                )}
-              </div>
-            )}
-
-            {isQuote && <div className="mt-5 hidden lg:block">{confirmBtn("btn-accent w-full rounded-full", "Confirmar locação (material saiu)")}</div>}
+            {isActive && hasOutstanding && <p className="mt-3 text-[12px] text-white/55">O total muda conforme os dias passam e as devoluções são registradas.</p>}
           </BalanceCard>
 
           {/* AÇÕES RÁPIDAS */}
           <section className="order-2" aria-labelledby="quick-title">
-            <SectionTitle className="lg:sr-only">
-              <span id="quick-title">Ações rápidas</span>
-            </SectionTitle>
+            <SectionTitle className="lg:sr-only" title={<span id="quick-title">Ações rápidas</span>} />
             <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0 md:pb-0 [&::-webkit-scrollbar]:hidden [&>*]:w-[132px] [&>*]:shrink-0 [&>*]:snap-start md:[&>*]:w-auto">
               {tiles}
             </div>
@@ -520,13 +494,16 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
           {/* Equipamentos (breakdown) */}
           <section aria-labelledby="items-title">
             <SectionTitle
-              aside={<span className="tnum text-[15px] font-bold text-brand-950">{money(c.itemsTotal)}</span>}
-            >
-              <span id="items-title">Equipamentos</span>
-              <span className="tnum ml-1.5 text-[13px] font-medium text-slate-400">
-                {units} {units === 1 ? "unidade" : "unidades"} · {r.items.length} {r.items.length === 1 ? "item" : "itens"}
-              </span>
-            </SectionTitle>
+              action={<span className="tnum text-[15px] font-bold text-brand-950">{money(c.itemsTotal)}</span>}
+              title={
+                <>
+                  <span id="items-title">Equipamentos</span>
+                  <span className="tnum ml-1.5 text-[13px] font-medium text-slate-400">
+                    {units} {units === 1 ? "unidade" : "unidades"} · {r.items.length} {r.items.length === 1 ? "item" : "itens"}
+                  </span>
+                </>
+              }
+            />
             {c.hasAdditions ? (
               <>
                 <GroupTitle>

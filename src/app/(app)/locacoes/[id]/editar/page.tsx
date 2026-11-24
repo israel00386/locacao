@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
-import { RoundLink } from "@/components/rental-ui";
+import { TopBar } from "@/components/ui";
 import { RentalForm, type InitialRental } from "@/components/rental-form";
 import { rentalFormOptions } from "@/lib/form-options";
 import { getRental } from "@/lib/rentals";
@@ -37,17 +36,11 @@ export default async function EditarLocacaoPage({ params }: { params: Promise<{ 
   };
   return (
     <>
-      <header className="mb-5 flex items-center gap-3 lg:mb-7">
-        <RoundLink href={`/locacoes/${r.id}`} label={`Voltar para ${rentalCode(r.number)}`}>
-          <ChevronLeft aria-hidden />
-        </RoundLink>
-        <div className="min-w-0">
-          <p className="tnum text-[13px] font-medium text-slate-500">
-            Editar {r.stage === "ORCAMENTO" ? "orçamento" : "locação"} · {rentalCode(r.number)}
-          </p>
-          <h1 className="truncate text-[26px] leading-[1.1] font-bold tracking-[-0.025em] text-brand-950 sm:text-[30px]">{r.customer.name}</h1>
-        </div>
-      </header>
+      <TopBar
+        back={`/locacoes/${r.id}`}
+        eyebrow={`Editar ${r.stage === "ORCAMENTO" ? "orçamento" : "locação"} · ${rentalCode(r.number)}`}
+        title={r.customer.name}
+      />
       <div>
         <RentalForm customers={customers} equipment={equipment} initial={initial} todayISO={todayISO()} />
       </div>

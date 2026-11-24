@@ -28,8 +28,8 @@ import { priceFor, suggestPeriod, suggestUnitPrice, type PriceTable } from "@/li
 import { inclusiveDays, parseISODate, toISODate, addDays, weekday } from "@/lib/dates";
 import { money, parseMoney, PERIODS, unitMoney, type Period } from "@/lib/format";
 import { saveRental, type RentalPayload } from "@/app/(app)/locacoes/actions";
-import { Badge } from "./ui";
-import { Avatar, BalanceCard, SOFT } from "./rental-ui";
+import { Badge, BalanceCard, Chip } from "./ui";
+import { Avatar, SOFT } from "./rental-ui";
 
 export interface CustomerOption {
   id: string;
@@ -648,16 +648,16 @@ export function RentalForm({
 
       {/* RESUMO — computador: cartão em degradê fixo na lateral */}
       <aside className="hidden lg:sticky lg:top-6 lg:block">
-        <BalanceCard className="p-6!">
-          <div className="flex items-center justify-between gap-3">
-            <div className="text-[13px] font-medium text-white/70">{initial ? "Total" : "Total estimado"}</div>
-            <span className="tnum rounded-full bg-white/10 px-2.5 py-1 text-[12px] font-semibold text-white/85 ring-1 ring-white/15 ring-inset">
+        <BalanceCard
+          label={initial ? "Total" : "Total estimado"}
+          value={money(total)}
+          chips={
+            <Chip tone="glass">
               {units} un. · {days || 1} {days === 1 || !days ? "dia" : "dias"}
-            </span>
-          </div>
-          <div className="tnum mt-1.5 text-[36px] leading-none font-bold tracking-[-0.03em] break-words">{money(total)}</div>
-
-          <ol className="mt-5 grid grid-cols-4 gap-1.5" aria-label="Etapas">
+            </Chip>
+          }
+        >
+          <ol className="grid grid-cols-4 gap-1.5" aria-label="Etapas">
             {steps.map((st) => (
               <li key={st.label} className="min-w-0">
                 <span className={`block h-1.5 rounded-full ${st.done ? "bg-accent-400" : "bg-white/15"}`} aria-hidden />

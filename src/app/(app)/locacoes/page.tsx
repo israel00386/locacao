@@ -2,7 +2,8 @@ import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { AlertTriangle, Archive, ChevronRight, FileText, HardHat, Inbox, Layers, Plus, Search, Wallet, X } from "lucide-react";
 import { RentalCard } from "@/components/rental-card";
-import { BalanceCard, Donut, ROUND_BUTTON, SOFT } from "@/components/rental-ui";
+import { SOFT } from "@/components/rental-ui";
+import { BalanceCard, Chip, Donut, SegmentedTabs } from "@/components/ui";
 import { CountUp } from "@/components/count-up";
 import { db } from "@/lib/db";
 import { listRentals } from "@/lib/rentals";
@@ -107,24 +108,23 @@ export default async function LocacoesPage({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      {/* Topo: título grande + busca */}
-      <header className="mb-5 transition-[padding] has-[details[open]]:pb-[60px] md:has-[details[open]]:pb-0 lg:mb-7">
+      {/* Topo: título grande + busca (botão redondo no celular, campo macio no tablet/computador) */}
+      <header className="mb-5 has-[details[open]]:pb-[60px] md:has-[details[open]]:pb-0 lg:mb-7">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[13px] font-medium text-slate-500">Operação</p>
-            <h1 className="text-[30px] leading-[1.1] font-bold tracking-[-0.025em] text-brand-950 sm:text-[32px]">Locações</h1>
+            <p className="text-[15px] font-medium text-slate-500">Operação</p>
+            <h1 className="text-[1.75rem] leading-[1.15] font-bold tracking-[-0.025em] text-brand-950 sm:text-[2rem]">Locações</h1>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <div className="hidden w-[min(340px,34vw)] md:block">{searchForm}</div>
-            {/* Celular: busca num botão redondo que abre o campo */}
             <details className="group md:hidden" open={!!q || undefined}>
-              <summary className={`${ROUND_BUTTON} cursor-pointer list-none [&::-webkit-details-marker]:hidden`} aria-label="Buscar locação">
-                <Search className="group-open:hidden" aria-hidden />
-                <X className="hidden group-open:block" aria-hidden />
+              <summary className="btn-round cursor-pointer list-none [&::-webkit-details-marker]:hidden" aria-label="Buscar locação">
+                <Search className="h-5 w-5 group-open:hidden" strokeWidth={1.9} aria-hidden />
+                <X className="hidden h-5 w-5 group-open:block" strokeWidth={1.9} aria-hidden />
               </summary>
               <div className="absolute inset-x-4 z-20 mt-3">{searchForm}</div>
             </details>
-            <Link href="/locacoes/nova" className="btn-accent hidden min-h-12 rounded-full px-5 lg:inline-flex">
+            <Link href="/locacoes/nova" className="btn-accent hidden min-h-12 px-5 lg:inline-flex">
               <Plus size={18} strokeWidth={2.4} aria-hidden /> Nova locação
             </Link>
           </div>
@@ -133,67 +133,54 @@ export default async function LocacoesPage({ searchParams }: { searchParams: Pro
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:gap-5">
         {/* Resumo em degradê */}
-        <BalanceCard>
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <div className="text-[13px] font-medium text-white/70">A receber</div>
-              <div className="tnum mt-1 text-[32px] leading-none font-bold tracking-[-0.03em] break-words min-[380px]:text-[36px] sm:text-[40px]">
-                <CountUp value={receivable} format="money" />
-              </div>
-              <div className="mt-2 text-[13px] text-white/65">
+        <BalanceCard
+          label="A receber"
+          icon={<Wallet aria-hidden />}
+          amount={receivable}
+          chips={
+            <>
+              <Chip tone="glass">
                 em {receivableRows.length} {receivableRows.length === 1 ? "locação" : "locações"}
-              </div>
-            </div>
+              </Chip>
+              {overdue > 0 && (
+                <Chip tone="glass-red">
+                  {overdue} {overdue === 1 ? "atrasada" : "atrasadas"}
+                </Chip>
+              )}
+            </>
+          }
+          actions={
             <Donut
-              size={84}
-              stroke={11}
-              label={`${onTime} em dia, ${overdue} atrasadas, ${quotes} orçamentos`}
+              size={92}
+              thickness={13}
+              track="rgb(255 255 255 / .14)"
+              className="w-[84px] sm:w-[92px]"
+              ariaLabel={`${onTime} em dia, ${overdue} atrasadas, ${quotes} orçamentos`}
+              centerValue={active.length}
+              centerLabel="na obra"
               segments={[
-                { value: onTime, color: "#7dd3fc" },
-                { value: overdue, color: "#f87171" },
-                { value: quotes, color: "var(--color-accent-400)" },
+                { value: onTime, color: "var(--data-sky)", label: "Em dia" },
+                { value: overdue, color: "var(--data-rose)", label: "Atrasadas" },
+                { value: quotes, color: "var(--data-yellow)", label: "Orçamentos" },
               ]}
-            >
-              <span className="tnum text-xl leading-none font-bold">{active.length}</span>
-              <span className="mt-0.5 text-[10px] font-medium text-white/65">na obra</span>
-            </Donut>
-          </div>
-          <div className="mt-5 grid grid-cols-3 gap-2 border-t border-white/10 pt-4">
-            <SummaryLink href={href("ativas")} dot="bg-sky-300" label="Em dia" value={onTime} />
-            <SummaryLink href={href("atrasadas")} dot="bg-red-400" label="Atrasadas" value={overdue} />
-            <SummaryLink href={href("orcamentos")} dot="bg-accent-400" label="Orçamentos" value={quotes} />
-          </div>
-        </BalanceCard>
+            />
+          }
+          footer={
+            <div className="grid grid-cols-3 gap-2">
+              <SummaryLink href={href("ativas")} dot="bg-sky-400" label="Em dia" value={onTime} />
+              <SummaryLink href={href("atrasadas")} dot="bg-rose-500" label="Atrasadas" value={overdue} />
+              <SummaryLink href={href("orcamentos")} dot="bg-accent-400" label="Orçamentos" value={quotes} />
+            </div>
+          }
+        />
 
-        {/* Filtros: pílulas roláveis (celular/tablet) */}
-        <nav aria-label="Filtrar locações" className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden">
-          <div className="inline-flex min-w-max gap-1 rounded-full bg-white p-1.5 shadow-[0_1px_2px_rgb(15_18_63/.04),0_8px_24px_-16px_rgb(15_18_63/.25)]">
-            {TABS.map((t) => {
-              const on = tab === t.key;
-              const n = counts[t.key];
-              return (
-                <Link
-                  key={t.key}
-                  href={href(t.key)}
-                  aria-current={on ? "page" : undefined}
-                  className={`flex min-h-10 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold whitespace-nowrap transition-[background-color,color] duration-150 active:scale-[.97] ${
-                    on ? "bg-brand-900 text-white" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                  }`}
-                >
-                  {t.label}
-                  {n > 0 && (
-                    <span
-                      className={`tnum rounded-full px-1.5 py-px text-[10.5px] leading-4 font-bold ${
-                        t.key === "atrasadas" ? "bg-red-500 text-white" : on ? "bg-accent-400 text-brand-950" : "bg-slate-100 text-slate-600"
-                      }`}
-                    >
-                      {n}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
+        {/* Filtros: pílulas segmentadas roláveis (celular/tablet) */}
+        <nav aria-label="Filtrar locações" className="-mx-4 min-w-0 px-4 lg:hidden">
+          <SegmentedTabs
+            ariaLabel="Filtrar locações"
+            active={href(tab)}
+            items={TABS.map((t) => ({ label: t.label, href: href(t.key), count: counts[t.key] || undefined }))}
+          />
         </nav>
 
         {/* Filtros: lista "explore" ao lado do resumo (computador) */}
