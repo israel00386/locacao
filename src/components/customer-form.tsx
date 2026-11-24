@@ -53,7 +53,7 @@ export function CustomerForm({
           {state.error}
         </p>
       )}
-      <button className="btn-primary w-full rounded-[14px] sm:min-h-11" disabled={pending}>
+      <button className="btn-primary w-full rounded-full sm:min-h-11" disabled={pending}>
         {pending ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <Check className="size-4" strokeWidth={2.4} aria-hidden />}
         {pending ? "Salvando…" : initial ? "Salvar alterações" : "Cadastrar cliente"}
       </button>

@@ -20,7 +20,7 @@ import {
 import { CashEntryButton, CashEntryRowButton, OpeningBalanceButton } from "@/components/cash-sheets";
 import { ExpenseRowButton, NewExpenseButton } from "@/components/expense-sheet";
 import { categoryTone, iconFor, methodIcon } from "@/components/finance-ui";
-import { DayLabel, EmptyState, NavyStat, QUICK_TILE_BTN, QUICK_TONES, QuickTileBody } from "@/components/screen-kit";
+import { DayLabel, EmptyState, MoneyStat, NavyStat, QUICK_TILE_BTN, QUICK_TONES, QuickTileBody } from "@/components/screen-kit";
 import { Avatar, Badge, BalanceCard, BarChart, Chip, Donut, IconBox, ProgressRow, Section, SegmentedTabs, Stat, TopBar, TxRow } from "@/components/ui";
 import { paymentStatus } from "@/lib/calc";
 import { cashSummary, filterStatement, groupByDay, periodSummary, type StatementFilter } from "@/lib/cash";
@@ -242,20 +242,22 @@ async function CaixaTab({
           </div>
         }
       >
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3 min-[400px]:grid-cols-3">
           <NavyStat label="Entrou" tone="green">
             {money(now.inflow)}
           </NavyStat>
           <NavyStat label="Saiu" tone="red">
             {money(now.outflow)}
           </NavyStat>
-          <NavyStat label="Lançamentos">{now.count}</NavyStat>
+          <div className="hidden min-[400px]:block">
+            <NavyStat label="Lançamentos">{now.count}</NavyStat>
+          </div>
         </div>
       </BalanceCard>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:col-span-5 lg:grid-rows-[auto_1fr]">
-        <Stat label={`Entradas em ${name}`} icon={<ArrowDownLeft />} tone="green" amount={monthIn.inflow} format="money" hint={`${monthIn.byKind.RECEBIMENTO ? "recebimentos" : "nenhum recebimento"}${monthIn.byKind.ENTRADA ? " + manuais" : ""}`} />
-        <Stat label={`Saídas em ${name}`} icon={<ArrowUpRight />} tone="red" amount={monthIn.outflow} format="money" hint={`despesas${monthIn.byKind.SAIDA ? " + retiradas" : ""}`} />
+        <MoneyStat label={`Entradas em ${name}`} icon={<ArrowDownLeft />} tone="green" amount={monthIn.inflow} hint={`${monthIn.byKind.RECEBIMENTO ? "recebimentos" : "nenhum recebimento"}${monthIn.byKind.ENTRADA ? " + manuais" : ""}`} />
+        <MoneyStat label={`Saídas em ${name}`} icon={<ArrowUpRight />} tone="red" amount={monthIn.outflow} hint={`despesas${monthIn.byKind.SAIDA ? " + retiradas" : ""}`} />
         <div className="col-span-2 grid grid-cols-3 gap-2.5 sm:gap-3">
           <CashEntryButton kind="ENTRADA" todayISO={today} className={`${QUICK_TILE_BTN} ${QUICK_TONES.emerald}`}>
             <QuickTileBody icon={ArrowDownLeft} label="Entrada" hint="aporte, ajuste" />
@@ -269,7 +271,8 @@ async function CaixaTab({
         </div>
       </div>
 
-      <Section title="Recebido × despesas" icon={<TrendingUp />} description="Últimos 6 meses" >
+      <div className="min-w-0 lg:col-span-7">
+<Section title="Recebido × despesas" icon={<TrendingUp />} description="Últimos 6 meses">
         <div className="px-4 pt-1 pb-5 sm:px-5">
           <BarChart
             data={buckets.map((b) => ({ label: b.label, values: b.values.map(round2) }))}
@@ -282,8 +285,10 @@ async function CaixaTab({
           />
         </div>
       </Section>
+</div>
 
-      <Section title="Por forma de pagamento" icon={<Landmark />} description={opening.date ? `Movimento desde ${fmtDate(parseISODate(opening.date))}` : "Movimento desde o início"}>
+      <div className="min-w-0 lg:col-span-5">
+<Section title="Por forma de pagamento" icon={<Landmark />} description={opening.date ? `Movimento desde ${fmtDate(parseISODate(opening.date))}` : "Movimento desde o início"}>
         {now.byMethod.length ? (
           <ul className="divide-y divide-slate-100 pb-2">
             {now.byMethod.map((r) => {
@@ -310,13 +315,15 @@ async function CaixaTab({
           </EmptyState>
         )}
       </Section>
+</div>
 
       <div className="lg:col-span-12">
         <Section
           title={`Extrato de ${name}`}
           icon={<Receipt />}
-          description={`${statement.length} lançamento${statement.length === 1 ? "" : "s"} · recebimentos, despesas e movimentações`}
-          actions={
+          description={`${statement.length} lançamento${statement.length === 1 ? "" : "s"} no mês`}
+        >
+          <div className="px-4 pt-1 pb-3 sm:px-5">
             <SegmentedTabs
               size="sm"
               ariaLabel="Filtrar extrato"
@@ -326,10 +333,9 @@ async function CaixaTab({
                 { label: "Saídas", href: href({ tipo: "saidas" }) },
               ]}
               active={href({ tipo: filter })}
-              className="!shadow-none bg-slate-100"
+              className="bg-slate-100 !shadow-none"
             />
-          }
-        >
+          </div>
           {flowTotal > 0 && (
             <div className="px-4 pb-1 sm:px-5">
               <div className="flex h-2 gap-[3px] overflow-hidden rounded-full bg-slate-100" role="img" aria-label={`Entradas ${money(monthIn.inflow)}, saídas ${money(monthIn.outflow)}`}>
@@ -360,7 +366,7 @@ async function CaixaTab({
                               icon={<Icon />}
                               iconTone={categoryTone(c.color)}
                               title={r.expense.description || c.name}
-                              subtitle={[c.name, r.subtitle].filter(Boolean).join(" · ")}
+                              subtitle={[r.expense.description ? c.name : "Despesa", r.subtitle].filter(Boolean).join(" · ")}
                               amount={r.amount}
                               sign="out"
                               meta={r.method ?? undefined}
@@ -461,6 +467,13 @@ async function DespesasTab({
   const chargedTotal = sumAmounts(charged.map((x) => ({ amount: Number(x.amount) })));
   const freightDiff = round2(chargedTotal - freightSpent);
   const top = byCategory[0];
+  // No donut, fatias muito finas (< 4%) viram uma só ("Outras") para não virarem bolinhas sobrepostas.
+  const big = byCategory.filter((c) => c.total / Math.max(spent, 0.01) >= 0.04);
+  const small = byCategory.filter((c) => !big.includes(c));
+  const donutSegments = [
+    ...big.map((c) => ({ value: c.total, color: colorStyle(c.color).css, label: c.label })),
+    ...(small.length ? [{ value: sumAmounts(small.map((c) => ({ amount: c.total }))), color: "#cbd5e1", label: small.length === 1 ? small[0].label : "Outras" }] : []),
+  ];
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-5">
@@ -478,7 +491,8 @@ async function DespesasTab({
           <Donut
             size={230}
             thickness={13}
-            segments={byCategory.map((c) => ({ value: c.total, color: colorStyle(c.color).css, label: c.label }))}
+            segments={donutSegments}
+            legend
             centerValue={top ? `${Math.round((top.total / Math.max(spent, 0.01)) * 100)}%` : "—"}
             centerLabel={top ? top.label : "sem despesas"}
             ariaLabel={byCategory.length ? `Despesas por categoria: ${byCategory.map((c) => `${c.label} ${money(c.total)}`).join(", ")}` : "Sem despesas no mês"}
@@ -494,7 +508,8 @@ async function DespesasTab({
         </div>
       </section>
 
-      <Section title="Por categoria" icon={<PieChart />} description="Para onde foi o dinheiro">
+      <div className="min-w-0 lg:col-span-7">
+<Section title="Por categoria" icon={<PieChart />} description="Para onde foi o dinheiro">
         {byCategory.length ? (
           <div className="space-y-1 pb-3">
             {byCategory.map((c) => {
@@ -521,6 +536,7 @@ async function DespesasTab({
           </EmptyState>
         )}
       </Section>
+</div>
 
       <div className="lg:col-span-7">
         <Section title={`Despesas de ${name}`} icon={<Receipt />} description="Toque numa despesa para editar ou excluir">
@@ -535,7 +551,7 @@ async function DespesasTab({
                       icon={<Icon />}
                       iconTone={categoryTone(c.color)}
                       title={e.description || c.name}
-                      subtitle={[c.name, fmtDate(parseISODate(e.date)), e.rental?.code].filter(Boolean).join(" · ")}
+                      subtitle={[e.description ? c.name : null, fmtDate(parseISODate(e.date)), e.rental?.code].filter(Boolean).join(" · ")}
                       amount={e.amount}
                       sign="out"
                       meta={e.method ?? undefined}
@@ -678,8 +694,8 @@ async function ReceberTab() {
       </BalanceCard>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:col-span-5">
-        <Stat label="Já devolvido e não pago" icon={<Receipt />} tone={overdueOpen > 0 ? "red" : undefined} amount={overdueOpen} format="money" hint="atrasadas, devolvidas ou encerradas" />
-        <Stat label="Na obra, em aberto" icon={<Truck />} amount={onSiteOpen} format="money" hint="cobrar na devolução" />
+        <MoneyStat label="Já devolvido e não pago" icon={<Receipt />} tone={overdueOpen > 0 ? "red" : undefined} amount={overdueOpen} hint="atrasadas, devolvidas ou encerradas" />
+        <MoneyStat label="Na obra, em aberto" icon={<Truck />} amount={onSiteOpen} hint="cobrar na devolução" />
       </div>
 
       <div className="lg:col-span-12">

@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import { Empty } from "./ui";
+import { CountUp } from "./count-up";
+import { Empty, IconBox } from "./ui";
 import "./finance-motion.css";
 
 /*
@@ -97,13 +98,45 @@ export function DayLabel({ children, right }: { children: ReactNode; right?: Rea
   );
 }
 
+/**
+ * Igual ao <Stat> do ui.tsx, mas para valores em dinheiro em cards estreitos (2 por linha no celular):
+ * o número encolhe com a tela em vez de quebrar no meio.
+ */
+export function MoneyStat({
+  label,
+  amount,
+  icon,
+  tone,
+  hint,
+}: {
+  label: string;
+  amount: number;
+  icon: ReactNode;
+  tone?: "red" | "green";
+  hint?: ReactNode;
+}) {
+  const color = tone === "red" ? "text-red-600" : tone === "green" ? "text-emerald-700" : "text-brand-950";
+  return (
+    <div className="card relative min-w-0 overflow-hidden p-4 sm:p-5">
+      <IconBox tone={tone === "red" ? "red" : tone === "green" ? "green" : "brand"} className="mb-3 sm:mb-4">
+        {icon}
+      </IconBox>
+      <div className="min-w-0 text-[13px] leading-snug font-medium text-slate-500">{label}</div>
+      <div className={`tnum mt-1 text-[clamp(1rem,5.2vw,1.75rem)] leading-tight font-bold tracking-[-0.025em] whitespace-nowrap lg:text-[clamp(1.125rem,1.7vw,1.75rem)] ${color}`}>
+        <CountUp value={amount} format="money" />
+      </div>
+      {hint && <div className="mt-1 text-xs text-slate-500">{hint}</div>}
+    </div>
+  );
+}
+
 /** Pequeno par rótulo/valor em cima do marinho. */
 export function NavyStat({ label, children, tone = "white" }: { label: string; children: ReactNode; tone?: "white" | "green" | "red" | "accent" }) {
   const color = { white: "text-white", green: "text-emerald-300", red: "text-rose-300", accent: "text-accent-300" }[tone];
   return (
     <div className="min-w-0">
       <div className="truncate text-[12.5px] font-medium text-white/60">{label}</div>
-      <div className={`tnum mt-0.5 truncate text-base font-bold tracking-[-0.01em] sm:text-lg ${color}`}>{children}</div>
+      <div className={`tnum mt-0.5 text-[clamp(.875rem,4.2vw,1.125rem)] leading-tight font-bold tracking-[-0.01em] whitespace-nowrap ${color}`}>{children}</div>
     </div>
   );
 }

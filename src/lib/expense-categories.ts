@@ -85,8 +85,25 @@ export function findCategory(categories: readonly ExpenseCategoryData[], id: str
   return categories.find((c) => c.id === id) ?? categories.find((c) => c.id === FALLBACK_CATEGORY.id) ?? FALLBACK_CATEGORY;
 }
 
-export function categoryLabel(categories: readonly ExpenseCategoryData[], id: string): string {
-  return findCategory(categories, id).name;
+/** Nomes das 6 categorias padrão (ids fixos criados pela migração), para quem não tem a lista do banco à mão. */
+export const DEFAULT_CATEGORY_NAMES: Record<string, string> = {
+  ENTREGA: "Entrega",
+  RETIRADA: "Retirada",
+  COMBUSTIVEL: "Combustível",
+  MANUTENCAO: "Manutenção",
+  COMPRA: "Compra de material",
+  OUTROS: "Outros",
+};
+
+/**
+ * Nome da categoria. Com a lista do banco: `categoryLabel(categories, id)`.
+ * Só com o id (compatibilidade): nomes padrão; id desconhecido → "Outros".
+ */
+export function categoryLabel(id: string): string;
+export function categoryLabel(categories: readonly ExpenseCategoryData[], id: string): string;
+export function categoryLabel(a: readonly ExpenseCategoryData[] | string, b?: string): string {
+  if (typeof a === "string") return DEFAULT_CATEGORY_NAMES[a] ?? FALLBACK_CATEGORY.name;
+  return findCategory(a, b ?? "").name;
 }
 
 /** Despesa de frete = categoria marcada "conta como frete". */
