@@ -159,7 +159,8 @@ h1, h2, h3 { text-wrap: balance; }
 /* Entrada de tela (src/components/page-transition.tsx) */
 /* fill-mode "backwards": depois da animação o transform some. Com "both" o transform ficava aplicado
    e prendia position: fixed (folhas/diálogos) dentro do card, atrás do cabeçalho. */
-.page-enter { animation: rise 0.34s var(--ease-out-soft) backwards; }
+/* Só fade (sem deslocar): o Hero encosta no cabeçalho marinho e um translate mostrava uma faixa clara entre os dois. */
+.page-enter { animation: fade-in 0.28s var(--ease-out-soft) backwards; }
 
 /* Entrada escalonada: cartões da tela e filhos de .stagger */
 .page-enter *:nth-child(1) { --n: 0; }
