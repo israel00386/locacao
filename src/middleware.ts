@@ -18,5 +18,6 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/|icons/|manifest.webmanifest|sw.js|favicon.ico|robots.txt).*)"],
+  // Não roda em arquivos estáticos (qualquer caminho com extensão: .png, .jpg, .js, .webmanifest…) nem em /_next.
+  matcher: ["/((?!_next/|.*\\.[a-zA-Z0-9]+$).*)"],
 };
