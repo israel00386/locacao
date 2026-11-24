@@ -1,33 +1,62 @@
-import Link from "next/link";
-import { Icon } from "@/components/nav";
-import { PageHeader } from "@/components/ui";
+import { Boxes, ClipboardList, FileSpreadsheet, LogOut, Settings, Users, Wallet } from "lucide-react";
+import { Avatar, IconBox, ListRow, type IconTone } from "@/components/ui";
+import { getSession } from "@/lib/auth";
 
-const items = [
-  { href: "/clientes", label: "Clientes", icon: "users" as const, desc: "Cadastro, obras e histórico" },
-  { href: "/financeiro", label: "Financeiro", icon: "money" as const, desc: "A receber e pagamentos" },
-  { href: "/config", label: "Configurações", icon: "gear" as const, desc: "Empresa, orçamento, usuários e importação" },
+export const metadata = { title: "Mais" };
+
+const groups: { label: string; items: { href: string; label: string; desc: string; icon: React.ReactNode; tone: IconTone }[] }[] = [
+  {
+    label: "Cadastros",
+    items: [
+      { href: "/clientes", label: "Clientes", desc: "Cadastro, obras e histórico", icon: <Users />, tone: "brand" },
+      { href: "/estoque", label: "Estoque", desc: "Equipamentos, disponível e manutenção", icon: <Boxes />, tone: "sky" },
+      { href: "/locacoes", label: "Locações", desc: "Na obra, orçamentos e encerradas", icon: <ClipboardList />, tone: "accent" },
+    ],
+  },
+  {
+    label: "Gestão",
+    items: [
+      { href: "/financeiro", label: "Financeiro", desc: "A receber, pagamentos e despesas", icon: <Wallet />, tone: "green" },
+      { href: "/config", label: "Configurações", desc: "Empresa, orçamento, usuários e senha", icon: <Settings />, tone: "slate" },
+      { href: "/config/importar", label: "Importar planilha", desc: "Trazer dados do Google Sheets", icon: <FileSpreadsheet />, tone: "slate" },
+    ],
+  },
 ];
 
-export default function MaisPage() {
+export default async function MaisPage() {
+  const session = await getSession();
+  const name = session?.name ?? "Usuário";
   return (
     <>
-      <PageHeader title="Mais" />
-      <div className="card stagger divide-y divide-slate-100 overflow-hidden">
-        {items.map((i) => (
-          <Link key={i.href} href={i.href} className="tap flex min-h-16 items-center gap-3 px-4 py-3.5 hover:bg-slate-50 active:bg-slate-100">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-900 text-accent-400">
-              <Icon name={i.icon} />
-            </span>
-            <span>
-              <span className="block text-sm font-semibold">{i.label}</span>
-              <span className="block text-xs text-slate-500">{i.desc}</span>
-            </span>
-          </Link>
+      <h1 className="sr-only">Mais</h1>
+      <div className="card mb-6 flex items-center gap-4 p-5">
+        <Avatar name={name} size="lg" tone="navy" />
+        <div className="min-w-0 flex-1">
+          <div className="micro text-slate-400">Conectado como</div>
+          <div className="truncate text-lg font-bold tracking-[-0.01em] text-brand-950">{name}</div>
+          <div className="text-[13px] text-slate-500">LOCAR Equipamentos</div>
+        </div>
+      </div>
+
+      <div className="space-y-6">
+        {groups.map((g) => (
+          <section key={g.label}>
+            <h2 className="micro mb-2.5 px-1 text-slate-500">{g.label}</h2>
+            <div className="card stagger divide-y divide-slate-100 overflow-hidden">
+              {g.items.map((i) => (
+                <ListRow key={i.href} href={i.href} leading={<IconBox tone={i.tone}>{i.icon}</IconBox>} title={i.label} subtitle={i.desc} />
+              ))}
+            </div>
+          </section>
         ))}
       </div>
-      <form action="/login/sair" method="post" className="mt-4">
-        <button className="btn-secondary w-full">Sair</button>
+
+      <form action="/login/sair" method="post" className="mt-6">
+        <button className="btn-danger w-full">
+          <LogOut className="h-[18px] w-[18px]" strokeWidth={1.9} aria-hidden /> Sair da conta
+        </button>
       </form>
+      <p className="mt-6 text-center text-xs text-slate-400">LOCAR Equipamentos · Pacatuba-CE</p>
     </>
   );
 }

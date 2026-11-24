@@ -1,5 +1,6 @@
 "use client";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import { CircleAlert, CircleCheck, FileSpreadsheet, KeyRound, Landmark, Loader2, Save, Store, TriangleAlert, Upload, UserPlus } from "lucide-react";
 import { addUser, changePassword, importSpreadsheet, saveCompany, type FormState, type ImportState } from "./actions";
 
 type Company = {
@@ -7,39 +8,77 @@ type Company = {
   pixKey: string; pixName: string; pixBank: string; quoteNotes: string; footer: string;
 };
 
+function Note({ tone, children }: { tone: "ok" | "error"; children: React.ReactNode }) {
+  const Icon = tone === "ok" ? CircleCheck : CircleAlert;
+  return (
+    <p
+      className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm ring-1 ring-inset ${tone === "ok" ? "bg-emerald-50 text-emerald-800 ring-emerald-200" : "bg-red-50 text-red-800 ring-red-200"}`}
+      role={tone === "ok" ? "status" : "alert"}
+    >
+      <Icon className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+      {children}
+    </p>
+  );
+}
+
 function Msg({ state, ok }: { state: FormState; ok: string }) {
-  if (state.error) return <p className="text-sm text-red-700">{state.error}</p>;
-  if (state.ok) return <p className="text-sm text-brand-700">{ok}</p>;
+  if (state.error) return <Note tone="error">{state.error}</Note>;
+  if (state.ok) return <Note tone="ok">{ok}</Note>;
   return null;
+}
+
+function Group({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+  return (
+    <fieldset className="space-y-3">
+      <legend className="mb-3 flex items-center gap-2 text-[13px] font-semibold text-slate-700 [&>svg]:h-4 [&>svg]:w-4 [&>svg]:text-slate-400">
+        {icon}
+        {title}
+      </legend>
+      {children}
+    </fieldset>
+  );
 }
 
 export function CompanyForm({ company }: { company: Company }) {
   const [state, action, pending] = useActionState(saveCompany, {});
-  const f = (name: keyof Company, label: string, span = false) => (
+  const f = (name: keyof Company, label: string, span = false, placeholder?: string) => (
     <div className={span ? "sm:col-span-2" : ""}>
       <label className="label" htmlFor={`co-${name}`}>{label}</label>
-      <input id={`co-${name}`} name={name} className="input" defaultValue={company[name]} />
+      <input id={`co-${name}`} name={name} className="input" defaultValue={company[name]} placeholder={placeholder} />
     </div>
   );
   return (
-    <form action={action} className="space-y-3 p-4">
-      <div className="grid gap-3 sm:grid-cols-2">
-        {f("name", "Nome da empresa")}
-        {f("subtitle", "Frase abaixo do nome")}
-        {f("location", "Cidade")}
-        {f("instagram", "Instagram")}
-        {f("phone", "Telefone/WhatsApp da empresa")}
-        {f("pixKey", "Chave Pix")}
-        {f("pixName", "Favorecido")}
-        {f("pixBank", "Banco")}
-      </div>
-      <div>
-        <label className="label" htmlFor="co-notes">Observações do orçamento (uma por linha)</label>
-        <textarea id="co-notes" name="quoteNotes" rows={4} className="input" defaultValue={company.quoteNotes} />
-      </div>
-      {f("footer", "Rodapé", true)}
-      <Msg state={state} ok="Salvo." />
-      <button className="btn-primary w-full" disabled={pending}>{pending ? "Salvando…" : "Salvar"}</button>
+    <form action={action} className="space-y-6 p-4 sm:p-5">
+      <Group icon={<Store strokeWidth={1.9} />} title="Identificação">
+        <div className="grid gap-3 sm:grid-cols-2">
+          {f("name", "Nome da empresa")}
+          {f("subtitle", "Frase abaixo do nome")}
+          {f("location", "Cidade")}
+          {f("instagram", "Instagram", false, "@suaempresa")}
+          {f("phone", "Telefone/WhatsApp da empresa", true, "(85) 90000-0000")}
+        </div>
+      </Group>
+      <div className="h-px bg-slate-100" />
+      <Group icon={<Landmark strokeWidth={1.9} />} title="Pagamento (Pix)">
+        <div className="grid gap-3 sm:grid-cols-2">
+          {f("pixKey", "Chave Pix", true)}
+          {f("pixName", "Favorecido")}
+          {f("pixBank", "Banco")}
+        </div>
+      </Group>
+      <div className="h-px bg-slate-100" />
+      <Group icon={<FileSpreadsheet strokeWidth={1.9} />} title="Texto do orçamento">
+        <div>
+          <label className="label" htmlFor="co-notes">Observações do orçamento (uma por linha)</label>
+          <textarea id="co-notes" name="quoteNotes" rows={4} className="input leading-relaxed" defaultValue={company.quoteNotes} />
+        </div>
+        {f("footer", "Rodapé", true)}
+      </Group>
+      <Msg state={state} ok="Dados da empresa salvos." />
+      <button className="btn-primary w-full sm:w-auto sm:min-w-40" disabled={pending}>
+        {pending ? <Loader2 className="h-[18px] w-[18px] animate-spin" aria-hidden /> : <Save className="h-[18px] w-[18px]" strokeWidth={1.9} aria-hidden />}
+        {pending ? "Salvando…" : "Salvar alterações"}
+      </button>
     </form>
   );
 }
@@ -47,12 +86,20 @@ export function CompanyForm({ company }: { company: Company }) {
 export function AddUserForm() {
   const [state, action, pending] = useActionState(addUser, {});
   return (
-    <form action={action} key={state.ok ?? 0} className="grid gap-3 p-4 sm:grid-cols-3">
-      <input name="name" className="input" placeholder="Nome" required />
-      <input name="email" type="email" className="input" placeholder="E-mail" required />
-      <input name="password" type="password" className="input" placeholder="Senha (mín. 6)" required minLength={6} />
-      <div className="sm:col-span-3"><Msg state={state} ok="Usuário criado." /></div>
-      <button className="btn-secondary sm:col-span-3" disabled={pending}>Adicionar usuário</button>
+    <form action={action} key={state.ok ?? 0} className="space-y-3 p-4 sm:p-5">
+      <div className="flex items-center gap-2 text-[13px] font-semibold text-slate-700">
+        <UserPlus className="h-4 w-4 text-slate-400" strokeWidth={1.9} aria-hidden /> Novo acesso
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <input name="name" className="input" placeholder="Nome" aria-label="Nome" required />
+        <input name="email" type="email" className="input" placeholder="E-mail" aria-label="E-mail" required />
+        <input name="password" type="password" className="input sm:col-span-2" placeholder="Senha (mín. 6 caracteres)" aria-label="Senha" required minLength={6} />
+      </div>
+      <Msg state={state} ok="Usuário criado." />
+      <button className="btn-secondary w-full" disabled={pending}>
+        {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <UserPlus className="h-4 w-4" strokeWidth={1.9} aria-hidden />}
+        Adicionar usuário
+      </button>
     </form>
   );
 }
@@ -60,33 +107,74 @@ export function AddUserForm() {
 export function PasswordForm() {
   const [state, action, pending] = useActionState(changePassword, {});
   return (
-    <form action={action} key={state.ok ?? 0} className="grid gap-3 p-4 sm:grid-cols-2">
-      <input name="current" type="password" className="input" placeholder="Senha atual" required autoComplete="current-password" />
-      <input name="next" type="password" className="input" placeholder="Nova senha" required minLength={6} autoComplete="new-password" />
-      <div className="sm:col-span-2"><Msg state={state} ok="Senha alterada." /></div>
-      <button className="btn-secondary sm:col-span-2" disabled={pending}>Trocar minha senha</button>
+    <form action={action} key={state.ok ?? 0} className="space-y-3 p-4 sm:p-5">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <input name="current" type="password" className="input" placeholder="Senha atual" aria-label="Senha atual" required autoComplete="current-password" />
+        <input name="next" type="password" className="input" placeholder="Nova senha" aria-label="Nova senha" required minLength={6} autoComplete="new-password" />
+      </div>
+      <Msg state={state} ok="Senha alterada." />
+      <button className="btn-secondary w-full" disabled={pending}>
+        {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <KeyRound className="h-4 w-4" strokeWidth={1.9} aria-hidden />}
+        Trocar minha senha
+      </button>
     </form>
   );
 }
 
 export function ImportForm({ hasData }: { hasData: boolean }) {
   const [state, action, pending] = useActionState<ImportState, FormData>(importSpreadsheet, {});
+  const [fileName, setFileName] = useState<string | null>(null);
   const r = state.report;
   return (
-    <form action={action} className="space-y-3 p-4">
-      <input name="file" type="file" accept=".xlsx" className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-2 file:font-semibold file:text-brand-700" required />
+    <form action={action} className="space-y-4 p-4 sm:p-5">
+      <label
+        className={`group relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[18px] border-2 border-dashed px-4 py-8 text-center transition-colors focus-within:border-brand-500 focus-within:bg-brand-50/40 ${
+          fileName ? "border-emerald-300 bg-emerald-50/50" : "border-slate-200 bg-slate-50/60 hover:border-brand-300 hover:bg-brand-50/40"
+        }`}
+      >
+        <span
+          className={`flex h-12 w-12 items-center justify-center rounded-2xl ring-1 ring-inset ${
+            fileName ? "bg-emerald-100 text-emerald-700 ring-emerald-200" : "bg-white text-brand-600 shadow-sm ring-slate-200 group-hover:text-brand-700"
+          }`}
+          aria-hidden
+        >
+          {fileName ? <FileSpreadsheet className="h-6 w-6" strokeWidth={1.75} /> : <Upload className="h-6 w-6" strokeWidth={1.75} />}
+        </span>
+        <span className="text-[15px] font-semibold text-slate-800">{fileName ?? "Escolher arquivo .xlsx"}</span>
+        <span className="text-[13px] text-slate-500">{fileName ? "Toque para trocar o arquivo" : "Toque aqui para selecionar a planilha baixada"}</span>
+        <input
+          name="file"
+          type="file"
+          accept=".xlsx"
+          required
+          className="absolute inset-0 cursor-pointer opacity-0"
+          onChange={(e) => setFileName(e.currentTarget.files?.[0]?.name ?? null)}
+        />
+      </label>
       {hasData && (
-        <label className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
-          <input type="checkbox" name="replace" className="mt-0.5 h-4 w-4 accent-amber-600" />
-          <span>Substituir tudo: <strong>apaga clientes, estoque e locações atuais</strong> e importa de novo. Usuários e dados da empresa ficam.</span>
+        <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900 ring-1 ring-amber-200 ring-inset">
+          <input type="checkbox" name="replace" className="mt-0.5 h-5 w-5 shrink-0 accent-amber-600" />
+          <span>
+            <span className="flex items-center gap-1.5 font-semibold">
+              <TriangleAlert className="h-4 w-4" strokeWidth={2} aria-hidden /> Substituir tudo
+            </span>
+            <span className="mt-0.5 block text-amber-800">
+              <strong>Apaga clientes, estoque e locações atuais</strong> e importa de novo. Usuários e dados da empresa ficam.
+            </span>
+          </span>
         </label>
       )}
-      {state.error && <p className="text-sm text-red-700">{state.error}</p>}
-      <button className="btn-primary w-full" disabled={pending}>{pending ? "Importando… (pode levar 1 minuto)" : "Importar planilha"}</button>
+      {state.error && <Note tone="error">{state.error}</Note>}
+      <button className="btn-primary btn-lg w-full" disabled={pending}>
+        {pending ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <Upload className="h-5 w-5" strokeWidth={1.9} aria-hidden />}
+        {pending ? "Importando… (pode levar 1 minuto)" : "Importar planilha"}
+      </button>
       {r && (
-        <div className="rounded-xl bg-brand-50 p-3 text-sm text-brand-900">
-          <p className="font-semibold">Importação concluída</p>
-          <ul className="mt-1 list-disc space-y-0.5 pl-5">
+        <div className="rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900 ring-1 ring-emerald-200 ring-inset" role="status">
+          <p className="flex items-center gap-2 font-semibold">
+            <CircleCheck className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden /> Importação concluída
+          </p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 marker:text-emerald-500">
             <li>{r.customers} clientes e {r.equipment} equipamentos</li>
             <li>{r.rentalLines} linhas agrupadas em {r.rentals} locações ({r.active} ativas, {r.closed} encerradas)</li>
             <li>{r.payments} pagamentos registrados</li>
