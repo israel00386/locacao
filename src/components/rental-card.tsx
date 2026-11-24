@@ -8,7 +8,12 @@ import type { RentalWithCalc } from "@/lib/rentals";
 export function RentalCard({ r }: { r: RentalWithCalc }) {
   const sit = situation(r.stage, r.calc);
   const fin = paymentStatus(r.stage, r.calc);
-  const itemsText = r.items.map((i) => `${i.qty}× ${i.equipment.name}`).join(", ");
+  const itemsText = r.items
+    .map((i, idx) => {
+      const ic = r.calc.items[idx];
+      return ic.addition ? `+ ${i.qty}× ${i.equipment.name} (acréscimo ${fmtDateShort(ic.startDate)} → ${fmtDateShort(ic.expectedEndDate)})` : `${i.qty}× ${i.equipment.name}`;
+    })
+    .join(", ");
   return (
     <Link href={`/locacoes/${r.id}`} className="block px-4 py-3 hover:bg-slate-50 active:bg-slate-100">
       <div className="flex items-start justify-between gap-3">

@@ -27,6 +27,8 @@ export function toCalcInput(r: RentalFull): RentalInput {
       qty: i.qty,
       unitPrice: n(i.unitPrice),
       daysOverride: i.daysOverride,
+      startDate: i.startDate,
+      expectedEndDate: i.expectedEndDate,
       returns: i.returns.map((x) => ({ qty: x.qty, date: x.date, chargedDays: x.chargedDays })),
     })),
   };

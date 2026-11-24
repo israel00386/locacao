@@ -15,6 +15,10 @@ export interface ItemInput {
   unitPrice: number;
   daysOverride: number | null;
   returns: ReturnInput[];
+  /** Retirada própria (acréscimo feito com a locação ativa). Vazio = retirada da locação. */
+  startDate?: Date | null;
+  /** Previsão própria do acréscimo. Vazio = previsão da locação. */
+  expectedEndDate?: Date | null;
 }
 
 export interface RentalInput {
@@ -27,7 +31,21 @@ export interface RentalInput {
   items: ItemInput[];
 }
 
+export type ItemStatus = "NA_OBRA" | "ATRASADO" | "DEVOLVIDO";
+
 export interface ItemCalc {
+  /** Acréscimo de equipamento (tem retirada própria). */
+  addition: boolean;
+  /** Retirada efetiva do item (própria ou da locação). */
+  startDate: Date;
+  /** Previsão efetiva do item (própria ou da locação). */
+  expectedEndDate: Date | null;
+  /** Dias cobrados de cada devolução, na mesma ordem de `returns`. */
+  returnDays: number[];
+  /** Este item ainda tem material na obra depois da própria previsão. */
+  overdue: boolean;
+  overdueDays: number;
+  status: ItemStatus;
   returnedQty: number;
   outstandingQty: number;
   /** Dias usados para a parte que ainda está na obra. */
@@ -53,6 +71,10 @@ export interface RentalCalc {
   overdueDays: number;
   /** Maior quantidade de dias cobrada entre os itens (para exibir). */
   days: number;
+  /** Próxima previsão de devolução entre os itens que ainda estão na obra (sem atraso). */
+  nextExpectedEnd: Date | null;
+  /** Tem acréscimo de equipamento. */
+  hasAdditions: boolean;
   financial: "PAGO" | "PARCIAL" | "EM_ABERTO" | "SEM_VALOR";
 }
 
@@ -72,26 +94,52 @@ export function outstandingDaysFor(
   return inclusiveDays(start, end);
 }
 
+/** Datas efetivas do item: as próprias (acréscimo) ou as da locação. */
+export function itemDates(
+  item: Pick<ItemInput, "startDate" | "expectedEndDate">,
+  rental: Pick<RentalInput, "startDate" | "expectedEndDate">,
+): { start: Date; end: Date | null } {
+  return { start: item.startDate ?? rental.startDate, end: item.expectedEndDate ?? rental.expectedEndDate };
+}
+
 export function calcItem(item: ItemInput, rental: Pick<RentalInput, "stage" | "startDate" | "expectedEndDate">, today: Date): ItemCalc {
+  const { start, end } = itemDates(item, rental);
   const returnedQty = item.returns.reduce((s, r) => s + r.qty, 0);
   const outstandingQty = Math.max(0, item.qty - returnedQty);
-  const outstandingDays =
-    item.daysOverride ?? outstandingDaysFor(rental.stage, rental.startDate, rental.expectedEndDate, today);
+  const outstandingDays = item.daysOverride ?? outstandingDaysFor(rental.stage, start, end, today);
 
+  const returnDays = item.returns.map((r) => r.chargedDays ?? inclusiveDays(start, r.date));
   let total = 0;
-  for (const r of item.returns) {
-    const days = r.chargedDays ?? inclusiveDays(rental.startDate, r.date);
-    total += r.qty * item.unitPrice * days;
-  }
+  item.returns.forEach((r, i) => {
+    total += r.qty * item.unitPrice * returnDays[i];
+  });
   total += outstandingQty * item.unitPrice * outstandingDays;
 
+  const overdue = rental.stage === "ATIVA" && outstandingQty > 0 && !!end && end.getTime() < today.getTime();
+  const overdueDays = overdue ? inclusiveDays(end!, today) - 1 : 0;
+  const status: ItemStatus = outstandingQty === 0 ? "DEVOLVIDO" : overdue ? "ATRASADO" : "NA_OBRA";
+
   return {
+    addition: !!item.startDate,
+    startDate: start,
+    expectedEndDate: end,
+    returnDays,
+    overdue,
+    overdueDays,
+    status,
     returnedQty,
     outstandingQty,
     outstandingDays,
     dailyValue: round2(item.qty * item.unitPrice),
     total: round2(total),
   };
+}
+
+/** Selo de situação de um item (mesmas cores da situação da locação). */
+export function itemSituation(status: ItemStatus): { label: string; tone: Tone } {
+  if (status === "DEVOLVIDO") return { label: "Devolvido", tone: "yellow" };
+  if (status === "ATRASADO") return { label: "Atrasado", tone: "red" };
+  return { label: "Na obra", tone: "sky" };
 }
 
 export function calcRental(r: RentalInput, today: Date): RentalCalc {
@@ -105,24 +153,26 @@ export function calcRental(r: RentalInput, today: Date): RentalCalc {
   const outstandingQty = items.reduce((s, i) => s + i.outstandingQty, 0);
   const allReturned = r.items.length > 0 && outstandingQty === 0;
 
-  const overdue =
-    r.stage === "ATIVA" && outstandingQty > 0 && !!r.expectedEndDate && r.expectedEndDate.getTime() < today.getTime();
-  const overdueDays = overdue ? inclusiveDays(r.expectedEndDate!, today) - 1 : 0;
+  // Atrasada se qualquer item com material na obra passou da própria previsão; vale o maior atraso.
+  const overdue = items.some((i) => i.overdue);
+  const overdueDays = Math.max(0, ...items.map((i) => i.overdueDays));
 
-  const days = Math.max(
-    0,
-    ...r.items.map((it, idx) => {
-      const fromReturns = it.returns.map((x) => x.chargedDays ?? inclusiveDays(r.startDate, x.date));
-      return Math.max(items[idx].outstandingQty > 0 ? items[idx].outstandingDays : 0, ...fromReturns, 0);
-    }),
-  );
+  const days = Math.max(0, ...items.map((i) => Math.max(i.outstandingQty > 0 ? i.outstandingDays : 0, ...i.returnDays, 0)));
+
+  let nextExpectedEnd: Date | null = null;
+  for (const i of items) {
+    if (i.outstandingQty > 0 && !i.overdue && i.expectedEndDate && (!nextExpectedEnd || i.expectedEndDate < nextExpectedEnd)) {
+      nextExpectedEnd = i.expectedEndDate;
+    }
+  }
+  const hasAdditions = items.some((i) => i.addition);
 
   let financial: RentalCalc["financial"] = "EM_ABERTO";
   if (total <= 0) financial = "SEM_VALOR";
   else if (open <= 0.009) financial = "PAGO";
   else if (paid > 0) financial = "PARCIAL";
 
-  return { items, itemsTotal, extrasTotal, discount, total, paid, open, outstandingQty, allReturned, overdue, overdueDays, days, financial };
+  return { items, itemsTotal, extrasTotal, discount, total, paid, open, outstandingQty, allReturned, overdue, overdueDays, days, nextExpectedEnd, hasAdditions, financial };
 }
 
 /** Faixa de preço sugerida pela duração da locação. */
@@ -157,6 +207,22 @@ export function priceFor(eq: PriceTable, period: string): number | null {
     }
   }
   return null;
+}
+
+/**
+ * Valor por dia sugerido para um equipamento. Prioridade:
+ * último valor cobrado deste cliente → tabela de preços → último valor cobrado de qualquer cliente.
+ */
+export function suggestUnitPrice(
+  eq: (PriceTable & { lastPrice: number | null }) | undefined,
+  customerPrice: number | null | undefined,
+  period: string,
+): { unitPrice: number | null; source?: string } {
+  if (customerPrice != null) return { unitPrice: customerPrice, source: "último valor deste cliente" };
+  const table = eq ? priceFor(eq, period) : null;
+  if (table != null) return { unitPrice: table, source: "tabela de preços" };
+  if (eq?.lastPrice != null) return { unitPrice: eq.lastPrice, source: "último valor cobrado" };
+  return { unitPrice: null };
 }
 
 export type Tone = "gray" | "sky" | "yellow" | "green" | "blue" | "red" | "amber";

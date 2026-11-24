@@ -26,7 +26,12 @@ export function quoteMessage(r: RentalWithCalc, companyName: string, url: string
     ...(r.siteAddress ? [`Obra: ${r.siteAddress}`] : []),
     `Período: ${fmtDate(r.startDate)}${r.expectedEndDate ? ` a ${fmtDate(r.expectedEndDate)}` : ""}`,
     "",
-    ...r.items.map((i) => `• ${i.qty}× ${i.equipment.name}`),
+    ...r.items.map((i, idx) => {
+      const ic = r.calc.items[idx];
+      return ic.addition
+        ? `• ${i.qty}× ${i.equipment.name} (acréscimo: ${fmtDate(ic.startDate)}${ic.expectedEndDate ? ` a ${fmtDate(ic.expectedEndDate)}` : ""})`
+        : `• ${i.qty}× ${i.equipment.name}`;
+    }),
     "",
     `*Total: ${money(r.calc.total)}*`,
     ...(r.calc.paid > 0 && r.calc.open > 0 ? [`Pago: ${money(r.calc.paid)} · Em aberto: ${money(r.calc.open)}`] : []),

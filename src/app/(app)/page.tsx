@@ -20,8 +20,9 @@ export default async function PainelPage() {
   const onSite = active.filter((r) => r.calc.outstandingQty > 0);
   const overdue = onSite.filter((r) => r.calc.overdue);
   const dueSoon = onSite.filter((r) => {
-    if (!r.expectedEndDate || r.calc.overdue) return false;
-    const d = diffDays(now, r.expectedEndDate);
+    // Próxima previsão entre os itens na obra (acréscimos têm a própria).
+    if (!r.calc.nextExpectedEnd || r.calc.overdue) return false;
+    const d = diffDays(now, r.calc.nextExpectedEnd);
     return d >= 0 && d <= 3;
   });
   const returnedNotClosed = active.filter((r) => r.calc.allReturned);

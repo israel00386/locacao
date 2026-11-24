@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { fmtDate, inclusiveDays, today } from "@/lib/dates";
+import { fmtDate, today } from "@/lib/dates";
 import { money, periodLabel, rentalCode, unitMoney } from "@/lib/format";
 import { getCompany, rentalInclude, withCalc } from "@/lib/rentals";
 import { PrintButton } from "./print-button";
@@ -58,11 +58,14 @@ export default async function OrcamentoPublico({ params }: { params: Promise<{ t
               return (
                 <li key={it.id} className="py-2.5">
                   <div className="flex justify-between gap-3">
-                    <span className="font-semibold">{it.qty}× {it.equipment.name}</span>
+                    <span className="font-semibold">
+                      {it.qty}× {it.equipment.name}
+                      {ic.addition && <span className="ml-1.5 rounded bg-[#d9a520]/20 px-1.5 py-0.5 text-[10px] font-bold uppercase text-[#7a5a00]">Acréscimo</span>}
+                    </span>
                     <span className="font-semibold tnum">{money(ic.total)}</span>
                   </div>
                   <div className="text-[11px] text-slate-500 tnum">
-                    {unitMoney(Number(it.unitPrice))}/dia · {periodLabel(it.period)} · {fmtDate(r.startDate)} a {fmtDate(r.expectedEndDate)}
+                    {unitMoney(Number(it.unitPrice))}/dia · {periodLabel(it.period)} · {fmtDate(ic.startDate)} a {fmtDate(ic.expectedEndDate)}
                   </div>
                 </li>
               );
@@ -85,18 +88,20 @@ export default async function OrcamentoPublico({ params }: { params: Promise<{ t
               <tbody className="tnum">
                 {r.items.map((it, idx) => {
                   const ic = c.items[idx];
-                  const returnDays = it.returns.map((x) => x.chargedDays ?? inclusiveDays(r.startDate, x.date));
-                  const allDays = [...returnDays, ...(ic.outstandingQty > 0 ? [ic.outstandingDays] : [])];
+                  const allDays = [...ic.returnDays, ...(ic.outstandingQty > 0 ? [ic.outstandingDays] : [])];
                   const daysText = allDays.length && allDays.every((d) => d === allDays[0]) ? String(allDays[0]) : allDays.join(" / ");
                   const lastReturn = it.returns.at(-1)?.date;
-                  const end = ic.outstandingQty > 0 ? r.expectedEndDate : lastReturn ?? r.expectedEndDate;
+                  const end = ic.outstandingQty > 0 ? ic.expectedEndDate : lastReturn ?? ic.expectedEndDate;
                   return (
                     <tr key={it.id} className="border-b border-slate-200 odd:bg-slate-50">
-                      <td className="px-2 py-1.5 font-medium">{it.equipment.name}</td>
+                      <td className="px-2 py-1.5 font-medium">
+                        {it.equipment.name}
+                        {ic.addition && <span className="ml-1.5 text-[10px] font-bold uppercase text-[#7a5a00]">(acréscimo)</span>}
+                      </td>
                       <td className="px-2 py-1.5 text-right">{it.qty}</td>
                       <td className="px-2 py-1.5 text-right">{unitMoney(Number(it.unitPrice))}</td>
                       <td className="px-2 py-1.5 text-center">{periodLabel(it.period)}</td>
-                      <td className="px-2 py-1.5 text-center">{fmtDate(r.startDate)}</td>
+                      <td className="px-2 py-1.5 text-center">{fmtDate(ic.startDate)}</td>
                       <td className="px-2 py-1.5 text-center">{fmtDate(end)}</td>
                       <td className="px-2 py-1.5 text-right">{daysText}</td>
                       <td className="px-2 py-1.5 text-right font-semibold">{money(ic.total)}</td>

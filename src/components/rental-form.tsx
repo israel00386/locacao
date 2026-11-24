@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { priceFor, suggestPeriod, type PriceTable } from "@/lib/calc";
+import { priceFor, suggestPeriod, suggestUnitPrice, type PriceTable } from "@/lib/calc";
 import { inclusiveDays, parseISODate, toISODate, addDays, weekday } from "@/lib/dates";
 import { money, parseMoney, PERIODS, unitMoney, type Period } from "@/lib/format";
 import { saveRental, type RentalPayload } from "@/app/(app)/locacoes/actions";
+import { Badge } from "./ui";
 
 export interface CustomerOption {
   id: string;
@@ -32,7 +33,17 @@ export interface InitialRental {
   discount: number;
   notes: string;
   stage: string;
-  items: { id: string; equipmentId: string; qty: number; unitPrice: number; period: Period; daysOverride: number | null; returnedQty: number }[];
+  items: {
+    id: string;
+    equipmentId: string;
+    qty: number;
+    unitPrice: number;
+    period: Period;
+    daysOverride: number | null;
+    returnedQty: number;
+    /** Acréscimo: retirada e previsão próprias (AAAA-MM-DD). Não são editadas aqui e ficam preservadas. */
+    addition?: { startDate: string; expectedEndDate: string };
+  }[];
   extras: { description: string; amount: number }[];
 }
 
@@ -47,6 +58,7 @@ interface ItemState {
   auto: boolean;
   minQty: number;
   priceSource?: string;
+  addition?: { startDate: string; expectedEndDate: string };
 }
 
 const EXTRA_PRESETS = ["Taxa de entrega", "Mobilização", "Cobrança mínima", "Manutenção"];
@@ -100,6 +112,7 @@ export function RentalForm({
         daysOverride: i.daysOverride ? String(i.daysOverride) : "",
         auto: false,
         minQty: i.returnedQty,
+        addition: i.addition,
       })) ?? [],
   );
   const [extras, setExtras] = useState(
@@ -123,13 +136,8 @@ export function RentalForm({
   // Prioridade: último valor deste cliente → tabela de preços → último valor cobrado de qualquer cliente.
   function autoPrice(eqId: string, d: number): { period: Period; unitPrice: string; priceSource?: string } {
     const period = suggestPeriod(d || 1);
-    const eq = eqById.get(eqId);
-    const own = customer?.prices[eqId];
-    if (own != null) return { period, unitPrice: fmtNum(own), priceSource: "último valor deste cliente" };
-    const table = eq ? priceFor(eq, period) : null;
-    if (table != null) return { period, unitPrice: fmtNum(table), priceSource: "tabela de preços" };
-    if (eq?.lastPrice != null) return { period, unitPrice: fmtNum(eq.lastPrice), priceSource: "último valor cobrado" };
-    return { period, unitPrice: "", priceSource: undefined };
+    const sug = suggestUnitPrice(eqById.get(eqId), customer?.prices[eqId], period);
+    return { period, unitPrice: sug.unitPrice != null ? fmtNum(sug.unitPrice) : "", priceSource: sug.source };
   }
 
   function onDatesChange(nextStart: string, nextEnd: string) {
@@ -151,7 +159,16 @@ export function RentalForm({
 
   const update = (key: string, patch: Partial<ItemState>) => setItems((l) => l.map((i) => (i.key === key ? { ...i, ...patch } : i)));
 
-  const lineTotal = (i: ItemState) => i.qty * parseMoney(i.unitPrice) * (Number(i.daysOverride) || days || 1);
+  // Acréscimo conta da própria retirada até a própria previsão (ou a da locação).
+  const itemDays = (i: ItemState) => {
+    if (!i.addition) return days || 1;
+    const s = parseISODate(i.addition.startDate);
+    const e = parseISODate(i.addition.expectedEndDate) ?? end;
+    return s && e && e >= s ? inclusiveDays(s, e) : 1;
+  };
+  const lineTotal = (i: ItemState) => i.qty * parseMoney(i.unitPrice) * (Number(i.daysOverride) || itemDays(i));
+  const hasAdditions = items.some((i) => i.addition);
+  const fmtShort = (iso: string) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}` : "—");
   const itemsTotal = items.reduce((s, i) => s + lineTotal(i), 0);
   const extrasTotal = extras.reduce((s, e) => s + parseMoney(e.amount), 0);
   const total = itemsTotal + extrasTotal - parseMoney(discount);
@@ -326,6 +343,11 @@ export function RentalForm({
             + Adicionar
           </button>
         </div>
+        {hasAdditions && (
+          <p className="border-b border-slate-100 bg-amber-50 px-4 py-2 text-xs text-amber-800">
+            Os acréscimos mantêm as próprias datas de retirada e previsão (não mudam com as datas acima). Equipamento adicionado aqui entra com as datas da locação; para outra data, use “+ Acréscimo de equipamento” na página da locação.
+          </p>
+        )}
         {items.length === 0 ? (
           <button type="button" onClick={() => setPicker(true)} className="block w-full px-4 py-8 text-center text-sm text-slate-500">
             Nenhum equipamento. Toque para adicionar.
@@ -341,6 +363,12 @@ export function RentalForm({
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="text-sm font-semibold">{eq?.name ?? "?"}</div>
+                      {it.addition && (
+                        <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-slate-700 tnum">
+                          <Badge tone="amber">Acréscimo</Badge>
+                          retirada {fmtShort(it.addition.startDate)} → previsão {fmtShort(it.addition.expectedEndDate || expectedEndDate)}
+                        </div>
+                      )}
                       <div className={`text-xs ${over ? "font-medium text-amber-700" : "text-slate-500"}`}>
                         {avail} disponíveis{over ? " — vai faltar (sublocar?)" : ""}
                       </div>
@@ -400,7 +428,7 @@ export function RentalForm({
                     <div className="mt-2 flex flex-wrap items-end gap-3">
                       <div>
                         <div className="label">Dias cobrados (vazio = automático)</div>
-                        <input className="input w-32 tnum" inputMode="numeric" value={it.daysOverride} onChange={(e) => update(it.key, { daysOverride: e.target.value.replace(/\D/g, "") })} placeholder={String(days || 1)} />
+                        <input className="input w-32 tnum" inputMode="numeric" value={it.daysOverride} onChange={(e) => update(it.key, { daysOverride: e.target.value.replace(/\D/g, "") })} placeholder={String(itemDays(it))} />
                       </div>
                       {it.minQty === 0 ? (
                         <button type="button" className="btn-danger btn-sm" onClick={() => setItems((l) => l.filter((x) => x.key !== it.key))}>
@@ -421,13 +449,13 @@ export function RentalForm({
       {/* ACRÉSCIMOS E DESCONTO */}
       <div className="card space-y-3 p-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">Acréscimos</h2>
+          <h2 className="text-sm font-semibold">Taxas e cobranças extras</h2>
         </div>
         {extras.map((ex) => (
           <div key={ex.key} className="flex gap-2">
             <input className="input flex-1" value={ex.description} placeholder="Descrição" onChange={(e) => setExtras((l) => l.map((x) => (x.key === ex.key ? { ...x, description: e.target.value } : x)))} />
             <input className="input w-28 tnum" inputMode="decimal" value={ex.amount} placeholder="R$" onChange={(e) => setExtras((l) => l.map((x) => (x.key === ex.key ? { ...x, amount: e.target.value } : x)))} />
-            <button type="button" className="btn-ghost px-2" aria-label="Remover acréscimo" onClick={() => setExtras((l) => l.filter((x) => x.key !== ex.key))}>
+            <button type="button" className="btn-ghost px-2" aria-label="Remover taxa" onClick={() => setExtras((l) => l.filter((x) => x.key !== ex.key))}>
               ✕
             </button>
           </div>
@@ -457,7 +485,7 @@ export function RentalForm({
           <div className="flex items-baseline justify-between text-sm">
             <span className="text-slate-500">
               {items.length} {items.length === 1 ? "item" : "itens"} · {days || 1} {days === 1 ? "dia" : "dias"}
-              {extrasTotal > 0 && ` · acréscimos ${money(extrasTotal)}`}
+              {extrasTotal > 0 && ` · taxas ${money(extrasTotal)}`}
             </span>
             <span className="text-lg font-bold tnum">{money(total)}</span>
           </div>

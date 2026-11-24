@@ -4,9 +4,9 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { parseISODate, today } from "@/lib/dates";
+import { fmtDate, parseISODate, today } from "@/lib/dates";
 import { parseMoney } from "@/lib/format";
-import { getRental } from "@/lib/rentals";
+import { getRental, getStock } from "@/lib/rentals";
 
 export interface ActionResult {
   error?: string;
@@ -104,6 +104,13 @@ export async function saveRental(payload: RentalPayload): Promise<ActionResult> 
       if (!current) throw new UserError("Locação não encontrada.");
       if (current.stage === "ENCERRADA" || current.stage === "CANCELADA") throw new UserError("Reabra a locação para editar.");
 
+      const earlyAddition = current.items.find((i) => i.startDate && i.startDate < startDate);
+      if (earlyAddition) {
+        throw new UserError(
+          `O acréscimo de ${earlyAddition.equipment.name} foi retirado em ${fmtDate(earlyAddition.startDate)}. A retirada da locação não pode ser depois disso.`,
+        );
+      }
+
       await tx.rental.update({ where: { id: p.id }, data });
 
       const keep = new Set(p.items.filter((i) => i.id).map((i) => i.id));
@@ -113,6 +120,7 @@ export async function saveRental(payload: RentalPayload): Promise<ActionResult> 
           await tx.rentalItem.delete({ where: { id: old.id } });
         }
       }
+      // Retirada/previsão próprias dos acréscimos não fazem parte do formulário: o update abaixo não as toca.
       for (const i of p.items) {
         const fields = { equipmentId: i.equipmentId, qty: i.qty, unitPrice: i.unitPrice, period: i.period, daysOverride: i.daysOverride };
         const old = i.id ? current.items.find((x) => x.id === i.id) : undefined;
@@ -138,6 +146,85 @@ export async function saveRental(payload: RentalPayload): Promise<ActionResult> 
 
 class UserError extends Error {}
 
+const additionSchema = z.object({
+  startDate: z.string().min(10, "Informe a data de retirada."),
+  expectedEndDate: z.string().optional(),
+  items: z
+    .array(
+      z.object({
+        equipmentId: z.string().min(1),
+        qty: z.number().int().positive("Quantidade inválida."),
+        unitPrice: z.number().min(0),
+        period: z.enum(["DIARIA", "SEMANAL", "QUINZENAL", "MENSAL", "ESPECIAL"]),
+      }),
+    )
+    .min(1, "Escolha pelo menos um equipamento."),
+});
+
+export type AdditionPayload = z.infer<typeof additionSchema>;
+
+/**
+ * Acréscimo de equipamento: só com a locação ativa. Cada item ganha a própria retirada e previsão,
+ * conta os próprios dias e é devolvido separadamente.
+ */
+export async function addItemsToRental(rentalId: string, payload: AdditionPayload): Promise<ActionResult> {
+  await requireUser();
+  const parsed = additionSchema.safeParse(payload);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+  const p = parsed.data;
+
+  const startDate = parseISODate(p.startDate);
+  const expectedEndDate = parseISODate(p.expectedEndDate);
+  if (!startDate) return { error: "Informe a data de retirada." };
+
+  try {
+    await db.$transaction(async (tx) => {
+      const rental = await tx.rental.findUnique({ where: { id: rentalId } });
+      if (!rental) throw new UserError("Locação não encontrada.");
+      if (rental.stage !== "ATIVA") {
+        throw new UserError("Acréscimo de equipamento só pode ser feito com a locação ativa. Confirme a locação primeiro (ou reabra, se estiver encerrada).");
+      }
+      if (startDate < rental.startDate) {
+        throw new UserError(`A retirada do acréscimo não pode ser antes da retirada da locação (${fmtDate(rental.startDate)}).`);
+      }
+      const end = expectedEndDate ?? rental.expectedEndDate;
+      if (end && end < startDate) {
+        throw new UserError(expectedEndDate ? "A previsão de devolução é antes da retirada." : "Informe a previsão de devolução do acréscimo.");
+      }
+
+      // Estoque: soma o que foi pedido de cada equipamento e compara com o disponível agora.
+      const stock = new Map((await getStock()).map((s) => [s.id, s]));
+      const wanted = new Map<string, number>();
+      for (const i of p.items) wanted.set(i.equipmentId, (wanted.get(i.equipmentId) ?? 0) + i.qty);
+      for (const [eqId, qty] of wanted) {
+        const s = stock.get(eqId);
+        if (!s) throw new UserError("Equipamento não encontrado ou inativo.");
+        if (qty > s.availableQty) {
+          throw new UserError(`${s.name}: só ${Math.max(0, s.availableQty)} disponíve${s.availableQty === 1 ? "l" : "is"} no estoque (pedido ${qty}).`);
+        }
+      }
+
+      await tx.rentalItem.createMany({
+        data: p.items.map((i) => ({
+          rentalId,
+          equipmentId: i.equipmentId,
+          qty: i.qty,
+          unitPrice: i.unitPrice,
+          period: i.period,
+          startDate,
+          // Sem previsão própria, guarda a da locação: o acréscimo não muda se a previsão da locação mudar depois.
+          expectedEndDate: end,
+        })),
+      });
+    });
+  } catch (e) {
+    if (e instanceof UserError) return { error: e.message };
+    throw e;
+  }
+  refresh(rentalId);
+  return {};
+}
+
 export async function confirmRental(id: string) {
   await requireUser();
   await db.rental.update({ where: { id, stage: "ORCAMENTO" }, data: { stage: "ATIVA" } });
@@ -159,6 +246,10 @@ export async function registerReturn(rentalId: string, form: FormData): Promise<
     if (!qty) continue;
     const max = rental.calc.items[idx].outstandingQty;
     if (qty < 0 || qty > max) return { error: `Quantidade inválida para ${item.equipment.name} (máximo ${max}).` };
+    const itemStart = rental.calc.items[idx].startDate;
+    if (date < itemStart) {
+      return { error: `${item.equipment.name} foi retirado em ${fmtDate(itemStart)}. A devolução não pode ser antes disso.` };
+    }
     const daysRaw = String(form.get(`days_${item.id}`) ?? "").trim();
     entries.push({ itemId: item.id, qty, chargedDays: daysRaw ? Math.max(1, Math.round(Number(daysRaw))) : null });
   }

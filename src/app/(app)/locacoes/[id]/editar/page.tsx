@@ -30,6 +30,7 @@ export default async function EditarLocacaoPage({ params }: { params: Promise<{ 
       period: i.period as Period,
       daysOverride: i.daysOverride,
       returnedQty: r.calc.items[idx].returnedQty,
+      addition: i.startDate ? { startDate: toISODate(i.startDate), expectedEndDate: toISODate(i.expectedEndDate) } : undefined,
     })),
     extras: r.extras.map((e) => ({ description: e.description, amount: Number(e.amount) })),
   };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calcRental, priceFor, suggestPeriod, outstandingDaysFor } from "@/lib/calc";
+import { calcRental, itemSituation, priceFor, suggestPeriod, suggestUnitPrice, outstandingDaysFor } from "@/lib/calc";
 import { parseISODate as d, inclusiveDays } from "@/lib/dates";
 
 const base = {
@@ -132,6 +132,167 @@ describe("locação", () => {
   });
 });
 
+describe("acréscimo de equipamento", () => {
+  // Locação: retirada 01/11, previsão 30/11. Acréscimo: retirada 10/11, previsão 20/11.
+  const rental = {
+    ...base,
+    stage: "ATIVA",
+    startDate: d("2026-11-01")!,
+    expectedEndDate: d("2026-11-30")!,
+  };
+  const initial = { qty: 10, unitPrice: 1, daysOverride: null, returns: [] };
+
+  it("item sem datas próprias calcula como antes", () => {
+    const c = calcRental({ ...rental, items: [initial] }, d("2026-11-15")!);
+    expect(c.items[0].addition).toBe(false);
+    expect(c.items[0].startDate).toEqual(d("2026-11-01"));
+    expect(c.items[0].expectedEndDate).toEqual(d("2026-11-30"));
+    expect(c.items[0].outstandingDays).toBe(30);
+    expect(c.items[0].status).toBe("NA_OBRA");
+    expect(c.hasAdditions).toBe(false);
+    expect(c.total).toBe(300);
+  });
+
+  it("acréscimo com início posterior e previsão própria conta só os seus dias", () => {
+    const c = calcRental(
+      {
+        ...rental,
+        items: [
+          initial,
+          { qty: 4, unitPrice: 2, daysOverride: null, returns: [], startDate: d("2026-11-10"), expectedEndDate: d("2026-11-20") },
+        ],
+      },
+      d("2026-11-15")!,
+    );
+    const a = c.items[1];
+    expect(a.addition).toBe(true);
+    expect(a.startDate).toEqual(d("2026-11-10"));
+    expect(a.expectedEndDate).toEqual(d("2026-11-20"));
+    expect(a.outstandingDays).toBe(11); // 10/11 → 20/11
+    expect(a.total).toBe(4 * 2 * 11);
+    expect(c.total).toBe(300 + 88);
+    expect(c.days).toBe(30);
+    expect(c.overdue).toBe(false);
+    expect(c.hasAdditions).toBe(true);
+    expect(c.nextExpectedEnd).toEqual(d("2026-11-20"));
+  });
+
+  it("acréscimo sem previsão própria usa a previsão da locação", () => {
+    const c = calcRental(
+      { ...rental, items: [{ qty: 2, unitPrice: 5, daysOverride: null, returns: [], startDate: d("2026-11-21") }] },
+      d("2026-11-22")!,
+    );
+    expect(c.items[0].expectedEndDate).toEqual(d("2026-11-30"));
+    expect(c.items[0].outstandingDays).toBe(10); // 21/11 → 30/11
+    expect(c.total).toBe(100);
+  });
+
+  it("devolução parcial do acréscimo conta da retirada do acréscimo", () => {
+    const c = calcRental(
+      {
+        ...rental,
+        items: [
+          initial,
+          {
+            qty: 4,
+            unitPrice: 2,
+            daysOverride: null,
+            startDate: d("2026-11-10"),
+            expectedEndDate: d("2026-11-20"),
+            // 3 voltaram em 14/11 (5 dias); 1 continua até a previsão 20/11 (11 dias)
+            returns: [{ qty: 3, date: d("2026-11-14")!, chargedDays: null }],
+          },
+        ],
+      },
+      d("2026-11-15")!,
+    );
+    const a = c.items[1];
+    expect(a.returnDays).toEqual([5]);
+    expect(a.returnedQty).toBe(3);
+    expect(a.outstandingQty).toBe(1);
+    expect(a.status).toBe("NA_OBRA");
+    expect(a.total).toBe(3 * 2 * 5 + 1 * 2 * 11);
+    expect(c.total).toBe(300 + 52);
+  });
+
+  it("acréscimo devolvido por inteiro fica Devolvido, o resto continua na obra", () => {
+    const c = calcRental(
+      {
+        ...rental,
+        items: [
+          initial,
+          { qty: 2, unitPrice: 1, daysOverride: null, startDate: d("2026-11-10"), expectedEndDate: d("2026-11-20"), returns: [{ qty: 2, date: d("2026-11-12")!, chargedDays: null }] },
+        ],
+      },
+      d("2026-11-25")!,
+    );
+    expect(c.items[1].status).toBe("DEVOLVIDO");
+    expect(c.items[1].total).toBe(2 * 1 * 3);
+    expect(c.items[1].overdue).toBe(false); // voltou tudo, mesmo depois da previsão
+    expect(c.overdue).toBe(false);
+    expect(c.allReturned).toBe(false);
+    expect(itemSituation(c.items[1].status)).toEqual({ label: "Devolvido", tone: "yellow" });
+  });
+
+  it("só o acréscimo atrasado deixa a locação atrasada", () => {
+    const c = calcRental(
+      {
+        ...rental,
+        items: [
+          initial,
+          { qty: 1, unitPrice: 14, daysOverride: null, returns: [], startDate: d("2026-11-10"), expectedEndDate: d("2026-11-20") },
+        ],
+      },
+      d("2026-11-23")!,
+    );
+    expect(c.items[0].overdue).toBe(false);
+    expect(c.items[0].status).toBe("NA_OBRA");
+    expect(c.items[1].overdue).toBe(true);
+    expect(c.items[1].overdueDays).toBe(3);
+    expect(c.items[1].status).toBe("ATRASADO");
+    expect(c.items[1].outstandingDays).toBe(14); // 10/11 → 23/11 (hoje)
+    expect(c.overdue).toBe(true);
+    expect(c.overdueDays).toBe(3);
+    expect(c.total).toBe(300 + 14 * 14);
+    expect(c.nextExpectedEnd).toEqual(d("2026-11-30"));
+    expect(itemSituation(c.items[1].status)).toEqual({ label: "Atrasado", tone: "red" });
+  });
+
+  it("locação atrasada usa o maior atraso entre os itens", () => {
+    const c = calcRental(
+      {
+        ...rental,
+        expectedEndDate: d("2026-11-12")!,
+        items: [
+          initial,
+          { qty: 1, unitPrice: 1, daysOverride: null, returns: [], startDate: d("2026-11-10"), expectedEndDate: d("2026-11-20") },
+        ],
+      },
+      d("2026-11-22")!,
+    );
+    expect(c.items[0].overdueDays).toBe(10);
+    expect(c.items[1].overdueDays).toBe(2);
+    expect(c.overdueDays).toBe(10);
+  });
+
+  it("previsão do acréscimo depois da previsão da locação: locação não atrasa enquanto o inicial já voltou", () => {
+    const c = calcRental(
+      {
+        ...rental,
+        expectedEndDate: d("2026-11-12")!,
+        items: [
+          { ...initial, returns: [{ qty: 10, date: d("2026-11-12")!, chargedDays: null }] },
+          { qty: 1, unitPrice: 1, daysOverride: null, returns: [], startDate: d("2026-11-10"), expectedEndDate: d("2026-11-30") },
+        ],
+      },
+      d("2026-11-22")!,
+    );
+    expect(c.overdue).toBe(false);
+    expect(c.items[0].total).toBe(10 * 12);
+    expect(c.items[1].outstandingDays).toBe(21);
+  });
+});
+
 describe("tabela de preços", () => {
   it("sugere a faixa pela duração", () => {
     expect(suggestPeriod(3)).toBe("DIARIA");
@@ -146,5 +307,14 @@ describe("tabela de preços", () => {
     expect(priceFor(t, "SEMANAL")).toBe(1);
     expect(priceFor(t, "ESPECIAL")).toBeNull();
     expect(priceFor({ priceDaily: null, priceWeekly: null, priceBiweekly: null, priceMonthly: null }, "DIARIA")).toBeNull();
+  });
+
+  it("valor sugerido: cliente → tabela → último valor cobrado", () => {
+    const eq = { priceDaily: 1, priceWeekly: null, priceBiweekly: null, priceMonthly: 0.5, lastPrice: 0.8 };
+    expect(suggestUnitPrice(eq, 0.7, "MENSAL").unitPrice).toBe(0.7);
+    expect(suggestUnitPrice(eq, undefined, "MENSAL").unitPrice).toBe(0.5);
+    const empty = { priceDaily: null, priceWeekly: null, priceBiweekly: null, priceMonthly: null, lastPrice: 0.8 };
+    expect(suggestUnitPrice(empty, null, "DIARIA")).toEqual({ unitPrice: 0.8, source: "último valor cobrado" });
+    expect(suggestUnitPrice({ ...empty, lastPrice: null }, null, "DIARIA").unitPrice).toBeNull();
   });
 });
