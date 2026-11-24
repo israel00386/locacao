@@ -17,8 +17,8 @@ import {
   Truck,
   Wallet,
 } from "lucide-react";
-import { CashEntryButton, CashEntryRowButton, OpeningBalanceButton } from "@/components/cash-sheets";
-import { ExpenseRowButton, NewExpenseButton } from "@/components/expense-sheet";
+import { CashEntryRowButton, OpeningBalanceButton } from "@/components/cash-sheets";
+import { ExpenseRowButton, RegisterButton } from "@/components/expense-sheet";
 import { categoryTone, iconFor, methodIcon } from "@/components/finance-ui";
 import { DayLabel, EmptyState, MoneyStat, NavyStat, QUICK_TILE_BTN, QUICK_TONES, QuickTileBody } from "@/components/screen-kit";
 import { Avatar, Badge, BalanceCard, BarChart, Chip, Donut, IconBox, ProgressRow, Section, SegmentedTabs, Stat, TopBar, TxRow } from "@/components/ui";
@@ -100,9 +100,9 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
             <Link href="/financeiro/categorias" className="btn-round" aria-label="Categorias de despesa" title="Categorias de despesa">
               <Shapes className="size-5" strokeWidth={1.9} />
             </Link>
-            <NewExpenseButton rentals={rentalOptions} todayISO={today} categories={categories} className="btn-primary hidden rounded-full sm:inline-flex">
-              <Plus className="size-4" strokeWidth={2.4} aria-hidden /> Despesa
-            </NewExpenseButton>
+            <RegisterButton rentals={rentalOptions} todayISO={today} categories={categories} className="btn-primary rounded-full max-sm:size-11 max-sm:px-0">
+              <Plus className="size-4" strokeWidth={2.4} aria-hidden /> <span className="max-sm:sr-only">Registrar</span>
+            </RegisterButton>
           </>
         }
       />
@@ -258,16 +258,10 @@ async function CaixaTab({
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:col-span-5 lg:grid-rows-[auto_1fr]">
         <MoneyStat label={`Entradas em ${name}`} icon={<ArrowDownLeft />} tone="green" amount={monthIn.inflow} hint={`${monthIn.byKind.RECEBIMENTO ? "recebimentos" : "nenhum recebimento"}${monthIn.byKind.ENTRADA ? " + manuais" : ""}`} />
         <MoneyStat label={`Saídas em ${name}`} icon={<ArrowUpRight />} tone="red" amount={monthIn.outflow} hint={`despesas${monthIn.byKind.SAIDA ? " + retiradas" : ""}`} />
-        <div className="col-span-2 grid grid-cols-3 gap-2.5 sm:gap-3">
-          <CashEntryButton kind="ENTRADA" todayISO={today} className={`${QUICK_TILE_BTN} ${QUICK_TONES.emerald}`}>
-            <QuickTileBody icon={ArrowDownLeft} label="Entrada" hint="aporte, ajuste" />
-          </CashEntryButton>
-          <CashEntryButton kind="SAIDA" todayISO={today} className={`${QUICK_TILE_BTN} ${QUICK_TONES.rose}`}>
-            <QuickTileBody icon={ArrowUpRight} label="Saída" hint="retirada do dono" />
-          </CashEntryButton>
-          <NewExpenseButton rentals={rentalOptions} todayISO={today} categories={categories} className={`${QUICK_TILE_BTN} ${QUICK_TONES.brand}`}>
-            <QuickTileBody icon={Receipt} label="Despesa" hint="frete, combustível" />
-          </NewExpenseButton>
+        <div className="col-span-2">
+          <RegisterButton rentals={rentalOptions} todayISO={today} categories={categories} className="btn-primary btn-lg w-full rounded-full">
+            <Plus className="size-5" strokeWidth={2.4} aria-hidden /> Registrar entrada ou saída
+          </RegisterButton>
         </div>
       </div>
 
@@ -499,9 +493,9 @@ async function DespesasTab({
           />
         </div>
         <div className="mt-5 grid grid-cols-2 gap-2">
-          <NewExpenseButton rentals={rentalOptions} todayISO={today} categories={categories} className="btn-primary rounded-full">
-            <Plus className="size-4" strokeWidth={2.4} aria-hidden /> Despesa
-          </NewExpenseButton>
+          <RegisterButton rentals={rentalOptions} todayISO={today} categories={categories} className="btn-primary rounded-full">
+            <Plus className="size-4" strokeWidth={2.4} aria-hidden /> Registrar
+          </RegisterButton>
           <Link href="/financeiro/categorias" className="btn-secondary rounded-full">
             <Shapes className="size-4" aria-hidden /> Categorias
           </Link>
@@ -566,9 +560,9 @@ async function DespesasTab({
               icon={Receipt}
               title="Nenhuma despesa neste mês"
               action={
-                <NewExpenseButton rentals={rentalOptions} todayISO={today} categories={categories} className="btn-primary rounded-full">
-                  <Plus className="size-4" strokeWidth={2.4} aria-hidden /> Nova despesa
-                </NewExpenseButton>
+                <RegisterButton rentals={rentalOptions} todayISO={today} categories={categories} className="btn-primary rounded-full">
+                  <Plus className="size-4" strokeWidth={2.4} aria-hidden /> Registrar
+                </RegisterButton>
               }
             >
               Registre fretes, combustível, manutenção e compras de material.

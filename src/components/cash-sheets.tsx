@@ -31,7 +31,7 @@ const KIND_INFO = {
   },
 } as const;
 
-function CashEntryForm({ entry, kind: initialKind, todayISO, onDone }: { entry?: CashEntryValues; kind: "ENTRADA" | "SAIDA"; todayISO: string; onDone: () => void }) {
+export function CashEntryForm({ entry, kind: initialKind, todayISO, onDone, fixedKind = false }: { entry?: CashEntryValues; kind: "ENTRADA" | "SAIDA"; todayISO: string; onDone: () => void; fixedKind?: boolean }) {
   const uid = useId();
   const [kind, setKind] = useState(entry?.kind ?? initialKind);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +57,8 @@ function CashEntryForm({ entry, kind: initialKind, todayISO, onDone }: { entry?:
 
   return (
     <form action={submit} className="space-y-5 px-5 pt-1 pb-5 sm:px-6">
-      <div className="grid grid-cols-2 gap-1 rounded-full bg-slate-100 p-1" role="radiogroup" aria-label="Tipo">
+      {fixedKind && <input type="hidden" name="kind" value={kind} />}
+      <div className={`grid grid-cols-2 gap-1 rounded-full bg-slate-100 p-1 ${fixedKind ? "hidden" : ""}`} role="radiogroup" aria-label="Tipo">
         {(["ENTRADA", "SAIDA"] as const).map((k) => {
           const on = kind === k;
           const Icon = KIND_INFO[k].icon;
@@ -68,7 +69,7 @@ function CashEntryForm({ entry, kind: initialKind, todayISO, onDone }: { entry?:
                 on ? `bg-white shadow-sm ${k === "ENTRADA" ? "text-emerald-700" : "text-rose-700"}` : "text-slate-500"
               }`}
             >
-              <input type="radio" name="kind" value={k} checked={on} onChange={() => setKind(k)} className="sr-only" />
+              <input type="radio" name={fixedKind ? undefined : "kind"} value={k} checked={on} onChange={() => setKind(k)} className="sr-only" />
               <Icon className="size-4" strokeWidth={2.2} aria-hidden />
               {k === "ENTRADA" ? "Entrada" : "Saída"}
             </label>
@@ -114,15 +115,16 @@ function CashEntryForm({ entry, kind: initialKind, todayISO, onDone }: { entry?:
       </div>
 
       <p className="rounded-[16px] bg-slate-50 px-4 py-3 text-xs leading-relaxed text-slate-500">
-        Use para o que não é recebimento de locação nem despesa: aporte, retirada do dono, ajuste de diferença. Pagamentos de clientes entram sozinhos pela
-        locação, e despesas pelo botão “Despesa”.
+        {fixedKind
+          ? "Dinheiro que entrou no caixa sem ser pagamento de locação: aporte, venda avulsa, empréstimo, ajuste. Pagamentos de clientes entram sozinhos pela locação."
+          : "Use para o que não é recebimento de locação nem despesa: aporte, retirada do dono, ajuste de diferença. Pagamentos de clientes entram sozinhos pela locação."}
       </p>
 
       <FormAlert>{error}</FormAlert>
       <div className="flex flex-col gap-2 border-t border-slate-100 pt-4 sm:flex-row-reverse">
         <button className="btn-primary w-full rounded-full sm:w-auto sm:flex-1" disabled={pending}>
           {pending ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <Check className="size-4" strokeWidth={2.4} aria-hidden />}
-          {pending ? "Salvando…" : entry ? "Salvar alterações" : kind === "ENTRADA" ? "Lançar entrada" : "Lançar saída"}
+          {pending ? "Salvando…" : entry ? "Salvar alterações" : kind === "ENTRADA" ? "Registrar entrada" : "Registrar saída"}
         </button>
         {entry && (
           <button type="button" className="btn-danger w-full rounded-full sm:w-auto" onClick={remove} disabled={pending}>

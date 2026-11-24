@@ -196,7 +196,7 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
         <QuickTileBody icon={MessageCircle} label="Enviar no WhatsApp" hint={r.customer.phone ?? "escolher contato"} />
       </a>
       <a href={url} target="_blank" rel="noreferrer" className={quickTileClass("brand")}>
-        <QuickTileBody icon={FileText} label={isQuote ? "Orçamento / PDF" : "Ver PDF"} hint="link do cliente" />
+        <QuickTileBody icon={FileText} label={isQuote ? "Orçamento / PDF" : "Recibo / PDF"} hint="link do cliente" />
       </a>
       {isActive && hasOutstanding && (
         <QuickTile href="#devolucao" tone="accent" icon={<Undo2 />} label="Devolução" hint={`${c.outstandingQty} un. na obra`} />

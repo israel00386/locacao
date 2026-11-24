@@ -4,8 +4,8 @@ import { Check, Copy, Printer } from "lucide-react";
 
 export function PrintButton() {
   return (
-    <button type="button" onClick={() => window.print()} className="btn-primary rounded-full px-5">
-      <Printer size={16} aria-hidden /> Salvar PDF / Imprimir
+    <button type="button" onClick={() => window.print()} className="inline-flex min-h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-md bg-neutral-900 px-4 text-sm font-semibold text-white hover:bg-neutral-700">
+      <Printer size={16} aria-hidden /> PDF / Imprimir
     </button>
   );
 }

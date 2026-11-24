@@ -293,12 +293,12 @@ export function ShareQuote({
           }}
         >
           {copied ? <Link2 size={17} aria-hidden /> : <Share2 size={17} aria-hidden />}
-          {copied ? "Link copiado" : "Compartilhar orçamento"}
+          {copied ? "Link copiado" : "Compartilhar documento"}
         </button>
       )}
       {showView && (
         <a href={url} target="_blank" rel="noreferrer" className={`${second} ${className}`}>
-          <ExternalLink size={16} aria-hidden /> Ver orçamento / PDF
+          <ExternalLink size={16} aria-hidden /> Ver documento / PDF
         </a>
       )}
     </>

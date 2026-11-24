@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useId, useMemo, useState, useTransition, type ReactNode } from "react";
-import { Check, LoaderCircle, Pencil, Plus, Search, Settings2, Trash2 } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Check, LoaderCircle, Pencil, Plus, Search, Settings2, Trash2 } from "lucide-react";
+import { CashEntryForm } from "./cash-sheets";
 import { addExpense, deleteExpense, updateExpense } from "@/app/(app)/financeiro/actions";
 import { colorStyle, PAYMENT_METHODS, selectableCategories, type ExpenseCategoryData } from "@/lib/expense-categories";
 import { InlineCategoryCreator } from "./category-sheet";
@@ -196,7 +197,7 @@ function ExpenseForm({ expense, rentals, todayISO, categories, defaultRentalId, 
       <div className="flex flex-col gap-2 border-t border-slate-100 pt-4 sm:flex-row-reverse">
         <button className="btn-primary w-full rounded-full sm:w-auto sm:flex-1" disabled={pending || creating}>
           {pending ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <Check className="size-4" strokeWidth={2.4} aria-hidden />}
-          {pending ? "Salvando…" : expense ? "Salvar alterações" : "Adicionar despesa"}
+          {pending ? "Salvando…" : expense ? "Salvar alterações" : "Registrar saída"}
         </button>
         {expense && (
           <button type="button" className="btn-danger w-full rounded-full sm:w-auto" onClick={remove} disabled={pending}>
@@ -293,6 +294,79 @@ export function ExpenseRowButton({ expense, rentals, todayISO, categories, label
       {open && (
         <Sheet title="Editar despesa" subtitle="Altere os dados ou exclua o lançamento" icon={Pencil} onClose={() => setOpen(false)}>
           <ExpenseForm expense={expense} rentals={rentals} todayISO={todayISO} categories={categories} onDone={() => setOpen(false)} />
+        </Sheet>
+      )}
+    </>
+  );
+}
+
+/**
+ * Botão único "Registrar": abre o painel e a pessoa escolhe Entrada ou Saída.
+ * - Entrada: movimentação manual de caixa (aporte, venda avulsa…).
+ * - Saída: despesa com categoria (frete, combustível, retirada do dono… — categorias cadastráveis).
+ */
+export function RegisterButton({
+  rentals,
+  todayISO,
+  categories,
+  defaultKind = "SAIDA",
+  className = "btn-primary rounded-full",
+  children = (
+    <>
+      <Plus className="size-4" strokeWidth={2.4} aria-hidden /> Registrar
+    </>
+  ),
+}: Common & { defaultKind?: "ENTRADA" | "SAIDA"; className?: string; children?: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const [kind, setKind] = useState<"ENTRADA" | "SAIDA">(defaultKind);
+  return (
+    <>
+      <button
+        type="button"
+        className={className}
+        onClick={() => {
+          setKind(defaultKind);
+          setOpen(true);
+        }}
+      >
+        {children}
+      </button>
+      {open && (
+        <Sheet
+          title="Registrar"
+          subtitle={kind === "ENTRADA" ? "Dinheiro que entrou no caixa" : "Dinheiro que saiu: despesa, frete, retirada…"}
+          icon={Plus}
+          iconClass={kind === "ENTRADA" ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}
+          onClose={() => setOpen(false)}
+        >
+          <div className="px-5 pt-1 sm:px-6">
+            <div className="grid grid-cols-2 gap-1 rounded-full bg-slate-100 p-1" role="tablist" aria-label="Tipo de lançamento">
+              {(["ENTRADA", "SAIDA"] as const).map((k) => {
+                const on = kind === k;
+                const Icon = k === "ENTRADA" ? ArrowDownLeft : ArrowUpRight;
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    role="tab"
+                    aria-selected={on}
+                    onClick={() => setKind(k)}
+                    className={`flex min-h-11 items-center justify-center gap-1.5 rounded-full text-sm font-semibold transition ${
+                      on ? `bg-white shadow-sm ${k === "ENTRADA" ? "text-emerald-700" : "text-rose-700"}` : "text-slate-500"
+                    }`}
+                  >
+                    <Icon className="size-4" strokeWidth={2.2} aria-hidden />
+                    {k === "ENTRADA" ? "Entrada" : "Saída"}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          {kind === "ENTRADA" ? (
+            <CashEntryForm key="in" kind="ENTRADA" fixedKind todayISO={todayISO} onDone={() => setOpen(false)} />
+          ) : (
+            <ExpenseForm key="out" rentals={rentals} todayISO={todayISO} categories={categories} onDone={() => setOpen(false)} />
+          )}
         </Sheet>
       )}
     </>
