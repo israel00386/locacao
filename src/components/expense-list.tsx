@@ -4,6 +4,8 @@ import { ExpenseRowActions, NewExpenseButton, type ExpenseRentalOption } from "@
 import { fmtDate, parseISODate } from "@/lib/dates";
 import { expenseCategory, FREIGHT_CATEGORIES, freightProfit, sumAmounts } from "@/lib/expense-categories";
 import { money } from "@/lib/format";
+import { Link2, Plus } from "lucide-react";
+import { categoryIcon, CategoryTile } from "@/components/finance-ui";
 
 /** Mesmo formato de src/lib/expenses.ts (ExpenseRow), repetido aqui para não puxar o banco para o componente. */
 export interface ExpenseItemData {
@@ -19,8 +21,10 @@ export interface ExpenseItemData {
 
 export function CategoryChip({ category }: { category: string }) {
   const c = expenseCategory(category);
+  const Icon = categoryIcon(category);
   return (
-    <span className={`inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset ${c.chip}`}>
+    <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset ${c.chip}`}>
+      <Icon className="size-3" strokeWidth={2.2} aria-hidden />
       {c.label}
     </span>
   );
@@ -28,27 +32,42 @@ export function CategoryChip({ category }: { category: string }) {
 
 /** Uma linha de despesa. `showRental` mostra o link da locação ligada (no financeiro). */
 export function ExpenseItem({ expense: e, showRental = true, actions, extra }: { expense: ExpenseItemData; showRental?: boolean; actions?: ReactNode; extra?: ReactNode }) {
+  const c = expenseCategory(e.category);
   return (
-    <li className="px-4 py-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <CategoryChip category={e.category} />
-            <span className="text-xs text-slate-500 tnum">{fmtDate(parseISODate(e.date))}</span>
-            {e.method && <span className="text-xs text-slate-500">· {e.method}</span>}
+    <li className="flex gap-3 px-4 py-3.5 sm:px-5">
+      <CategoryTile category={e.category} />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold break-words text-slate-900">{e.description || c.label}</div>
+            <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-slate-500">
+              {e.description && <span>{c.label}</span>}
+              {e.description && <span aria-hidden>·</span>}
+              <span className="tnum">{fmtDate(parseISODate(e.date))}</span>
+              {e.method && <span>· {e.method}</span>}
+            </div>
           </div>
-          {e.description && <div className="mt-1 text-sm font-medium break-words">{e.description}</div>}
-          {showRental && e.rental && (
-            <Link href={`/locacoes/${e.rental.id}`} className="mt-0.5 block truncate text-xs text-brand-700 hover:underline">
-              {e.rental.code} · {e.rental.customerName}
-            </Link>
-          )}
-          {extra}
+          <span className="shrink-0 pt-px text-sm font-bold whitespace-nowrap text-slate-900 tnum">− {money(e.amount)}</span>
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          <span className="text-sm font-bold text-red-700 tnum">− {money(e.amount)}</span>
-          {actions}
-        </div>
+        {(showRental && e.rental) || actions ? (
+          <div className="mt-1.5 flex min-w-0 items-center justify-between gap-2">
+            {showRental && e.rental ? (
+              <Link
+                href={`/locacoes/${e.rental.id}`}
+                className="inline-flex min-w-0 items-center gap-1 rounded-md bg-brand-50 px-1.5 py-0.5 text-[11px] font-medium text-brand-700 hover:bg-brand-100"
+              >
+                <Link2 className="size-3 shrink-0" aria-hidden />
+                <span className="truncate">
+                  {e.rental.code} · {e.rental.customerName}
+                </span>
+              </Link>
+            ) : (
+              <span />
+            )}
+            {actions}
+          </div>
+        ) : null}
+        {extra}
       </div>
     </li>
   );
@@ -94,10 +113,10 @@ export function ExpenseList({
       ) : (
         <p className="px-4 py-5 text-center text-sm text-slate-500">{emptyText}</p>
       )}
-      <div className="space-y-1 border-t border-slate-100 bg-slate-50/60 px-4 py-3 text-sm">
+      <div className="space-y-1.5 border-t border-slate-100 bg-slate-50/70 px-4 py-3.5 text-sm sm:px-5">
         <div className="flex justify-between gap-3">
           <span className="text-slate-600">Total de despesas</span>
-          <span className="font-bold text-red-700 tnum">{money(total)}</span>
+          <span className="font-bold text-slate-900 tnum">{money(total)}</span>
         </div>
         {freight && (hasFreight || freight.charged > 0) && (
           <>
@@ -114,7 +133,7 @@ export function ExpenseList({
         {editable && (
           <div className="pt-2">
             <NewExpenseButton rentals={rentals!} todayISO={todayISO!} defaultRentalId={rentalId} className="btn-secondary btn-sm w-full sm:w-auto">
-              + Despesa desta locação
+              <Plus className="size-4" aria-hidden /> Despesa desta locação
             </NewExpenseButton>
           </div>
         )}
