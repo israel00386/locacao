@@ -281,14 +281,15 @@ export function ExpenseRowActions({ expense, rentals, todayISO, categories }: Co
   );
 }
 
-/** A linha inteira é um botão que abre a edição (listas do Financeiro). */
-export function ExpenseRowButton({ expense, rentals, todayISO, categories, className, children }: Common & { expense: ExpenseFormValues; className: string; children: ReactNode }) {
+/**
+ * Botão transparente que cobre a linha inteira (o <li> precisa de `relative`) e abre a edição.
+ * Assim a linha usa o <TxRow> do design system sem aninhar elementos interativos.
+ */
+export function ExpenseRowButton({ expense, rentals, todayISO, categories, label }: Common & { expense: ExpenseFormValues; label: string }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button type="button" className={className} onClick={() => setOpen(true)} aria-haspopup="dialog">
-        {children}
-      </button>
+      <button type="button" className="absolute inset-0 z-[1] w-full cursor-pointer" onClick={() => setOpen(true)} aria-haspopup="dialog" aria-label={label} />
       {open && (
         <Sheet title="Editar despesa" subtitle="Altere os dados ou exclua o lançamento" icon={Pencil} onClose={() => setOpen(false)}>
           <ExpenseForm expense={expense} rentals={rentals} todayISO={todayISO} categories={categories} onDone={() => setOpen(false)} />

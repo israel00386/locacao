@@ -1,13 +1,13 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ExpenseRowActions, NewExpenseButton, type ExpenseRentalOption } from "@/components/expense-sheet";
-import { fmtDate, parseISODate } from "@/lib/dates";
-import { expenseCategory, FREIGHT_CATEGORIES, freightProfit, sumAmounts } from "@/lib/expense-categories";
-import { money } from "@/lib/format";
 import { Link2, Plus } from "lucide-react";
-import { categoryIcon, CategoryTile } from "@/components/finance-ui";
+import { ExpenseRowActions, NewExpenseButton, type ExpenseRentalOption } from "@/components/expense-sheet";
+import { CategoryTile } from "@/components/finance-ui";
+import { fmtDate, parseISODate } from "@/lib/dates";
+import { findCategory, freightProfit, getCategories, isFreightCategory, sumAmounts, type ExpenseCategoryData } from "@/lib/expenses";
+import { money } from "@/lib/format";
 
-/** Mesmo formato de src/lib/expenses.ts (ExpenseRow), repetido aqui para não puxar o banco para o componente. */
+/** Mesmo formato de src/lib/expenses.ts (ExpenseRow). */
 export interface ExpenseItemData {
   id: string;
   date: string;
@@ -19,42 +19,43 @@ export interface ExpenseItemData {
   rental: { id: string; code: string; customerName: string } | null;
 }
 
-export function CategoryChip({ category }: { category: string }) {
-  const c = expenseCategory(category);
-  const Icon = categoryIcon(category);
-  return (
-    <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset ${c.chip}`}>
-      <Icon className="size-3" strokeWidth={2.2} aria-hidden />
-      {c.label}
-    </span>
-  );
-}
-
-/** Uma linha de despesa. `showRental` mostra o link da locação ligada (no financeiro). */
-export function ExpenseItem({ expense: e, showRental = true, actions, extra }: { expense: ExpenseItemData; showRental?: boolean; actions?: ReactNode; extra?: ReactNode }) {
-  const c = expenseCategory(e.category);
+/** Uma linha de despesa (estilo transação). `showRental` mostra o link da locação ligada. */
+export function ExpenseItem({
+  expense: e,
+  categories,
+  showRental = true,
+  actions,
+  extra,
+}: {
+  expense: ExpenseItemData;
+  categories: ExpenseCategoryData[];
+  showRental?: boolean;
+  actions?: ReactNode;
+  extra?: ReactNode;
+}) {
+  const c = findCategory(categories, e.category);
   return (
     <li className="flex gap-3 px-4 py-3.5 sm:px-5">
-      <CategoryTile category={e.category} />
+      <CategoryTile category={c} size="lg" />
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-sm font-semibold break-words text-slate-900">{e.description || c.label}</div>
-            <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-slate-500">
-              {e.description && <span>{c.label}</span>}
+            <div className="text-[15px] leading-snug font-semibold break-words text-slate-900">{e.description || c.name}</div>
+            <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[13px] text-slate-500">
+              {e.description && <span>{c.name}</span>}
               {e.description && <span aria-hidden>·</span>}
               <span className="tnum">{fmtDate(parseISODate(e.date))}</span>
               {e.method && <span>· {e.method}</span>}
             </div>
           </div>
-          <span className="shrink-0 pt-px text-sm font-bold whitespace-nowrap text-slate-900 tnum">− {money(e.amount)}</span>
+          <span className="shrink-0 pt-px text-[15px] font-bold whitespace-nowrap text-rose-600 tnum">−{money(e.amount)}</span>
         </div>
         {(showRental && e.rental) || actions ? (
           <div className="mt-1.5 flex min-w-0 items-center justify-between gap-2">
             {showRental && e.rental ? (
               <Link
                 href={`/locacoes/${e.rental.id}`}
-                className="inline-flex min-w-0 items-center gap-1 rounded-md bg-brand-50 px-1.5 py-0.5 text-[11px] font-medium text-brand-700 hover:bg-brand-100"
+                className="inline-flex min-w-0 items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-medium text-brand-700 hover:bg-brand-100"
               >
                 <Link2 className="size-3 shrink-0" aria-hidden />
                 <span className="truncate">
@@ -74,11 +75,11 @@ export function ExpenseItem({ expense: e, showRental = true, actions, extra }: {
 }
 
 /**
- * Despesas de uma locação + total (para a página da locação).
+ * Despesas de uma locação + total (para a página da locação). Busca as categorias sozinha.
  * - `extras`: taxas/extras cobrados do cliente → mostra o "lucro do frete".
  * - `rentalId` + `rentals` + `todayISO`: mostra os botões de nova despesa, editar e excluir.
  */
-export function ExpenseList({
+export async function ExpenseList({
   expenses,
   extras,
   rentalId,
@@ -93,10 +94,11 @@ export function ExpenseList({
   todayISO?: string;
   emptyText?: string;
 }) {
+  const categories = await getCategories();
   const editable = !!(rentals && todayISO);
   const total = sumAmounts(expenses);
-  const hasFreight = expenses.some((e) => FREIGHT_CATEGORIES.includes(e.category));
-  const freight = extras ? freightProfit(extras, expenses) : null;
+  const hasFreight = expenses.some((e) => isFreightCategory(categories, e.category));
+  const freight = extras ? freightProfit(extras, expenses, categories) : null;
   return (
     <div>
       {expenses.length ? (
@@ -105,8 +107,9 @@ export function ExpenseList({
             <ExpenseItem
               key={e.id}
               expense={e}
+              categories={categories}
               showRental={false}
-              actions={editable ? <ExpenseRowActions expense={e} rentals={rentals!} todayISO={todayISO!} /> : undefined}
+              actions={editable ? <ExpenseRowActions expense={e} rentals={rentals!} todayISO={todayISO!} categories={categories} /> : undefined}
             />
           ))}
         </ul>
@@ -122,7 +125,9 @@ export function ExpenseList({
           <>
             <div className="flex justify-between gap-3 text-xs text-slate-500">
               <span>Cobrado − frete</span>
-              <span className="whitespace-nowrap tnum">{money(freight.charged)} − {money(freight.spent)}</span>
+              <span className="whitespace-nowrap tnum">
+                {money(freight.charged)} − {money(freight.spent)}
+              </span>
             </div>
             <div className="flex justify-between gap-3">
               <span className="text-slate-600">Lucro do frete</span>
@@ -132,7 +137,7 @@ export function ExpenseList({
         )}
         {editable && (
           <div className="pt-2">
-            <NewExpenseButton rentals={rentals!} todayISO={todayISO!} defaultRentalId={rentalId} className="btn-secondary btn-sm w-full sm:w-auto">
+            <NewExpenseButton rentals={rentals!} todayISO={todayISO!} categories={categories} defaultRentalId={rentalId} className="btn-secondary btn-sm w-full rounded-full sm:w-auto">
               <Plus className="size-4" aria-hidden /> Despesa desta locação
             </NewExpenseButton>
           </div>

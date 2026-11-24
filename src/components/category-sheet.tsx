@@ -63,7 +63,7 @@ export function CategoryFields({ value, onChange, compact = false }: { value: Ca
                 }`}
               >
                 <input type="radio" name={`${uid}-color`} value={c} checked={on} onChange={() => set({ color: c })} className="sr-only" aria-label={COLOR_STYLES[c].label} />
-                <span className="size-8 rounded-full" style={{ background: COLOR_STYLES[c].hex }} aria-hidden />
+                <span className="size-8 rounded-full" style={{ background: COLOR_STYLES[c].css }} aria-hidden />
                 {on && <Check className="absolute size-4 text-white" strokeWidth={3} aria-hidden />}
               </label>
             );

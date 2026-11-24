@@ -14,22 +14,22 @@ export interface ColorStyle {
   tile: string;
   /** Pílula com texto. */
   chip: string;
-  /** Cor para SVG (donut). */
-  hex: string;
+  /** Cor CSS para SVG/estilo (donut, amostras): variáveis --data-* do design system. */
+  css: string;
 }
 
 // Classes completas escritas por extenso para o Tailwind encontrar.
 export const COLOR_STYLES: Record<CategoryColor, ColorStyle> = {
-  sky: { label: "Azul-claro", bar: "bg-sky-500", tile: "bg-sky-50 text-sky-600", chip: "bg-sky-50 text-sky-800 ring-sky-200", hex: "#0ea5e9" },
-  indigo: { label: "Anil", bar: "bg-indigo-500", tile: "bg-indigo-50 text-indigo-600", chip: "bg-indigo-50 text-indigo-800 ring-indigo-200", hex: "#6366f1" },
-  amber: { label: "Âmbar", bar: "bg-amber-400", tile: "bg-amber-50 text-amber-600", chip: "bg-amber-50 text-amber-800 ring-amber-200", hex: "#f59e0b" },
-  rose: { label: "Rosa", bar: "bg-rose-500", tile: "bg-rose-50 text-rose-600", chip: "bg-rose-50 text-rose-800 ring-rose-200", hex: "#f43f5e" },
-  emerald: { label: "Verde", bar: "bg-emerald-500", tile: "bg-emerald-50 text-emerald-600", chip: "bg-emerald-50 text-emerald-800 ring-emerald-200", hex: "#10b981" },
-  slate: { label: "Cinza", bar: "bg-slate-400", tile: "bg-slate-100 text-slate-500", chip: "bg-slate-100 text-slate-700 ring-slate-200", hex: "#94a3b8" },
-  violet: { label: "Violeta", bar: "bg-violet-500", tile: "bg-violet-50 text-violet-600", chip: "bg-violet-50 text-violet-800 ring-violet-200", hex: "#8b5cf6" },
-  teal: { label: "Verde-água", bar: "bg-teal-500", tile: "bg-teal-50 text-teal-600", chip: "bg-teal-50 text-teal-800 ring-teal-200", hex: "#14b8a6" },
-  orange: { label: "Laranja", bar: "bg-orange-500", tile: "bg-orange-50 text-orange-600", chip: "bg-orange-50 text-orange-800 ring-orange-200", hex: "#f97316" },
-  navy: { label: "Marinho", bar: "bg-brand-600", tile: "bg-brand-50 text-brand-700", chip: "bg-brand-50 text-brand-800 ring-brand-200", hex: "#1f2b7a" },
+  sky: { label: "Azul-claro", bar: "bg-sky-500", tile: "bg-sky-50 text-sky-600", chip: "bg-sky-50 text-sky-800 ring-sky-200", css: "var(--data-sky)" },
+  indigo: { label: "Anil", bar: "bg-indigo-500", tile: "bg-indigo-50 text-indigo-600", chip: "bg-indigo-50 text-indigo-800 ring-indigo-200", css: "var(--data-indigo)" },
+  amber: { label: "Âmbar", bar: "bg-amber-400", tile: "bg-amber-50 text-amber-600", chip: "bg-amber-50 text-amber-800 ring-amber-200", css: "var(--data-amber)" },
+  rose: { label: "Rosa", bar: "bg-rose-500", tile: "bg-rose-50 text-rose-600", chip: "bg-rose-50 text-rose-800 ring-rose-200", css: "var(--data-rose)" },
+  emerald: { label: "Verde", bar: "bg-emerald-500", tile: "bg-emerald-50 text-emerald-600", chip: "bg-emerald-50 text-emerald-800 ring-emerald-200", css: "var(--data-emerald)" },
+  slate: { label: "Cinza", bar: "bg-slate-400", tile: "bg-slate-100 text-slate-500", chip: "bg-slate-100 text-slate-700 ring-slate-200", css: "#94a3b8" },
+  violet: { label: "Violeta", bar: "bg-violet-500", tile: "bg-violet-50 text-violet-600", chip: "bg-violet-50 text-violet-800 ring-violet-200", css: "var(--data-violet)" },
+  teal: { label: "Verde-água", bar: "bg-teal-500", tile: "bg-teal-50 text-teal-600", chip: "bg-teal-50 text-teal-800 ring-teal-200", css: "var(--data-teal)" },
+  orange: { label: "Laranja", bar: "bg-orange-500", tile: "bg-orange-50 text-orange-600", chip: "bg-orange-50 text-orange-800 ring-orange-200", css: "var(--data-orange)" },
+  navy: { label: "Marinho", bar: "bg-brand-600", tile: "bg-brand-50 text-brand-700", chip: "bg-brand-50 text-brand-800 ring-brand-200", css: "var(--data-navy)" },
 };
 
 export function colorStyle(color: string): ColorStyle {

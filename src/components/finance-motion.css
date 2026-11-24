@@ -1,51 +1,9 @@
-/* Movimento dos gráficos do Financeiro/Estoque (CSS puro; fill-mode backwards). */
-@keyframes kit-bar-y {
-  from { transform: scaleY(0); }
-}
-@keyframes kit-bar-x {
-  from { transform: scaleX(0); }
-}
+/* Movimento das folhas do Financeiro (fill-mode backwards; nunca both/forwards). */
 @keyframes kit-fade {
   from { opacity: 0; }
 }
 @keyframes kit-rise {
   from { opacity: 0; transform: translateY(24px); }
 }
-@keyframes kit-pop {
-  from { opacity: 0; transform: scale(0.94) rotate(-8deg); }
-}
-.bar-grow {
-  transform-origin: 50% 100%;
-  animation: kit-bar-y 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.12s backwards;
-}
-.bar-grow-x {
-  transform-origin: 0 50%;
-  animation: kit-bar-x 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.12s backwards;
-}
-.donut-in {
-  animation: kit-pop 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.05s backwards;
-}
-.press {
-  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.2s ease;
-  touch-action: manipulation;
-}
-.press:active {
-  transform: scale(0.97);
-}
-/* Rolagem horizontal discreta (pílulas) */
-.no-scrollbar {
-  scrollbar-width: none;
-}
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  .bar-grow,
-  .bar-grow-x,
-  .donut-in {
-    animation: none;
-  }
-  .press:active {
-    transform: none;
-  }
-}
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
