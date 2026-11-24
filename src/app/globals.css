@@ -31,22 +31,36 @@
 
   --font-sans: var(--font-onest), "Onest", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
-  --shadow-card: 0 1px 2px rgb(15 18 63 / 0.05), 0 6px 20px -10px rgb(15 18 63 / 0.14);
-  --shadow-raised: 0 2px 4px rgb(15 18 63 / 0.06), 0 12px 28px -12px rgb(15 18 63 / 0.25);
+  --shadow-card: 0 1px 2px rgb(15 18 63 / 0.04), 0 4px 16px -6px rgb(15 18 63 / 0.08);
+  --shadow-raised: 0 2px 4px rgb(15 18 63 / 0.05), 0 16px 36px -14px rgb(15 18 63 / 0.28);
+  --shadow-float: 0 24px 60px -20px rgb(8 8 42 / 0.45);
 
   --ease-out-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
 
   --animate-shimmer: shimmer 1.4s linear infinite;
 }
 
+:root {
+  /* Fundo do app: slate levemente frio */
+  --app-bg: #f5f6fa;
+  /* Faixa "hero" marinho: degradê + brilho amarelo bem leve */
+  --hero-bg:
+    radial-gradient(60% 90% at 100% 0%, rgb(248 200 10 / 0.16), transparent 60%),
+    radial-gradient(80% 120% at 0% 0%, rgb(58 71 158 / 0.55), transparent 55%),
+    linear-gradient(160deg, var(--color-brand-900) 0%, var(--color-brand-800) 100%);
+}
+
 html {
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  background: var(--app-bg);
 }
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply text-slate-900 antialiased;
+  background: var(--app-bg);
   overflow-x: hidden;
+  font-feature-settings: "cv11", "ss01";
 }
 
 /* Foco visível: anel marinho com halo amarelo (AA sobre fundo claro); amarelo puro sobre o marinho. */
@@ -62,22 +76,61 @@ body {
 
 h1, h2, h3 { text-wrap: balance; }
 
+/* ---------- Botões (44px no celular, raio 14px) ---------- */
 @utility btn {
-  @apply inline-flex min-h-11 select-none items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition duration-150 ease-out active:scale-[.97] disabled:pointer-events-none disabled:opacity-50 sm:min-h-10;
+  @apply inline-flex min-h-11 select-none items-center justify-center gap-2 rounded-[14px] px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition duration-150 ease-out active:scale-[.97] disabled:pointer-events-none disabled:opacity-50 sm:min-h-10;
   touch-action: manipulation;
+  & > svg { flex-shrink: 0; }
 }
-@utility btn-primary { @apply btn bg-brand-600 text-white shadow-sm shadow-brand-900/20 hover:bg-brand-700 active:bg-brand-800; }
-@utility btn-accent { @apply btn bg-accent-400 text-brand-950 shadow-sm shadow-accent-700/25 hover:bg-accent-300 active:bg-accent-500; }
-@utility btn-secondary { @apply btn bg-white text-slate-800 ring-1 ring-slate-300 hover:bg-slate-50 active:bg-slate-100; }
-@utility btn-danger { @apply btn bg-white text-red-700 ring-1 ring-red-200 hover:bg-red-50 active:bg-red-100; }
-@utility btn-ghost { @apply btn text-slate-700 hover:bg-slate-100 active:bg-slate-200; }
-@utility btn-sm { @apply min-h-10 rounded-lg px-3 py-1.5 text-xs sm:min-h-8; }
+@utility btn-primary {
+  @apply btn text-white;
+  background: linear-gradient(180deg, var(--color-brand-500) -40%, var(--color-brand-700) 100%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 1px 2px rgb(15 18 63 / 0.2), 0 6px 14px -6px rgb(23 34 99 / 0.55);
+  &:hover { filter: brightness(1.12); }
+  &:active { filter: brightness(0.95); }
+}
+@utility btn-accent {
+  @apply btn text-brand-950;
+  background: linear-gradient(180deg, var(--color-accent-300) 0%, var(--color-accent-400) 100%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.45), 0 1px 2px rgb(138 101 0 / 0.25), 0 8px 18px -8px rgb(185 137 0 / 0.6);
+  &:hover { filter: brightness(1.04); }
+  &:active { filter: brightness(0.96); }
+}
+@utility btn-secondary {
+  @apply btn border border-slate-200 bg-white text-slate-800 hover:border-slate-300 hover:bg-slate-50 active:bg-slate-100;
+  box-shadow: 0 1px 2px rgb(15 18 63 / 0.05);
+}
+@utility btn-danger { @apply btn bg-white text-red-700 ring-1 ring-red-200 ring-inset hover:bg-red-50 active:bg-red-100; }
+@utility btn-ghost { @apply btn text-slate-700 hover:bg-slate-900/[.05] active:bg-slate-900/[.08]; }
+/* Botão translúcido para usar sobre o marinho (hero, barra lateral) */
+@utility btn-glass { @apply btn bg-white/10 text-white ring-1 ring-white/15 ring-inset backdrop-blur hover:bg-white/15 active:bg-white/20; }
+@utility btn-sm { @apply min-h-10 rounded-[11px] px-3 py-1.5 text-xs sm:min-h-8; }
+@utility btn-lg { @apply min-h-12 rounded-2xl px-5 text-base; }
+@utility btn-icon { @apply btn aspect-square px-0; }
+
+/* ---------- Campos (48px no celular) ---------- */
 @utility input {
-  @apply block min-h-11 w-full rounded-xl border-0 bg-white px-3 py-2.5 text-base text-slate-900 ring-1 ring-slate-300 outline-none transition-shadow placeholder:text-slate-400 focus:ring-2 focus:ring-brand-600 sm:min-h-10 sm:text-sm;
-  &:focus { box-shadow: 0 0 0 5px rgb(248 200 10 / 0.35); }
+  @apply block min-h-12 w-full rounded-[14px] border border-slate-200 bg-white px-3.5 py-2.5 text-base text-slate-900 outline-none transition-[border-color,box-shadow,background-color] duration-150 placeholder:text-slate-400 hover:border-slate-300 disabled:bg-slate-50 disabled:text-slate-500 sm:min-h-11 sm:text-sm;
+  box-shadow: 0 1px 2px rgb(15 18 63 / 0.04);
+  &:focus {
+    border-color: var(--color-brand-600);
+    box-shadow: 0 0 0 1px var(--color-brand-600), 0 0 0 5px rgb(248 200 10 / 0.35);
+  }
 }
-@utility label { @apply mb-1 block text-xs font-semibold text-slate-600; }
-@utility card { @apply rounded-2xl bg-white ring-1 ring-slate-200/80; box-shadow: var(--shadow-card); }
+@utility label { @apply mb-1.5 block text-[13px] font-medium text-slate-600; }
+/* Micro-rótulo: único caso de maiúsculas */
+@utility micro { @apply text-[11px] font-semibold tracking-[.08em] uppercase; }
+
+/* ---------- Superfícies ---------- */
+@utility card {
+  @apply rounded-[20px] border border-slate-200/70 bg-white;
+  box-shadow: var(--shadow-card);
+}
+@utility card-hover {
+  @apply transition-[box-shadow,transform] duration-200;
+  &:hover { box-shadow: var(--shadow-raised); }
+}
+@utility hero-bg { background: var(--hero-bg); }
 @utility tnum { font-variant-numeric: tabular-nums; }
 @utility skeleton {
   @apply rounded-lg bg-slate-200/80;
@@ -134,6 +187,17 @@ h1, h2, h3 { text-wrap: balance; }
 /* Linhas clicáveis de lista: feedback de toque */
 .tap { transition: background-color 0.15s ease, transform 0.15s ease; }
 .tap:active { transform: scale(0.985); }
+.tap .tap-chevron { transition: transform 0.2s var(--ease-out-soft), color 0.15s ease; }
+.tap:hover .tap-chevron { transform: translateX(2px); color: var(--color-slate-500); }
+
+/* Grade sutil de "andaime" para fundos marinho (login, hero) */
+.scaffold-grid {
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.045) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(80% 70% at 70% 0%, black, transparent 75%);
+}
 
 /* Barra de progresso de navegação */
 .nav-progress {
@@ -213,6 +277,6 @@ html.splash-skip #splash { display: none; }
 
 @media print {
   .no-print, #splash, .nav-progress { display: none !important; }
-  body { background: white; }
+  html, body { background: white; }
   .page-enter, .page-enter .card { animation: none !important; }
 }

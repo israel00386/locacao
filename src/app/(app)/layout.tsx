@@ -7,8 +7,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-dvh lg:pl-64">
       <Sidebar userName={user.name} />
-      <MobileHeader />
-      <main className="mx-auto max-w-5xl px-4 pt-5 pb-[calc(7rem+env(safe-area-inset-bottom))] lg:px-8 lg:pt-8 lg:pb-12">
+      <MobileHeader userName={user.name} />
+      <main className="mx-auto max-w-[1100px] px-4 pt-5 pb-[calc(7rem+env(safe-area-inset-bottom))] lg:px-10 lg:pt-8 lg:pb-12">
         <PageTransition>{children}</PageTransition>
       </main>
       <BottomNav />
