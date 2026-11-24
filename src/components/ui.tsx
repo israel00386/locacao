@@ -521,8 +521,11 @@ export function Donut({
   let acc = 0;
   const arcs = visible.map((s) => {
     const len = (s.value / total) * C;
-    const dash = multi ? Math.max(0.01, len - thickness - gap) : len;
-    const arc = { ...s, dash, offset: multi ? -(acc + thickness / 2 + gap / 2) : -acc };
+    // Fatias curtas não cabem as pontas arredondadas (virariam bolinhas): ficam retas.
+    const round = multi && len > thickness + gap + 2;
+    const dash = !multi ? len : round ? len - thickness - gap : Math.max(0.6, len - gap);
+    const offset = !multi ? -acc : round ? -(acc + thickness / 2 + gap / 2) : -(acc + gap / 2);
+    const arc = { ...s, dash, offset, round };
     acc += len;
     return arc;
   });
@@ -545,7 +548,7 @@ export function Donut({
                 fill="none"
                 stroke={a.color}
                 strokeWidth={thickness}
-                strokeLinecap={multi ? "round" : "butt"}
+                strokeLinecap={a.round ? "round" : "butt"}
                 strokeDasharray={`${a.dash} ${C}`}
                 strokeDashoffset={a.offset}
               />
