@@ -18,6 +18,16 @@ interface Row {
 }
 
 const fmtNum = (n: number) => String(n).replace(".", ",");
+const OPEN_EVENT = "locar:acrescimo";
+
+/** Tile/atalho que abre a folha de acréscimo (o AddItemsButton da página escuta o evento). */
+export function AddItemsTile({ className, children }: { className: string; children: React.ReactNode }) {
+  return (
+    <button type="button" className={className} onClick={() => window.dispatchEvent(new Event(OPEN_EVENT))}>
+      {children}
+    </button>
+  );
+}
 
 /**
  * Acréscimo de equipamento numa locação ativa: retirada e previsão próprias.
@@ -40,13 +50,21 @@ export function AddItemsButton({
 }) {
   const [open, setOpen] = useState(false);
   const [done, setDone] = useState(false);
+  useEffect(() => {
+    const onOpen = () => {
+      setDone(false);
+      setOpen(true);
+    };
+    window.addEventListener(OPEN_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_EVENT, onOpen);
+  }, []);
   return (
     <>
-      <button type="button" className="btn-secondary" onClick={() => { setDone(false); setOpen(true); }}>
+      <button type="button" className="btn-secondary rounded-full px-4" onClick={() => { setDone(false); setOpen(true); }}>
         <PackagePlus size={17} aria-hidden /> Acréscimo de equipamento
       </button>
       {done && (
-        <span className="flex basis-full items-center gap-1.5 text-sm text-emerald-700">
+        <span role="status" className="flex basis-full items-center gap-1.5 rounded-2xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
           <Check size={15} aria-hidden /> Acréscimo registrado. O material saiu do estoque.
         </span>
       )}
@@ -160,31 +178,31 @@ function AddItemsSheet({
 
   // Portal no <body>: fora de containers animados (transform), que prenderiam o position: fixed.
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-brand-950/45 backdrop-blur-[2px] sm:items-center sm:p-6" onClick={onClose}>
+    <div className="fixed inset-0 z-50 transition-opacity duration-200 starting:opacity-0 flex items-end justify-center bg-brand-950/45 sm:items-center sm:p-6" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-items-title"
-        className="flex h-[94dvh] w-full max-w-lg flex-col rounded-t-[28px] bg-white pb-[env(safe-area-inset-bottom)] shadow-2xl sm:h-auto sm:max-h-[90dvh] sm:rounded-[28px]"
+        className="flex translate-y-0 transition-[translate,opacity] duration-300 ease-out starting:translate-y-10 starting:opacity-0 motion-reduce:transition-none h-[94dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-[32px] bg-[#f6f7fb] pb-[env(safe-area-inset-bottom)] shadow-2xl sm:h-auto sm:max-h-[90dvh] sm:rounded-[32px]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-slate-200 sm:hidden" aria-hidden />
-        <div className="flex items-start gap-3 border-b border-slate-100 px-5 pt-3 pb-4">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-200/70 ring-inset" aria-hidden>
+        <div className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-slate-300/80 sm:hidden" aria-hidden />
+        <div className="flex items-start gap-3 px-5 pt-3 pb-3 sm:pt-5">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-100 to-orange-50 text-amber-700" aria-hidden>
             <PackagePlus size={20} />
           </span>
           <div className="min-w-0 flex-1">
             <h2 id="add-items-title" className="text-lg leading-tight font-bold tracking-[-0.01em] text-slate-900">Acréscimo de equipamento</h2>
             <p className="mt-0.5 text-xs text-slate-500">Datas próprias; cada acréscimo é devolvido separadamente.</p>
           </div>
-          <button type="button" className="btn-ghost h-10 w-10 shrink-0 rounded-full p-0" aria-label="Fechar" onClick={onClose}>
+          <button type="button" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-[0_2px_8px_-4px_rgb(15_18_63/.3)] hover:text-slate-900 active:scale-95" aria-label="Fechar" onClick={onClose}>
             <X size={20} aria-hidden />
           </button>
         </div>
 
-        <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">
+        <div className="flex-1 space-y-5 overflow-y-auto px-4 pt-1 pb-4 sm:px-5">
           {/* DATAS */}
-          <div className="space-y-3">
+          <div className="space-y-3 rounded-[24px] bg-white p-4 shadow-[0_1px_2px_rgb(15_18_63/.04)]">
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="label" htmlFor="add-start">Retirada</label>
@@ -212,7 +230,7 @@ function AddItemsSheet({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="grid flex-1 grid-cols-4 gap-1 rounded-2xl bg-slate-100 p-1" role="group" aria-label="Prazo rápido">
+              <div className="grid flex-1 grid-cols-4 gap-1 rounded-full bg-slate-100 p-1" role="group" aria-label="Prazo rápido">
                 {[1, 7, 15, 30].map((d) => {
                   const on = days === d && !!end;
                   return (
@@ -220,8 +238,8 @@ function AddItemsSheet({
                       key={d}
                       type="button"
                       aria-pressed={on}
-                      className={`min-h-10 rounded-xl text-[13px] font-semibold transition-[background-color,color,box-shadow] duration-150 ${
-                        on ? "bg-white text-brand-800 shadow-[var(--shadow-card)] ring-1 ring-slate-200" : "text-slate-600 hover:text-slate-900"
+                      className={`min-h-10 rounded-full text-[13px] font-semibold transition-[background-color,color,box-shadow] duration-150 ${
+                        on ? "bg-brand-900 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"
                       }`}
                       onClick={() => start && onDatesChange(startDate, toISODate(addDays(start, d - 1)))}
                     >
@@ -231,7 +249,7 @@ function AddItemsSheet({
                 })}
               </div>
               {days > 0 && end && (
-                <span className="tnum shrink-0 rounded-lg bg-brand-50 px-2 py-1 text-sm font-bold text-brand-700">
+                <span className="tnum hidden shrink-0 rounded-full bg-brand-50 px-2.5 py-1 text-sm font-bold text-brand-700 min-[400px]:inline">
                   {days} {days === 1 ? "dia" : "dias"}
                 </span>
               )}
@@ -241,14 +259,14 @@ function AddItemsSheet({
           {/* ESCOLHIDOS */}
           {rows.length > 0 && (
             <div>
-              <div className="mb-2 text-[11px] font-semibold tracking-[0.08em] text-slate-500 uppercase">Escolhidos</div>
-              <ul className="divide-y divide-amber-200/50 overflow-hidden rounded-2xl bg-amber-50/40 ring-1 ring-amber-200/80 ring-inset">
+              <div className="mb-2 px-1 text-[13px] font-semibold text-brand-950">Escolhidos</div>
+              <ul className="space-y-2">
                 {rows.map((r) => {
                   const eq = eqById.get(r.equipmentId);
                   const avail = eq?.availableQty ?? 0;
                   const over = r.qty > avail;
                   return (
-                    <li key={r.equipmentId} className="space-y-2.5 px-4 py-3.5">
+                    <li key={r.equipmentId} className="space-y-2.5 rounded-[22px] bg-white px-4 py-3.5 shadow-[0_1px_2px_rgb(15_18_63/.04)] ring-1 ring-amber-200/70 ring-inset">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <div className="text-sm font-semibold text-slate-900">{eq?.name ?? "?"}</div>
@@ -261,10 +279,10 @@ function AddItemsSheet({
                       <div className="grid grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] items-end gap-2">
                         <div>
                           <div className="label">Qtd.</div>
-                          <div className="flex h-12 items-center rounded-[14px] bg-white ring-1 ring-slate-300 ring-inset sm:h-10">
+                          <div className="flex h-12 items-center rounded-full bg-white ring-1 ring-slate-200 ring-inset sm:h-11">
                             <button
                               type="button"
-                              className="flex h-full w-10 items-center justify-center rounded-l-[14px] text-slate-600 hover:bg-slate-50"
+                              className="flex h-full w-10 items-center justify-center rounded-l-full text-slate-600 hover:bg-slate-50"
                               aria-label="Diminuir"
                               onClick={() => (r.qty <= 1 ? setRows((l) => l.filter((x) => x !== r)) : update(r.equipmentId, { qty: r.qty - 1 }))}
                             >
@@ -280,7 +298,7 @@ function AddItemsSheet({
                             />
                             <button
                               type="button"
-                              className="flex h-full w-10 items-center justify-center rounded-r-[14px] text-slate-600 hover:bg-slate-50"
+                              className="flex h-full w-10 items-center justify-center rounded-r-full text-slate-600 hover:bg-slate-50"
                               aria-label="Aumentar"
                               onClick={() => update(r.equipmentId, { qty: r.qty + 1 })}
                             >
@@ -332,12 +350,12 @@ function AddItemsSheet({
 
           {/* LISTA DE EQUIPAMENTOS */}
           <div>
-            <div className="mb-2 text-[11px] font-semibold tracking-[0.08em] text-slate-500 uppercase">Estoque</div>
+            <div className="mb-2 px-1 text-[13px] font-semibold text-brand-950">Estoque</div>
             <div className="relative">
               <Search size={18} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" aria-hidden />
-              <input className="input pl-11" placeholder="Buscar equipamento…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Buscar equipamento" />
+              <input className="input rounded-full border-0 pl-11 shadow-[0_1px_2px_rgb(15_18_63/.05)]" placeholder="Buscar equipamento…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Buscar equipamento" />
             </div>
-            <ul className="mt-2 divide-y divide-slate-100 overflow-hidden rounded-2xl ring-1 ring-slate-200 ring-inset">
+            <ul className="mt-2 divide-y divide-slate-100 overflow-hidden rounded-[22px] bg-white shadow-[0_1px_2px_rgb(15_18_63/.04)]">
               {list.map((e) => {
                 const chosen = rows.find((r) => r.equipmentId === e.id)?.qty ?? 0;
                 const price = e.priceDaily ?? e.priceWeekly ?? e.priceBiweekly ?? e.priceMonthly;
@@ -350,7 +368,7 @@ function AddItemsSheet({
                       className="flex w-full items-center gap-3 px-3 py-3 text-left hover:bg-slate-50 active:bg-slate-100 disabled:opacity-50"
                       onClick={() => add(e.id)}
                     >
-                      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${chosen > 0 ? "bg-brand-600 text-white" : "bg-slate-100 text-slate-500"}`} aria-hidden>
+                      <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${chosen > 0 ? "bg-brand-900 text-accent-300" : "bg-slate-100 text-slate-500"}`} aria-hidden>
                         <Package size={18} />
                       </span>
                       <span className="min-w-0 flex-1">
@@ -361,7 +379,7 @@ function AddItemsSheet({
                         </span>
                       </span>
                       {chosen > 0 ? (
-                        <span className="tnum flex h-8 min-w-8 items-center justify-center rounded-full bg-brand-600 px-2 text-xs font-bold text-white">{chosen}</span>
+                        <span className="tnum flex h-8 min-w-8 items-center justify-center rounded-full bg-accent-400 px-2 text-xs font-bold text-brand-950">{chosen}</span>
                       ) : (
                         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand-600" aria-hidden>
                           <Plus size={18} />
@@ -376,16 +394,16 @@ function AddItemsSheet({
           </div>
         </div>
 
-        <div className="space-y-2.5 border-t border-slate-100 bg-white px-5 pt-3 pb-4">
+        <div className="space-y-2.5 rounded-t-[28px] bg-white px-5 pt-4 pb-4 shadow-[0_-8px_24px_-16px_rgb(15_18_63/.25)]">
           <div className="flex items-baseline justify-between text-sm">
             <span className="tnum text-slate-500">
               {rows.reduce((s, r) => s + r.qty, 0)} un. · {days || 1} {days === 1 || !days ? "dia" : "dias"}
             </span>
-            <span className="tnum text-xl font-bold tracking-[-0.02em] text-brand-900">{money(total)}</span>
+            <span className="tnum text-2xl font-bold tracking-[-0.02em] text-brand-950">{money(total)}</span>
           </div>
           {overStock && <p className="text-xs text-red-700">Há quantidade acima do disponível no estoque.</p>}
           {error && <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-800 ring-1 ring-red-200 ring-inset">{error}</p>}
-          <button type="button" className="btn-primary w-full" disabled={pending || !rows.length} onClick={submit}>
+          <button type="button" className="btn-primary btn-lg w-full rounded-full" disabled={pending || !rows.length} onClick={submit}>
             {pending ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Check size={16} aria-hidden />}
             {pending ? "Salvando…" : "Adicionar à locação"}
           </button>

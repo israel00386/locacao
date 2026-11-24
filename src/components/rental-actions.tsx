@@ -96,7 +96,7 @@ export function ReturnForm({
   const open = items.filter((i) => i.outstanding > 0);
   if (!open.length)
     return (
-      <div className="flex items-center gap-3 px-5 pb-5 text-sm text-slate-600">
+      <div className="flex items-center gap-3 px-4 pb-5 text-sm text-slate-600 sm:px-5">
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200 ring-inset">
           <Check size={16} aria-hidden />
         </span>
@@ -106,7 +106,7 @@ export function ReturnForm({
   const chosen = open.reduce((s, i) => s + (Number(qty[i.id]) || 0), 0);
   const allSet = open.every((i) => qty[i.id] === String(i.outstanding));
   return (
-    <form ref={formRef} action={formAction} className="space-y-4 px-5 pb-5">
+    <form ref={formRef} action={formAction} className="space-y-4 px-4 pb-5 sm:px-5">
       <div className="grid grid-cols-[1fr_auto] items-end gap-3">
         <div>
           <label className="label" htmlFor="ret-date">Data da devolução</label>
@@ -114,7 +114,7 @@ export function ReturnForm({
         </div>
         <button
           type="button"
-          className={`btn-sm mb-0.5 min-h-11 sm:min-h-10 ${allSet ? "btn-primary" : "btn-secondary"}`}
+          className={`btn-sm mb-0.5 min-h-11 rounded-full px-3.5 sm:min-h-10 ${allSet ? "btn-primary" : "btn-secondary"}`}
           onClick={() => setQty(allSet ? {} : Object.fromEntries(open.map((i) => [i.id, String(i.outstanding)])))}
           aria-pressed={allSet}
         >
@@ -123,18 +123,18 @@ export function ReturnForm({
         </button>
       </div>
       {retDate && <p className="-mt-2 text-xs text-slate-500">{weekday(retDate)}</p>}
-      <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl ring-1 ring-slate-200 ring-inset">
+      <ul className="space-y-2">
         {open.map((i) => {
           const v = Number(qty[i.id]) || 0;
           const over = v > i.outstanding;
           return (
-            <li key={i.id} className={`px-3.5 py-3 transition-colors ${v > 0 ? "bg-brand-50/40" : ""}`}>
+            <li key={i.id} className={`rounded-[20px] px-3.5 py-3 transition-colors ${v > 0 ? "bg-brand-50 ring-1 ring-brand-100 ring-inset" : "bg-slate-50"}`}>
               <div className="flex items-center gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5 text-sm font-semibold text-slate-900">
                     {i.name}
                     {i.addition && (
-                      <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-amber-800 uppercase">Acréscimo</span>
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold tracking-wide text-amber-800 uppercase">Acréscimo</span>
                     )}
                   </div>
                   <div className="mt-0.5 text-xs text-slate-500">
@@ -142,10 +142,10 @@ export function ReturnForm({
                     {i.addition ? ` · retirada ${fmtDateShort(parseISODate(i.startISO))}` : ""}
                   </div>
                 </div>
-                <div className={`flex items-center rounded-[14px] bg-white ring-1 ring-inset ${over ? "ring-red-300" : "ring-slate-300"}`}>
+                <div className={`flex items-center rounded-full bg-white shadow-[0_1px_2px_rgb(15_18_63/.05)] ring-1 ring-inset ${over ? "ring-red-300" : "ring-slate-200"}`}>
                   <input
                     name={`qty_${i.id}`}
-                    className="tnum h-11 w-14 rounded-l-[14px] border-0 bg-transparent px-0 text-center text-base font-semibold text-slate-900 outline-none placeholder:font-normal placeholder:text-slate-300"
+                    className="tnum h-11 w-14 rounded-l-full border-0 bg-transparent px-0 text-center text-base font-semibold text-slate-900 outline-none placeholder:font-normal placeholder:text-slate-300"
                     inputMode="numeric"
                     placeholder="0"
                     value={qty[i.id] ?? ""}
@@ -173,7 +173,7 @@ export function ReturnForm({
       </ul>
       <input name="note" className="input" placeholder="Observação (opcional): quem recebeu, avaria…" />
       <FormMessage error={state.error} ok={!!state.ok && "Devolução registrada. O material voltou para o estoque."} />
-      <button className="btn-primary w-full" disabled={pending}>
+      <button className="btn-primary btn-lg w-full rounded-full" disabled={pending}>
         {pending ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Undo2 size={16} aria-hidden />}
         {pending ? "Registrando…" : chosen > 0 ? `Registrar devolução de ${chosen} ${chosen === 1 ? "unidade" : "unidades"}` : "Registrar devolução"}
       </button>
@@ -202,15 +202,15 @@ export function PaymentForm({
     return r;
   }, {});
   return (
-    <form key={key} action={formAction} className="space-y-4 px-5 pt-1 pb-5">
+    <form key={key} action={formAction} className="space-y-4 px-4 pt-2 pb-5 sm:px-5">
       <div>
         <label className="label" htmlFor="pay-amount">Valor recebido</label>
         <div className="relative">
-          <span className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-sm font-semibold text-slate-400">R$</span>
+          <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-sm font-semibold text-slate-400">R$</span>
           <input
             id="pay-amount"
             name="amount"
-            className="input tnum min-h-12 pl-11 text-lg! font-semibold"
+            className="input tnum min-h-14 rounded-[18px] pl-12 text-xl! font-bold tracking-[-0.01em]"
             inputMode="decimal"
             defaultValue={open > 0 ? open.toFixed(2).replace(".", ",") : ""}
             placeholder="0,00"
@@ -224,7 +224,7 @@ export function PaymentForm({
           {METHODS.map((m) => (
             <label key={m} className="cursor-pointer">
               <input type="radio" name="method" value={m} defaultChecked={m === "Pix"} className="peer sr-only" />
-              <span className="inline-flex min-h-10 items-center rounded-xl bg-white px-3 text-[13px] font-medium text-slate-700 ring-1 ring-slate-300 ring-inset transition-colors peer-checked:bg-brand-600 peer-checked:text-white peer-checked:ring-brand-600 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand-600 hover:bg-slate-50 peer-checked:hover:bg-brand-700">
+              <span className="inline-flex min-h-10 items-center rounded-full bg-slate-100 px-3.5 text-[13px] font-semibold text-slate-600 transition-colors peer-checked:bg-brand-900 peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand-600 hover:bg-slate-200/70 peer-checked:hover:bg-brand-800">
                 {m}
               </span>
             </label>
@@ -242,7 +242,7 @@ export function PaymentForm({
         </div>
       </div>
       <FormMessage error={state.error} ok={!!state.ok && "Pagamento registrado."} />
-      <button className="btn-primary w-full" disabled={pending}>
+      <button className="btn-primary btn-lg w-full rounded-full" disabled={pending}>
         {pending ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Check size={16} aria-hidden />}
         {pending ? "Salvando…" : "Registrar pagamento"}
       </button>
@@ -306,7 +306,7 @@ export function ShareQuote({
 }
 
 /**
- * Barra de ações fixa no celular, logo acima da navegação inferior.
+ * Barra de ações fixa no celular, logo acima da barra inferior flutuante (~88px + safe-area).
  * Portal no <body>: fora do container animado da página (transform prende o position: fixed).
  */
 export function MobileActionBar({ children }: { children: React.ReactNode }) {
@@ -314,8 +314,8 @@ export function MobileActionBar({ children }: { children: React.ReactNode }) {
   useEffect(() => setMounted(true), []);
   if (!mounted) return null;
   return createPortal(
-    <div className="no-print fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 px-3 pb-2 lg:hidden">
-      <div className="mx-auto flex max-w-lg gap-2 rounded-[20px] bg-white/90 p-2 shadow-[0_10px_30px_-10px_rgb(15_18_63/.35),0_0_0_1px_rgb(15_18_63/.06)] backdrop-blur-md [&>*]:min-w-0 [&>*]:flex-1">
+    <div className="no-print pointer-events-none fixed inset-x-0 bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-20 px-3 lg:hidden">
+      <div className="pointer-events-auto mx-auto flex max-w-lg gap-2 rounded-full bg-white/95 p-1.5 shadow-[0_12px_32px_-12px_rgb(15_18_63/.4),0_0_0_1px_rgb(15_18_63/.05)] backdrop-blur-md [&>*]:min-w-0 [&>*]:flex-1">
         {children}
       </div>
     </div>,

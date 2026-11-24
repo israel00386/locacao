@@ -1,7 +1,5 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
-import { NavyHero } from "@/components/rental-ui";
+import { TopBar } from "@/components/ui";
 import { RentalForm, type InitialRental } from "@/components/rental-form";
 import { rentalFormOptions } from "@/lib/form-options";
 import { getRental } from "@/lib/rentals";
@@ -38,20 +36,12 @@ export default async function EditarLocacaoPage({ params }: { params: Promise<{ 
   };
   return (
     <>
-      <NavyHero className="pb-16 lg:pb-16">
-        <Link
-          href={`/locacoes/${r.id}`}
-          className="-ml-2 inline-flex min-h-10 items-center gap-1 rounded-xl px-2 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white"
-        >
-          <ChevronLeft size={18} aria-hidden /> {rentalCode(r.number)}
-        </Link>
-        <div className="mt-2 text-[11px] font-semibold tracking-[0.08em] text-accent-300/90 uppercase">
-          Editar {r.stage === "ORCAMENTO" ? "orçamento" : "locação"} · {rentalCode(r.number)}
-        </div>
-        <h1 className="mt-1 text-[26px] leading-tight font-bold tracking-[-0.02em] break-words sm:text-[28px]">{r.customer.name}</h1>
-        <p className="mt-1 max-w-xl text-sm text-white/65">Altere cliente, obra, prazo, equipamentos e valores. Devoluções e pagamentos ficam na página da locação.</p>
-      </NavyHero>
-      <div className="relative z-10 -mt-10">
+      <TopBar
+        back={`/locacoes/${r.id}`}
+        eyebrow={`Editar ${r.stage === "ORCAMENTO" ? "orçamento" : "locação"} · ${rentalCode(r.number)}`}
+        title={r.customer.name}
+      />
+      <div>
         <RentalForm customers={customers} equipment={equipment} initial={initial} todayISO={todayISO()} />
       </div>
     </>
