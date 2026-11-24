@@ -12,7 +12,7 @@ function Note({ tone, children }: { tone: "ok" | "error"; children: React.ReactN
   const Icon = tone === "ok" ? CircleCheck : CircleAlert;
   return (
     <p
-      className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm ring-1 ring-inset ${tone === "ok" ? "bg-emerald-50 text-emerald-800 ring-emerald-200" : "bg-red-50 text-red-800 ring-red-200"}`}
+      className={`flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm ${tone === "ok" ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-800"}`}
       role={tone === "ok" ? "status" : "alert"}
     >
       <Icon className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
@@ -30,7 +30,7 @@ function Msg({ state, ok }: { state: FormState; ok: string }) {
 function Group({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
     <fieldset className="space-y-3">
-      <legend className="mb-3 flex items-center gap-2 text-[13px] font-semibold text-slate-700 [&>svg]:h-4 [&>svg]:w-4 [&>svg]:text-slate-400">
+      <legend className="mb-3 flex items-center gap-2 text-sm font-semibold text-brand-950 [&>svg]:h-4 [&>svg]:w-4 [&>svg]:text-brand-500">
         {icon}
         {title}
       </legend>
@@ -48,7 +48,7 @@ export function CompanyForm({ company }: { company: Company }) {
     </div>
   );
   return (
-    <form action={action} className="space-y-6 p-4 sm:p-5">
+    <form action={action} className="space-y-6 px-4 pt-2 pb-5 sm:px-5">
       <Group icon={<Store strokeWidth={1.9} />} title="Identificação">
         <div className="grid gap-3 sm:grid-cols-2">
           {f("name", "Nome da empresa")}
@@ -107,7 +107,7 @@ export function AddUserForm() {
 export function PasswordForm() {
   const [state, action, pending] = useActionState(changePassword, {});
   return (
-    <form action={action} key={state.ok ?? 0} className="space-y-3 p-4 sm:p-5">
+    <form action={action} key={state.ok ?? 0} className="space-y-3 px-4 pt-2 pb-5 sm:px-5">
       <div className="grid gap-3 sm:grid-cols-2">
         <input name="current" type="password" className="input" placeholder="Senha atual" aria-label="Senha atual" required autoComplete="current-password" />
         <input name="next" type="password" className="input" placeholder="Nova senha" aria-label="Nova senha" required minLength={6} autoComplete="new-password" />
