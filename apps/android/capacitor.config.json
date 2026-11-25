@@ -1,0 +1,14 @@
+{
+  "appId": "br.com.locarequipamentos.app",
+  "appName": "LOCAR Equipamentos",
+  "webDir": "www",
+  "server": {
+    "url": "https://locacao-taupe.vercel.app",
+    "cleartext": false,
+    "errorPath": "offline.html"
+  },
+  "android": {
+    "appendUserAgent": "LocarApp/1.0 (Android)",
+    "backgroundColor": "#f3f5fa"
+  }
+}

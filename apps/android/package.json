@@ -1,0 +1,16 @@
+{
+  "name": "locar-android",
+  "private": true,
+  "version": "1.0.0",
+  "description": "App Android (APK) do LOCAR: abre o sistema publicado na Vercel.",
+  "scripts": {
+    "sync": "cap sync android",
+    "apk": "cap sync android && cd android && ./gradlew assembleRelease"
+  },
+  "dependencies": {
+    "@capacitor/android": "7.6.11",
+    "@capacitor/browser": "7.0.5",
+    "@capacitor/cli": "7.6.11",
+    "@capacitor/core": "7.6.11"
+  }
+}

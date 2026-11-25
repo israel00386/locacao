@@ -1,0 +1,46 @@
+{
+  "name": "locar-desktop",
+  "productName": "LOCAR Equipamentos",
+  "version": "1.0.0",
+  "description": "LOCAR Equipamentos para Windows: abre o sistema publicado na Vercel.",
+  "author": "LOCAR Equipamentos",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "exe": "electron-builder --win --x64 && node scripts/set-icon.mjs && makensis -V2 installer.nsi && node scripts/zip-portable.mjs"
+  },
+  "build": {
+    "appId": "br.com.locarequipamentos.desktop",
+    "productName": "LOCAR Equipamentos",
+    "copyright": "LOCAR Equipamentos",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "offline.html",
+      "build/icon.png"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "dir",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false
+    }
+  },
+  "devDependencies": {
+    "electron": "33.4.11",
+    "electron-builder": "25.1.8",
+    "pe-library": "1.0.1",
+    "resedit": "2.0.3"
+  }
+}

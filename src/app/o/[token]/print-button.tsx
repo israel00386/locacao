@@ -4,7 +4,18 @@ import { Check, Copy, Printer } from "lucide-react";
 
 export function PrintButton() {
   return (
-    <button type="button" onClick={() => window.print()} className="inline-flex min-h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-md bg-neutral-900 px-4 text-sm font-semibold text-white hover:bg-neutral-700">
+    <button
+      type="button"
+      onClick={() => {
+        // No app Android (Capacitor) a WebView não imprime: abre o documento no navegador do celular,
+        // onde "Compartilhar / Imprimir / Salvar PDF" funcionam.
+        const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; Plugins?: { Browser?: { open: (o: { url: string }) => Promise<void> } } } }).Capacitor;
+        if (cap?.isNativePlatform?.() && cap.Plugins?.Browser) {
+          cap.Plugins.Browser.open({ url: location.href }).catch(() => window.print());
+          return;
+        }
+        window.print();
+      }} className="inline-flex min-h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-md bg-neutral-900 px-4 text-sm font-semibold text-white hover:bg-neutral-700">
       <Printer size={16} aria-hidden /> PDF / Imprimir
     </button>
   );
