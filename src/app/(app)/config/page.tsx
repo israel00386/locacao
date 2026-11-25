@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { Building2, ChevronRight, FileSpreadsheet, KeyRound, Users } from "lucide-react";
+import { Building2, ChevronRight, FileSpreadsheet, KeyRound, TriangleAlert, Users } from "lucide-react";
 import { Avatar, Badge, Section, TopBar } from "@/components/ui";
 import { ActionButton } from "@/components/rental-actions";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { getCompany } from "@/lib/rentals";
-import { AddUserForm, CompanyForm, PasswordForm } from "./forms";
+import { AddUserForm, CompanyForm, PasswordForm, ResetDataForm } from "./forms";
 import { removeUser } from "./actions";
 
 export const metadata = { title: "Configurações" };
@@ -65,6 +65,10 @@ export default async function ConfigPage() {
 
           <Section title="Minha senha" icon={<KeyRound />} description="Use pelo menos 6 caracteres">
             <PasswordForm />
+          </Section>
+
+          <Section title="Zerar dados" icon={<TriangleAlert />} iconTone="red" description="Começar do zero">
+            <ResetDataForm />
           </Section>
         </div>
       </div>

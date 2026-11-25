@@ -1,7 +1,7 @@
 "use client";
 import { useActionState, useState } from "react";
 import { CircleAlert, CircleCheck, FileSpreadsheet, KeyRound, Landmark, Loader2, Save, Store, TriangleAlert, Upload, UserPlus } from "lucide-react";
-import { addUser, changePassword, importSpreadsheet, saveCompany, type FormState, type ImportState } from "./actions";
+import { addUser, changePassword, importSpreadsheet, resetAllData, saveCompany, type FormState, type ImportState } from "./actions";
 
 type Company = {
   name: string; subtitle: string; location: string; instagram: string; phone: string;
@@ -116,6 +116,42 @@ export function PasswordForm() {
       <button className="btn-secondary w-full" disabled={pending}>
         {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <KeyRound className="h-4 w-4" strokeWidth={1.9} aria-hidden />}
         Trocar minha senha
+      </button>
+    </form>
+  );
+}
+
+/** Zerar dados de operação (pede para digitar ZERAR e confirmar). */
+export function ResetDataForm() {
+  const [state, action, pending] = useActionState(resetAllData, {});
+  const [text, setText] = useState("");
+  const ready = text.trim().toUpperCase() === "ZERAR";
+  return (
+    <form
+      action={action}
+      key={state.ok ?? 0}
+      onSubmit={(e) => {
+        if (!window.confirm("Apagar TODOS os equipamentos, clientes, locações, pagamentos, despesas e o caixa? Não dá para desfazer.")) e.preventDefault();
+      }}
+      className="space-y-3 px-4 pt-2 pb-5 sm:px-5"
+    >
+      <p className="text-sm leading-relaxed text-slate-600">
+        Apaga <strong>equipamentos, estoque, clientes, obras, locações, pagamentos, despesas e movimentos do caixa</strong>. Continuam: usuários e senhas, dados da
+        empresa e categorias de despesa. A numeração volta para LOC-0001. <strong className="text-red-700">Não dá para desfazer.</strong>
+      </p>
+      <input
+        name="confirm"
+        className="input"
+        placeholder="Digite ZERAR para liberar"
+        aria-label="Digite ZERAR para confirmar"
+        autoComplete="off"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+      />
+      <Msg state={state} ok="Pronto: os dados foram zerados." />
+      <button className="btn-danger w-full" disabled={pending || !ready}>
+        {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <TriangleAlert className="h-4 w-4" strokeWidth={1.9} aria-hidden />}
+        Zerar todos os dados
       </button>
     </form>
   );

@@ -78,3 +78,30 @@ export async function importSpreadsheet(_: ImportState, form: FormData): Promise
     return { error: e instanceof Error ? e.message : "Falha ao importar." };
   }
 }
+
+/**
+ * Zera os dados de operação: locações (itens, devoluções, taxas, pagamentos), despesas, movimentos do caixa,
+ * clientes/obras e equipamentos/histórico de estoque. Mantém usuários, dados da empresa e categorias de despesa.
+ * A numeração das locações volta para LOC-0001.
+ */
+export async function resetAllData(_: FormState, form: FormData): Promise<FormState> {
+  await requireUser();
+  if (String(form.get("confirm") ?? "").trim().toUpperCase() !== "ZERAR") return { error: "Digite ZERAR para confirmar." };
+  await db.$transaction([
+    db.payment.deleteMany(),
+    db.itemReturn.deleteMany(),
+    db.rentalItem.deleteMany(),
+    db.rentalExtra.deleteMany(),
+    db.expense.deleteMany(),
+    db.cashEntry.deleteMany(),
+    db.rental.deleteMany(),
+    db.site.deleteMany(),
+    db.customer.deleteMany(),
+    db.stockEntry.deleteMany(),
+    db.equipment.deleteMany(),
+    db.company.updateMany({ data: { cashOpeningBalance: 0, cashOpeningDate: null } }),
+    db.$executeRawUnsafe(`SELECT setval(pg_get_serial_sequence('"Rental"', 'number'), 1, false)`),
+  ]);
+  revalidatePath("/", "layout");
+  return { ok: Date.now() };
+}
