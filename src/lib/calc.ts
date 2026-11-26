@@ -1,5 +1,7 @@
 // Regras de cálculo da locação. Funções puras (sem banco) para poder testar.
 import { inclusiveDays, maxDate } from "./dates";
+
+const minDate = (a: Date, b: Date) => (a.getTime() <= b.getTime() ? a : b);
 import { round2, type Period } from "./format";
 
 export type Stage = "ORCAMENTO" | "ATIVA" | "ENCERRADA" | "CANCELADA";
@@ -29,6 +31,11 @@ export interface RentalInput {
   extras: { amount: number }[];
   payments: { amount: number }[];
   items: ItemInput[];
+  /**
+   * Cobrar os dias depois da previsão (dias excedentes). Padrão: não — o valor fechado no contrato
+   * (retirada → previsão) não aumenta se a busca atrasar; só aumenta se o dono pedir para recalcular.
+   */
+  chargeOverdue?: boolean;
 }
 
 export type ItemStatus = "NA_OBRA" | "ATRASADO" | "DEVOLVIDO";
@@ -42,6 +49,8 @@ export interface ItemCalc {
   expectedEndDate: Date | null;
   /** Dias cobrados de cada devolução, na mesma ordem de `returns`. */
   returnDays: number[];
+  /** Valor dos dias excedentes (depois da previsão) deste item — cobrado ou não, conforme a opção da locação. */
+  excessValue: number;
   /** Este item ainda tem material na obra depois da própria previsão. */
   overdue: boolean;
   overdueDays: number;
@@ -75,23 +84,36 @@ export interface RentalCalc {
   nextExpectedEnd: Date | null;
   /** Tem acréscimo de equipamento. */
   hasAdditions: boolean;
+  /** Os dias excedentes estão sendo cobrados (opção ligada). */
+  chargeOverdue: boolean;
+  /** Valor dos dias excedentes: o que entra no total se a opção for ligada (ou o que já entrou, se ligada). */
+  excessValue: number;
   financial: "PAGO" | "PARCIAL" | "EM_ABERTO" | "SEM_VALOR";
 }
 
 /**
  * Dias que a parte ainda não devolvida conta.
  * - Orçamento: da retirada até a previsão (ou 1 dia).
- * - Ativa: da retirada até a previsão; se passou da previsão, até hoje (dias excedentes são cobrados).
+ * - Ativa: da retirada até a previsão (valor fechado). Passou da previsão: só conta até hoje se
+ *   `chargeOverdue` (cobrar dias excedentes) estiver ligado. Sem previsão: até hoje.
  */
 export function outstandingDaysFor(
   stage: string,
   start: Date,
   expectedEnd: Date | null,
   today: Date,
+  chargeOverdue = false,
 ): number {
   if (stage === "ORCAMENTO") return expectedEnd ? inclusiveDays(start, expectedEnd) : 1;
+  if (expectedEnd && !chargeOverdue) return inclusiveDays(start, expectedEnd);
   const end = expectedEnd ? maxDate(expectedEnd, today) : maxDate(start, today);
   return inclusiveDays(start, end);
+}
+
+/** Dias padrão de uma devolução: até a data da devolução, limitado à previsão se não cobra excedentes. */
+export function returnDaysFor(start: Date, expectedEnd: Date | null, returnDate: Date, chargeOverdue = false): number {
+  const until = expectedEnd && !chargeOverdue ? minDate(returnDate, expectedEnd) : returnDate;
+  return Math.max(1, inclusiveDays(start, until));
 }
 
 /** Datas efetivas do item: as próprias (acréscimo) ou as da locação. */
@@ -102,18 +124,31 @@ export function itemDates(
   return { start: item.startDate ?? rental.startDate, end: item.expectedEndDate ?? rental.expectedEndDate };
 }
 
-export function calcItem(item: ItemInput, rental: Pick<RentalInput, "stage" | "startDate" | "expectedEndDate">, today: Date): ItemCalc {
+export function calcItem(
+  item: ItemInput,
+  rental: Pick<RentalInput, "stage" | "startDate" | "expectedEndDate" | "chargeOverdue">,
+  today: Date,
+): ItemCalc {
   const { start, end } = itemDates(item, rental);
+  const charge = !!rental.chargeOverdue;
   const returnedQty = item.returns.reduce((s, r) => s + r.qty, 0);
   const outstandingQty = Math.max(0, item.qty - returnedQty);
-  const outstandingDays = item.daysOverride ?? outstandingDaysFor(rental.stage, start, end, today);
 
-  const returnDays = item.returns.map((r) => r.chargedDays ?? inclusiveDays(start, r.date));
-  let total = 0;
-  item.returns.forEach((r, i) => {
-    total += r.qty * item.unitPrice * returnDays[i];
-  });
-  total += outstandingQty * item.unitPrice * outstandingDays;
+  // Calcula com e sem os dias excedentes: o total usa a opção da locação; a diferença vira `excessValue`.
+  const outDays = (withExcess: boolean) => item.daysOverride ?? outstandingDaysFor(rental.stage, start, end, today, withExcess);
+  const retDays = (withExcess: boolean) => item.returns.map((r) => r.chargedDays ?? returnDaysFor(start, end, r.date, withExcess));
+  const valueOf = (withExcess: boolean) => {
+    const rd = retDays(withExcess);
+    let v = 0;
+    item.returns.forEach((r, i) => {
+      v += r.qty * item.unitPrice * rd[i];
+    });
+    return v + outstandingQty * item.unitPrice * outDays(withExcess);
+  };
+  const outstandingDays = outDays(charge);
+  const returnDays = retDays(charge);
+  const total = valueOf(charge);
+  const excessValue = round2(valueOf(true) - valueOf(false));
 
   const overdue = rental.stage === "ATIVA" && outstandingQty > 0 && !!end && end.getTime() < today.getTime();
   const overdueDays = overdue ? inclusiveDays(end!, today) - 1 : 0;
@@ -132,6 +167,7 @@ export function calcItem(item: ItemInput, rental: Pick<RentalInput, "stage" | "s
     outstandingDays,
     dailyValue: round2(item.qty * item.unitPrice),
     total: round2(total),
+    excessValue,
   };
 }
 
@@ -166,13 +202,15 @@ export function calcRental(r: RentalInput, today: Date): RentalCalc {
     }
   }
   const hasAdditions = items.some((i) => i.addition);
+  const chargeOverdue = !!r.chargeOverdue;
+  const excessValue = round2(items.reduce((s, i) => s + i.excessValue, 0));
 
   let financial: RentalCalc["financial"] = "EM_ABERTO";
   if (total <= 0) financial = "SEM_VALOR";
   else if (open <= 0.009) financial = "PAGO";
   else if (paid > 0) financial = "PARCIAL";
 
-  return { items, itemsTotal, extrasTotal, discount, total, paid, open, outstandingQty, allReturned, overdue, overdueDays, days, nextExpectedEnd, hasAdditions, financial };
+  return { items, itemsTotal, extrasTotal, discount, total, paid, open, outstandingQty, allReturned, overdue, overdueDays, days, nextExpectedEnd, hasAdditions, chargeOverdue, excessValue, financial };
 }
 
 /** Faixa de preço sugerida pela duração da locação. */
@@ -295,6 +333,8 @@ export interface OnSiteItemInput {
   daysOverride: number | null;
   /** Valor já cobrado pelas unidades devolvidas. */
   returnedValue: number;
+  /** Previsão do item: sem cobrar excedentes, a conta para nela (valor fechado). */
+  end?: Date | null;
 }
 
 /**
@@ -304,17 +344,29 @@ export interface OnSiteItemInput {
 export function onSiteValue(
   items: OnSiteItemInput[],
   until: Date,
-  money: { extras: number; discount: number; paid: number },
+  money: { extras: number; discount: number; paid: number; chargeOverdue?: boolean },
 ) {
   const lines = items
     .filter((i) => i.outstandingQty > 0)
     .map((i) => {
-      const days = i.daysOverride ?? (until.getTime() >= i.start.getTime() ? inclusiveDays(i.start, until) : 0);
-      return { name: i.name, qty: i.outstandingQty, unitPrice: i.unitPrice, days, value: round2(i.outstandingQty * i.unitPrice * days) };
+      const capped = i.end && !money.chargeOverdue ? minDate(until, i.end) : until;
+      const days = i.daysOverride ?? (capped.getTime() >= i.start.getTime() ? inclusiveDays(i.start, capped) : 0);
+      const fullDays = i.daysOverride ?? (until.getTime() >= i.start.getTime() ? inclusiveDays(i.start, until) : 0);
+      return {
+        name: i.name,
+        qty: i.outstandingQty,
+        unitPrice: i.unitPrice,
+        days,
+        value: round2(i.outstandingQty * i.unitPrice * days),
+        /** Dias depois da previsão que não entram (valor fechado). */
+        excessDays: Math.max(0, fullDays - days),
+        excessValue: round2(i.outstandingQty * i.unitPrice * Math.max(0, fullDays - days)),
+      };
     });
   const onSiteTotal = round2(lines.reduce((s, l) => s + l.value, 0));
   const returnedTotal = round2(items.reduce((s, i) => s + i.returnedValue, 0));
   const total = round2(onSiteTotal + returnedTotal + money.extras - money.discount);
   const open = round2(total - money.paid);
-  return { lines, onSiteTotal, returnedTotal, total, paid: round2(money.paid), open };
+  const excessValue = round2(lines.reduce((s, l) => s + l.excessValue, 0));
+  return { lines, onSiteTotal, returnedTotal, total, paid: round2(money.paid), open, excessValue };
 }

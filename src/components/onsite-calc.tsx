@@ -10,6 +10,7 @@ export interface OnSiteCalcItem {
   outstandingQty: number;
   unitPrice: number;
   startISO: string;
+  endISO?: string;
   daysOverride: number | null;
   returnedValue: number;
 }
@@ -23,6 +24,7 @@ export function OnSiteCalc({
   extras,
   discount,
   paid,
+  chargeOverdue = false,
   todayISO,
   expectedEndISO,
 }: {
@@ -30,6 +32,7 @@ export function OnSiteCalc({
   extras: number;
   discount: number;
   paid: number;
+  chargeOverdue?: boolean;
   todayISO: string;
   expectedEndISO: string;
 }) {
@@ -46,11 +49,11 @@ export function OnSiteCalc({
   const result = useMemo(() => {
     const date = parseISODate(until) ?? today;
     return onSiteValue(
-      items.map((i) => ({ ...i, start: parseISODate(i.startISO)! })),
+      items.map((i) => ({ ...i, start: parseISODate(i.startISO)!, end: parseISODate(i.endISO) })),
       date,
-      { extras, discount, paid },
+      { extras, discount, paid, chargeOverdue },
     );
-  }, [items, until, extras, discount, paid, today]);
+  }, [items, until, extras, discount, paid, chargeOverdue, today]);
   const untilDate = parseISODate(until) ?? today;
 
   return (
@@ -58,7 +61,10 @@ export function OnSiteCalc({
       <label className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3">
         <span className="min-w-0">
           <span className="block text-sm font-semibold text-brand-950">Calcular o que ele deve até a busca</span>
-          <span className="block text-xs text-slate-500">Opcional: soma o material na obra até a data escolhida, menos o que já foi pago.</span>
+          <span className="block text-xs text-slate-500">
+            Opcional: soma o material na obra até a data escolhida, menos o que já foi pago.
+            {chargeOverdue ? " Dias excedentes: cobrando." : " Dias depois da previsão só entram se você mandar cobrar."}
+          </span>
         </span>
         <input type="checkbox" className="peer sr-only" checked={on} onChange={(e) => setOn(e.target.checked)} />
         <span
@@ -99,6 +105,11 @@ export function OnSiteCalc({
                   <span className="tnum block text-xs text-slate-500">
                     {l.qty} un. × {unitMoney(l.unitPrice)}/dia × {l.days} {l.days === 1 ? "dia" : "dias"}
                   </span>
+                  {l.excessDays > 0 && (
+                    <span className="block text-xs text-amber-700">
+                      +{l.excessDays} {l.excessDays === 1 ? "dia" : "dias"} depois da previsão não cobrado{l.excessDays === 1 ? "" : "s"} ({money(l.excessValue)})
+                    </span>
+                  )}
                 </span>
                 <span className="tnum shrink-0 text-sm font-bold text-slate-900">{money(l.value)}</span>
               </li>

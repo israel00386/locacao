@@ -335,3 +335,11 @@ export async function toggleNegotiating(id: string) {
   if (r) await db.rental.update({ where: { id }, data: { negotiating: !r.negotiating } });
   refresh(id);
 }
+
+/** Liga/desliga a cobrança dos dias excedentes (depois da previsão) desta locação. */
+export async function toggleChargeOverdue(id: string) {
+  await requireUser();
+  const r = await db.rental.findUnique({ where: { id }, select: { chargeOverdue: true } });
+  if (r) await db.rental.update({ where: { id }, data: { chargeOverdue: !r.chargeOverdue } });
+  refresh(id);
+}

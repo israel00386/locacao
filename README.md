@@ -27,7 +27,7 @@ Ele substitui a planilha "Locar Equipamento e Serviços" e resolve os problemas 
 4. **Pagamento**: registre cada valor recebido (Pix, dinheiro…).
 5. **Encerrar** quando tudo voltou. Se ainda houver saldo, ele continua aparecendo no **Financeiro**.
 
-Atraso: com material na obra depois da data prevista, a locação fica **Atrasada** e os dias excedentes passam a ser somados.
+Atraso: com material na obra depois da data prevista, a locação fica **Atrasada**, mas o **valor fechado** (retirada → previsão) não muda. Os dias excedentes só entram no total se você tocar em **"Cobrar dias excedentes"** na locação (dá para voltar ao valor fechado). Devoluções depois da previsão também ficam no valor fechado, salvo com essa opção ligada.
 
 ### Como os dias são contados
 

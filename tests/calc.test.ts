@@ -14,8 +14,9 @@ describe("dias", () => {
     expect(inclusiveDays(d("2026-09-01")!, d("2026-09-19")!)).toBe(19);
   });
 
-  it("depois da previsão continua contando até hoje", () => {
-    expect(outstandingDaysFor("ATIVA", d("2026-11-01")!, d("2026-11-10")!, d("2026-11-15")!)).toBe(15);
+  it("depois da previsão: valor fechado até a previsão; só conta até hoje se cobrar excedentes", () => {
+    expect(outstandingDaysFor("ATIVA", d("2026-11-01")!, d("2026-11-10")!, d("2026-11-15")!)).toBe(10);
+    expect(outstandingDaysFor("ATIVA", d("2026-11-01")!, d("2026-11-10")!, d("2026-11-15")!, true)).toBe(15);
     expect(outstandingDaysFor("ATIVA", d("2026-11-01")!, d("2026-11-10")!, d("2026-11-05")!)).toBe(10);
     expect(outstandingDaysFor("ORCAMENTO", d("2026-11-01")!, d("2026-11-10")!, d("2026-11-20")!)).toBe(10);
   });
@@ -94,7 +95,43 @@ describe("locação", () => {
     );
     expect(c.overdue).toBe(true);
     expect(c.overdueDays).toBe(3);
-    expect(c.total).toBe(14 * 13);
+    // Padrão: mostra o atraso, mas mantém o valor fechado (10 dias); os 3 dias a mais ficam em excessValue.
+    expect(c.total).toBe(14 * 10);
+    expect(c.excessValue).toBe(14 * 3);
+    expect(c.chargeOverdue).toBe(false);
+  });
+
+  it("cobrar dias excedentes (opção ligada) soma os dias depois da previsão", () => {
+    const input = {
+      ...base,
+      stage: "ATIVA",
+      startDate: d("2026-10-26")!,
+      expectedEndDate: d("2026-11-24")!, // 30 dias fechados
+      items: [{ qty: 10, unitPrice: 1, daysOverride: null, returns: [] }],
+    };
+    const hoje = d("2026-11-29")!; // 5 dias depois
+    const fechado = calcRental(input, hoje);
+    expect(fechado.total).toBe(300);
+    expect(fechado.overdueDays).toBe(5);
+    expect(fechado.excessValue).toBe(50);
+    const recalculado = calcRental({ ...input, chargeOverdue: true }, hoje);
+    expect(recalculado.total).toBe(350);
+    expect(recalculado.chargeOverdue).toBe(true);
+  });
+
+  it("devolução depois da previsão não passa do valor fechado, a menos que cobre excedentes", () => {
+    const input = {
+      ...base,
+      stage: "ATIVA",
+      startDate: d("2026-10-26")!,
+      expectedEndDate: d("2026-11-24")!,
+      items: [{ qty: 10, unitPrice: 1, daysOverride: null, returns: [{ qty: 10, date: d("2026-11-28")!, chargedDays: null }] }],
+    };
+    expect(calcRental(input, d("2026-11-29")!).total).toBe(300);
+    expect(calcRental({ ...input, chargeOverdue: true }, d("2026-11-29")!).total).toBe(340);
+    // Devolução antes da previsão continua cobrando só até a devolução.
+    const cedo = { ...input, items: [{ ...input.items[0], returns: [{ qty: 10, date: d("2026-11-14")!, chargedDays: null }] }] };
+    expect(calcRental(cedo, d("2026-11-29")!).total).toBe(200);
   });
 
   it("dias cobrados manualmente prevalecem", () => {
@@ -250,10 +287,11 @@ describe("acréscimo de equipamento", () => {
     expect(c.items[1].overdue).toBe(true);
     expect(c.items[1].overdueDays).toBe(3);
     expect(c.items[1].status).toBe("ATRASADO");
-    expect(c.items[1].outstandingDays).toBe(14); // 10/11 → 23/11 (hoje)
+    expect(c.items[1].outstandingDays).toBe(11); // 10/11 → 20/11 (valor fechado do acréscimo)
     expect(c.overdue).toBe(true);
     expect(c.overdueDays).toBe(3);
-    expect(c.total).toBe(300 + 14 * 14);
+    expect(c.total).toBe(300 + 14 * 11);
+    expect(c.excessValue).toBe(14 * 3);
     expect(c.nextExpectedEnd).toEqual(d("2026-11-30"));
     expect(itemSituation(c.items[1].status)).toEqual({ label: "Atrasado", tone: "red" });
   });

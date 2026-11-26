@@ -108,6 +108,8 @@ model Rental {
   expectedEndDate DateTime?     @db.Date
   discount        Decimal       @default(0) @db.Decimal(12, 2)
   negotiating     Boolean       @default(false)
+  /// Cobrar dias excedentes (depois da previsão). Padrão: não — vale o valor fechado no contrato.
+  chargeOverdue   Boolean       @default(false)
   notes           String?
   quoteToken      String        @unique @default(cuid())
   closedAt        DateTime?     @db.Date

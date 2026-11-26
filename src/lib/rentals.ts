@@ -21,6 +21,7 @@ export function toCalcInput(r: RentalFull): RentalInput {
     startDate: r.startDate,
     expectedEndDate: r.expectedEndDate,
     discount: n(r.discount),
+    chargeOverdue: r.chargeOverdue,
     extras: r.extras.map((e) => ({ amount: n(e.amount) })),
     payments: r.payments.map((p) => ({ amount: n(p.amount) })),
     items: r.items.map((i) => ({

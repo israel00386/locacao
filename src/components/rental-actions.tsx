@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { Check, ChevronDown, CircleCheck, ExternalLink, Link2, Loader2, MessageCircle, Share2, Undo2 } from "lucide-react";
 import type { ActionResult } from "@/app/(app)/locacoes/actions";
 import { fmtDateShort, inclusiveDays, parseISODate, weekday } from "@/lib/dates";
+import { returnDaysFor } from "@/lib/calc";
 import { money } from "@/lib/format";
 
 /** Botão que chama uma server action, com confirmação opcional. */
@@ -67,6 +68,8 @@ export interface ReturnRow {
   suggestedDays: number;
   /** Retirada do item (a do acréscimo, se for acréscimo). AAAA-MM-DD */
   startISO: string;
+  /** Previsão do item (AAAA-MM-DD ou vazio): sem cobrar excedentes, a conta automática para nela. */
+  endISO?: string;
   addition?: boolean;
 }
 
@@ -75,11 +78,13 @@ export function ReturnForm({
   items,
   todayISO,
   startISO,
+  chargeOverdue = false,
 }: {
   action: (form: FormData) => Promise<ActionResult>;
   items: ReturnRow[];
   todayISO: string;
   startISO: string;
+  chargeOverdue?: boolean;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [qty, setQty] = useState<Record<string, string>>({});
@@ -164,7 +169,7 @@ export function ReturnForm({
                   name={`days_${i.id}`}
                   className="input mt-1 w-32 tnum"
                   inputMode="numeric"
-                  placeholder={retDate ? `auto: ${inclusiveDays(parseISODate(i.startISO)!, retDate)}` : "automático"}
+                  placeholder={retDate ? `auto: ${returnDaysFor(parseISODate(i.startISO)!, parseISODate(i.endISO), retDate, chargeOverdue)}` : "automático"}
                 />
               </details>
             </li>

@@ -51,6 +51,7 @@ import {
   deleteReturn,
   registerReturn,
   reopenRental,
+  toggleChargeOverdue,
   toggleNegotiating,
 } from "../actions";
 
@@ -325,7 +326,11 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
                 </>
               )}
             </div>
-            {isActive && hasOutstanding && <p className="mt-3 text-[12px] text-white/55">O total muda conforme os dias passam e as devoluções são registradas.</p>}
+            {isActive && hasOutstanding && (
+              <p className="mt-3 text-[12px] text-white/55">
+                {c.chargeOverdue ? "Cobrando dias excedentes: o total sobe a cada dia depois da previsão." : "Valor fechado até a previsão. Dias a mais só entram se você mandar cobrar."}
+              </p>
+            )}
           </BalanceCard>
 
           {/* AÇÕES RÁPIDAS */}
@@ -460,6 +465,19 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
             </ol>
           </section>
 
+          {!c.overdue && c.excessValue > 0.009 && isLive && (
+            <div className="flex flex-wrap items-center gap-3 rounded-[24px] bg-slate-50 px-4 py-3.5 text-sm text-slate-700">
+              <p className="min-w-0 flex-1">
+                {c.chargeOverdue
+                  ? `Dias excedentes cobrados: ${money(c.excessValue)} a mais no total.`
+                  : `Material devolvido depois da previsão. Valor fechado mantido; os dias a mais somariam ${money(c.excessValue)}.`}
+              </p>
+              <ActionButton className="btn-secondary btn-sm rounded-full" action={toggleChargeOverdue.bind(null, r.id)}>
+                {c.chargeOverdue ? "Voltar ao valor fechado" : "Cobrar dias excedentes"}
+              </ActionButton>
+            </div>
+          )}
+
           {c.overdue && (
             <div className="flex gap-3 rounded-[24px] bg-gradient-to-br from-red-50 to-rose-50 px-4 py-4 text-sm text-red-900">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-red-600 shadow-sm" aria-hidden>
@@ -469,11 +487,24 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
                 <p className="font-semibold">
                   Material na obra há {c.overdueDays} {c.overdueDays === 1 ? "dia" : "dias"} além da previsão.
                 </p>
-                <p className="mt-0.5 text-red-800/90">Os dias excedentes já estão sendo somados.</p>
+                <p className="mt-0.5 text-red-800/90">
+                  {c.chargeOverdue
+                    ? `Cobrando os dias excedentes (${money(c.excessValue)} a mais no total).`
+                    : `Valor fechado mantido. Os dias a mais (${money(c.excessValue)}) só entram se você mandar cobrar.`}
+                </p>
                 {c.hasAdditions && (
                   <p className="mt-1 text-xs text-red-800/80">
                     Atrasado: {r.items.filter((_, i) => c.items[i].overdue).map((it) => it.equipment.name).join(", ")}
                   </p>
+                )}
+                {c.excessValue > 0.009 && (
+                  <ActionButton
+                    className={`mt-2.5 rounded-full btn-sm ${c.chargeOverdue ? "btn-secondary" : "btn-danger"}`}
+                    action={toggleChargeOverdue.bind(null, r.id)}
+                    confirm={c.chargeOverdue ? undefined : `Somar ${c.overdueDays} ${c.overdueDays === 1 ? "dia excedente" : "dias excedentes"} (+${money(c.excessValue)} até hoje) ao valor da locação?`}
+                  >
+                    {c.chargeOverdue ? "Voltar ao valor fechado" : `Cobrar dias excedentes (+${money(c.excessValue)})`}
+                  </ActionButton>
                 )}
               </div>
             </div>
@@ -544,8 +575,10 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
                   outstanding: c.items[idx].outstandingQty,
                   suggestedDays: c.items[idx].outstandingDays,
                   startISO: toISODate(c.items[idx].startDate),
+                  endISO: toISODate(c.items[idx].expectedEndDate),
                   addition: c.items[idx].addition,
                 }))}
+                chargeOverdue={c.chargeOverdue}
               />
             </Panel>
           )}
@@ -561,6 +594,7 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
                     outstandingQty: ic.outstandingQty,
                     unitPrice: unit,
                     startISO: toISODate(ic.startDate),
+                    endISO: toISODate(ic.expectedEndDate),
                     daysOverride: it.daysOverride,
                     returnedValue: Math.round((ic.total - ic.outstandingQty * unit * ic.outstandingDays) * 100) / 100,
                   };
@@ -568,6 +602,7 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
                 extras={c.extrasTotal}
                 discount={c.discount}
                 paid={c.paid}
+                chargeOverdue={c.chargeOverdue}
                 todayISO={todayISO()}
                 expectedEndISO={toISODate(r.expectedEndDate)}
               />
