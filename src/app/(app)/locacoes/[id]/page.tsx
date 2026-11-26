@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import {
   Ban,
+  Calculator,
   Banknote,
   CalendarClock,
   ChevronRight,
@@ -31,6 +32,7 @@ import { BalanceCard, Donut, QuickTile, RoundButton, SectionTitle, TopBar } from
 import { Avatar, deadlineInfo, HeroStat, Panel, ProgressBar, QuickTileBody, quickTileClass, SOFT, TEXT_TONES } from "@/components/rental-ui";
 import { AddItemsButton, AddItemsTile } from "@/components/add-items-form";
 import { ExpenseList } from "@/components/expense-list";
+import { OnSiteCalc } from "@/components/onsite-calc";
 import { getExpenseRentalOptions, getRentalExpenses } from "@/lib/expenses";
 import { itemSituation, paymentStatus, situation } from "@/lib/calc";
 import { fmtDate, fmtDateShort, inclusiveDays, toISODate, today, todayISO, weekday } from "@/lib/dates";
@@ -544,6 +546,30 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
                   startISO: toISODate(c.items[idx].startDate),
                   addition: c.items[idx].addition,
                 }))}
+              />
+            </Panel>
+          )}
+
+          {isActive && c.outstandingQty > 0 && (
+            <Panel id="na-obra" title="Material na obra sem pagar" subtitle="Cálculo automático até a data da busca" icon={Calculator} tone="sky">
+              <OnSiteCalc
+                items={r.items.map((it, idx) => {
+                  const ic = c.items[idx];
+                  const unit = Number(it.unitPrice);
+                  return {
+                    name: it.equipment.name,
+                    outstandingQty: ic.outstandingQty,
+                    unitPrice: unit,
+                    startISO: toISODate(ic.startDate),
+                    daysOverride: it.daysOverride,
+                    returnedValue: Math.round((ic.total - ic.outstandingQty * unit * ic.outstandingDays) * 100) / 100,
+                  };
+                })}
+                extras={c.extrasTotal}
+                discount={c.discount}
+                paid={c.paid}
+                todayISO={todayISO()}
+                expectedEndISO={toISODate(r.expectedEndDate)}
               />
             </Panel>
           )}

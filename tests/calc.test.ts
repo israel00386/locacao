@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calcRental, itemSituation, priceFor, suggestPeriod, suggestUnitPrice, outstandingDaysFor } from "@/lib/calc";
+import { calcRental, itemSituation, priceFor, suggestPeriod, suggestUnitPrice, outstandingDaysFor, onSiteValue } from "@/lib/calc";
 import { parseISODate as d, inclusiveDays } from "@/lib/dates";
 
 const base = {
@@ -316,5 +316,37 @@ describe("tabela de preços", () => {
     const empty = { priceDaily: null, priceWeekly: null, priceBiweekly: null, priceMonthly: null, lastPrice: 0.8 };
     expect(suggestUnitPrice(empty, null, "DIARIA")).toEqual({ unitPrice: 0.8, source: "último valor cobrado" });
     expect(suggestUnitPrice({ ...empty, lastPrice: null }, null, "DIARIA").unitPrice).toBeNull();
+  });
+});
+
+describe("onSiteValue (material na obra sem pagar)", () => {
+  const d = (s: string) => new Date(s + "T00:00:00Z");
+  const items = [
+    { name: "Andaime", outstandingQty: 10, unitPrice: 1, start: d("2026-11-01"), daysOverride: null, returnedValue: 0 },
+    { name: "Betoneira", outstandingQty: 1, unitPrice: 30, start: d("2026-11-20"), daysOverride: null, returnedValue: 120 },
+    { name: "Escora", outstandingQty: 0, unitPrice: 0.5, start: d("2026-11-01"), daysOverride: null, returnedValue: 50 },
+  ];
+  it("soma até a data escolhida, contando o dia da retirada e o da busca", () => {
+    const r = onSiteValue(items, d("2026-11-26"), { extras: 150, discount: 20, paid: 100 });
+    expect(r.lines.map((l) => [l.name, l.days, l.value])).toEqual([
+      ["Andaime", 26, 260],
+      ["Betoneira", 7, 210],
+    ]);
+    expect(r.onSiteTotal).toBe(470);
+    expect(r.returnedTotal).toBe(170);
+    expect(r.total).toBe(770); // 470 + 170 + 150 − 20
+    expect(r.open).toBe(670);
+  });
+  it("data antes da retirada do item não cobra dias; dias manuais são respeitados", () => {
+    const r = onSiteValue(
+      [
+        { ...items[1], returnedValue: 0 },
+        { ...items[0], daysOverride: 5 },
+      ],
+      d("2026-11-10"),
+      { extras: 0, discount: 0, paid: 0 },
+    );
+    expect(r.lines.map((l) => l.days)).toEqual([0, 5]);
+    expect(r.total).toBe(50);
   });
 });

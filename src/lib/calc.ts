@@ -283,3 +283,38 @@ export function financialLabel(f: RentalCalc["financial"]): { label: string; ton
       return { label: "Em aberto", tone: "red" };
   }
 }
+
+export interface OnSiteItemInput {
+  name: string;
+  /** Unidades que ainda estão na obra. */
+  outstandingQty: number;
+  unitPrice: number;
+  /** Retirada efetiva do item. */
+  start: Date;
+  /** Dias cobrados à mão para a parte na obra (vazio = conta até a data escolhida). */
+  daysOverride: number | null;
+  /** Valor já cobrado pelas unidades devolvidas. */
+  returnedValue: number;
+}
+
+/**
+ * Quanto o cliente deve se o material que está na obra for buscado em `until`
+ * (conta o dia da retirada e o dia da busca). Soma o já devolvido, taxas e desconto, e desconta o que foi pago.
+ */
+export function onSiteValue(
+  items: OnSiteItemInput[],
+  until: Date,
+  money: { extras: number; discount: number; paid: number },
+) {
+  const lines = items
+    .filter((i) => i.outstandingQty > 0)
+    .map((i) => {
+      const days = i.daysOverride ?? (until.getTime() >= i.start.getTime() ? inclusiveDays(i.start, until) : 0);
+      return { name: i.name, qty: i.outstandingQty, unitPrice: i.unitPrice, days, value: round2(i.outstandingQty * i.unitPrice * days) };
+    });
+  const onSiteTotal = round2(lines.reduce((s, l) => s + l.value, 0));
+  const returnedTotal = round2(items.reduce((s, i) => s + i.returnedValue, 0));
+  const total = round2(onSiteTotal + returnedTotal + money.extras - money.discount);
+  const open = round2(total - money.paid);
+  return { lines, onSiteTotal, returnedTotal, total, paid: round2(money.paid), open };
+}
