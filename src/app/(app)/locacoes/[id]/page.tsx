@@ -487,16 +487,6 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
                 <p className="font-semibold">
                   Material na obra há {c.overdueDays} {c.overdueDays === 1 ? "dia" : "dias"} além da previsão.
                 </p>
-                <p className="mt-0.5 text-red-800/90">
-                  {c.chargeOverdue
-                    ? `Cobrando os dias excedentes (${money(c.excessValue)} a mais no total).`
-                    : `Valor fechado mantido. Os dias a mais (${money(c.excessValue)}) só entram se você mandar cobrar.`}
-                </p>
-                {c.hasAdditions && (
-                  <p className="mt-1 text-xs text-red-800/80">
-                    Atrasado: {r.items.filter((_, i) => c.items[i].overdue).map((it) => it.equipment.name).join(", ")}
-                  </p>
-                )}
                 {c.excessValue > 0.009 && (
                   <ActionButton
                     className={`mt-2.5 rounded-full btn-sm ${c.chargeOverdue ? "btn-secondary" : "btn-danger"}`}
