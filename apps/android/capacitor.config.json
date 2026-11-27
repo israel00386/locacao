@@ -8,7 +8,7 @@
     "errorPath": "offline.html"
   },
   "android": {
-    "appendUserAgent": "LocarApp/1.0 (Android)",
+    "appendUserAgent": "LocarApp/1.1 (Android)",
     "backgroundColor": "#f3f5fa"
   }
 }
