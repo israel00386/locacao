@@ -29,6 +29,7 @@ describe.skipIf(!enabled)("renovação com PostgreSQL", () => {
     rentalId = r.id; itemId = r.items[0].id;
   });
   afterEach(async () => {
+    vi.useRealTimers();
     if (rentalId) await db.rental.deleteMany({ where: { id: rentalId } });
     if (customerId) await db.customer.deleteMany({ where: { id: customerId } });
     if (equipmentId) await db.equipment.deleteMany({ where: { id: equipmentId } });
@@ -50,6 +51,23 @@ describe.skipIf(!enabled)("renovação com PostgreSQL", () => {
     expect((await getStock()).find((s) => s.id === equipmentId)?.availableQty).toBe(8);
     expect(await db.stockEntry.count({ where: { equipmentId } })).toBe(0);
   });
+  it("permite renovar quatro dias após o prazo sem entrada ou nova saída", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-12-04T15:00:00Z"));
+    const before = (await getRental(rentalId))!;
+    expect(before.calc.overdueDays).toBe(4);
+    const available = (await getStock()).find((s) => s.id === equipmentId)!.availableQty;
+    await renewRentalPeriod(rentalId, payload);
+    const after = (await getRental(rentalId))!;
+    expect(after.calc.overdue).toBe(false);
+    expect(after.calc.financialOverdue).toBe(true);
+    expect(after.periods[1].startDate).toEqual(d("2026-12-01"));
+    expect(after.items.map((i) => i.id)).toEqual([itemId]);
+    expect(after.items[0].returns).toHaveLength(0);
+    expect((await getStock()).find((s) => s.id === equipmentId)!.availableQty).toBe(available);
+    expect(await db.stockEntry.count({ where: { equipmentId } })).toBe(0);
+  });
+
   it("duas requisições simultâneas só criam uma renovação", async () => {
     const results = await Promise.allSettled([renewRentalPeriod(rentalId, payload), renewRentalPeriod(rentalId, payload)]);
     expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);

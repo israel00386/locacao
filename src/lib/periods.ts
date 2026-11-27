@@ -22,7 +22,7 @@ export interface PeriodInput {
 
 /** Apenas o último período pode gerar excedentes; renovar cobre os dias seguintes sem duplicá-los. */
 export function calcPeriods(periods: PeriodInput[], paid: number, now: Date, chargeOverdue: boolean,
-  returns: { itemId: string; qty: number; date: Date }[]) {
+  returns: { itemId: string; qty: number; date: Date }[], paymentRequired = false) {
   let credit = Math.max(0, paid);
   const sorted = [...periods].sort((a, b) => a.sequence - b.sequence);
   return sorted.map((p, idx) => {
@@ -41,6 +41,6 @@ export function calcPeriods(periods: PeriodInput[], paid: number, now: Date, cha
     const allocated = round2(Math.min(credit, total));
     credit = round2(credit - allocated);
     const open = round2(total - allocated);
-    return { ...p, total, paid: allocated, open, excess, overdue: open > 0.009 && p.dueDate < now };
+    return { ...p, total, paid: allocated, open, excess, overdue: open > 0.009 && (paymentRequired || p.dueDate < now) };
   });
 }

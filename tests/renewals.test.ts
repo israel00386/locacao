@@ -59,12 +59,23 @@ describe("períodos de renovação", () => {
     expect(calcPeriods(periods, 300, d("2026-12-15"), false, [])[1].overdue).toBe(false);
     expect(calcPeriods(periods, 300, d("2026-12-16"), false, [])[1].overdue).toBe(true);
   });
-  it("devolução antecipada preserva valor fechado e vencimento contratado", () => {
+  it("devolução com saldo fica atrasada mesmo antes do vencimento da renovação", () => {
     const c = calcRental({ ...base, expectedEndDate: d("2026-12-30"), periods, payments: [{ amount: 300 }],
       items: [{ ...base.items[0], returns: [{ qty: 2, date: d("2026-12-10"), chargedDays: null }] }] }, d("2026-12-11"));
     expect(c.total).toBe(900);
     expect(c.allReturned).toBe(true);
-    expect(paymentStatus("ATIVA", c).status).toBe("A_VENCER");
+    expect(paymentStatus("ATIVA", c).status).toBe("ATRASADO");
+    expect(c.attention).toBe(true);
+    expect(c.overdueOpen).toBe(600);
+    expect(c.periods[1].overdue).toBe(true);
+    expect(c.periods[1].dueDate).toEqual(d("2026-12-15"));
+  });
+  it.each([0, 450, 900])("renovação encerrada com R$%s pagos só fica em dia quando quitada", (amount) => {
+    const c = calcRental({ ...base, stage: "ENCERRADA", periods, payments: [{ amount }],
+      items: [{ ...base.items[0], returns: [{ qty: 2, date: d("2026-12-10"), chargedDays: null }] }] }, d("2026-12-11"));
+    expect(c.financialOverdue).toBe(amount < 900);
+    expect(c.overdueOpen).toBe(900 - amount);
+    expect(paymentStatus("ENCERRADA", c).status).toBe(amount < 900 ? "ATRASADO" : "FINALIZADO");
   });
   it("excedentes não duplicam dias cobertos pela renovação", () => {
     expect(calcPeriods(periods, 0, d("2026-12-20"), true, []).map((p) => p.total)).toEqual([300, 600]);

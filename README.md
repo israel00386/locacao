@@ -34,12 +34,13 @@ Atraso: com material na obra depois da data prevista, a locação fica **Atrasad
 Devolver ou encerrar não quita a locação. O resumo, o filtro **Atrasadas** e o painel incluem
 atraso de devolução **ou** saldo financeiro vencido, inclusive em locações encerradas.
 Os selos continuam separando a situação do material da situação do pagamento.
-Sem renovação, saldo após a devolução total ou encerramento continua classificado como atrasado.
+Com ou sem renovação, saldo após a devolução total ou encerramento fica classificado como atrasado,
+mesmo quando a cobrança tem vencimento futuro.
 
 ### Renovação opcional
 
 Na locação ativa, use **Renovar** / **Renovar locação**. O início é o dia seguinte ao término
-anterior; o prazo e o valor são sugeridos com base no último período. Revise o término, o valor
+anterior, inclusive quando a decisão de renovar ocorre alguns dias depois do prazo; o prazo e o valor são sugeridos com base no último período. Revise o término, o valor
 fechado e o vencimento antes de confirmar. Não há renovação automática.
 
 - Mantém cliente, obra e unidades ainda na obra, sem gerar devolução, nova saída ou duplicação de estoque.
@@ -48,7 +49,7 @@ fechado e o vencimento antes de confirmar. Não há renovação automática.
 - Pagamentos abatem os períodos mais antigos primeiro; crédito já recebido segue a mesma regra.
   Cada período mostra seu valor pago e saldo. Renovar não apaga dívidas anteriores.
 - O vencimento financeiro passa a ser o da cobrança de cada período: a devolução antecipada
-  mantém o valor fechado e não antecipa esse vencimento.
+  mantém o valor fechado e a data registrada, mas saldo após a devolução total aparece como **Atrasado**.
 - Dias excedentes continuam opcionais. Só contam após o último período contratado e param
   na devolução de cada unidade; os dias cobertos por renovação não são cobrados duas vezes.
 - Para preservar os contratos, locações renovadas não permitem editar itens/valores antigos nem

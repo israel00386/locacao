@@ -190,13 +190,13 @@ export function calcRental(r: RentalInput, today: Date): RentalCalc {
   const itemsTotal = round2(items.reduce((s, i) => s + i.total, 0));
   const extrasTotal = round2(r.extras.reduce((s, e) => s + e.amount, 0));
   const discount = round2(r.discount || 0);
+  const outstandingQty = items.reduce((s, i) => s + i.outstandingQty, 0);
+  const allReturned = r.items.length > 0 && outstandingQty === 0;
   const periodCalcs = calcPeriods(r.periods ?? [], r.payments.reduce((s, p) => s + p.amount, 0), today, !!r.chargeOverdue,
-    r.items.flatMap((i) => i.returns.map((x) => ({ ...x, itemId: i.id ?? "" }))));
+    r.items.flatMap((i) => i.returns.map((x) => ({ ...x, itemId: i.id ?? "" }))), allReturned || r.stage === "ENCERRADA");
   const total = periodCalcs.length ? round2(periodCalcs.reduce((s, p) => s + p.total, 0)) : round2(itemsTotal + extrasTotal - discount);
   const paid = round2(r.payments.reduce((s, p) => s + p.amount, 0));
   const open = round2(total - paid);
-  const outstandingQty = items.reduce((s, i) => s + i.outstandingQty, 0);
-  const allReturned = r.items.length > 0 && outstandingQty === 0;
 
   // Atrasada se qualquer item com material na obra passou da própria previsão; vale o maior atraso.
   const overdue = items.some((i) => i.overdue);
