@@ -115,7 +115,7 @@ export default async function PainelPage() {
     }),
   ]);
   const onSite = active.filter((r) => r.calc.outstandingQty > 0);
-  const overdue = onSite.filter((r) => r.calc.overdue).sort((a, b) => b.calc.overdueDays - a.calc.overdueDays);
+  const overdue = [...active, ...closedOpen].filter((r) => r.calc.attention).sort((a, b) => b.calc.overdueDays - a.calc.overdueDays);
   const dueSoon = onSite
     .filter((r) => {
       // Próxima previsão entre os itens na obra (acréscimos têm a própria).
@@ -127,7 +127,7 @@ export default async function PainelPage() {
   const returnedNotClosed = active.filter((r) => r.calc.allReturned);
   const owing = [...active, ...closedOpen].filter((r) => r.calc.open > 0.009);
   const receivable = owing.reduce((s, r) => s + Math.max(0, r.calc.open), 0);
-  const overdueOpen = overdue.reduce((s, r) => s + Math.max(0, r.calc.open), 0);
+  const overdueOpen = owing.reduce((s, r) => s + r.calc.overdueOpen, 0);
   const topOwing = [...owing].sort((a, b) => b.calc.open - a.calc.open).slice(0, 5);
   const lacking = stock.filter((s) => s.availableQty <= 0 && s.totalQty > 0);
   const piecesOut = onSite.reduce((s, r) => s + r.calc.outstandingQty, 0);
@@ -287,7 +287,7 @@ export default async function PainelPage() {
             >
               <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 <MiniStat icon={<HardHat />} label="Na obra" value={onSite.length} hint={plural(piecesOut, "peça", "peças")} />
-                <MiniStat icon={<AlarmClock />} label="Atrasadas" value={overdue.length} hint={overdue.length ? "passaram do prazo" : "nenhum atraso"} alert={overdue.length > 0} />
+                <MiniStat icon={<AlarmClock />} label="Atrasadas" value={overdue.length} hint={overdue.length ? "devolução ou pagamento" : "nenhum atraso"} alert={overdue.length > 0} />
                 <MiniStat icon={<FileText />} label="Orçamentos" value={quotes.length} hint="aguardando" />
               </div>
             </BalanceCard>
@@ -314,7 +314,7 @@ export default async function PainelPage() {
                       leading={<Avatar name={r.customer.name} tone="red" />}
                       title={r.customer.name}
                       subtitle={itemsSummary(r)}
-                      trailing={<Badge tone="red">{plural(r.calc.overdueDays, "dia", "dias")}</Badge>}
+                      trailing={<Badge tone="red">{r.calc.financialOverdue ? "Pagamento atrasado" : plural(r.calc.overdueDays, "dia", "dias")}</Badge>}
                       trailingSub={`previsto ${fmtDateShort(r.expectedEndDate)}`}
                     />
                   ))}

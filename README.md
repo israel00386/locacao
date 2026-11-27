@@ -29,6 +29,37 @@ Ele substitui a planilha "Locar Equipamento e Serviços" e resolve os problemas 
 
 Atraso: com material na obra depois da data prevista, a locação fica **Atrasada**, mas o **valor fechado** (retirada → previsão) não muda. Os dias excedentes só entram no total se você tocar em **"Cobrar dias excedentes"** na locação (dá para voltar ao valor fechado). Devoluções depois da previsão também ficam no valor fechado, salvo com essa opção ligada.
 
+### Devolução e atraso financeiro
+
+Devolver ou encerrar não quita a locação. O resumo, o filtro **Atrasadas** e o painel incluem
+atraso de devolução **ou** saldo financeiro vencido, inclusive em locações encerradas.
+Os selos continuam separando a situação do material da situação do pagamento.
+Com ou sem renovação, saldo após a devolução total ou encerramento fica classificado como atrasado,
+mesmo quando a cobrança tem vencimento futuro.
+
+### Renovação opcional
+
+Na locação ativa, use **Renovar** / **Renovar locação**. O início é o dia seguinte ao término
+anterior, inclusive quando a decisão de renovar ocorre alguns dias depois do prazo; o prazo e o valor são sugeridos com base no último período. Revise o término, o valor
+fechado e o vencimento antes de confirmar. Não há renovação automática.
+
+- Mantém cliente, obra e unidades ainda na obra, sem gerar devolução, nova saída ou duplicação de estoque.
+- A primeira renovação preserva o contrato inicial. As seguintes acrescentam períodos com valores,
+  vencimentos e equipamentos próprios, exibidos também no documento/PDF.
+- Pagamentos abatem os períodos mais antigos primeiro; crédito já recebido segue a mesma regra.
+  Cada período mostra seu valor pago e saldo. Renovar não apaga dívidas anteriores.
+- O vencimento financeiro passa a ser o da cobrança de cada período: a devolução antecipada
+  mantém o valor fechado e a data registrada, mas saldo após a devolução total aparece como **Atrasado**.
+- Dias excedentes continuam opcionais. Só contam após o último período contratado e param
+  na devolução de cada unidade; os dias cobertos por renovação não são cobrados duas vezes.
+- Para preservar os contratos, locações renovadas não permitem editar itens/valores antigos nem
+  desfazer devoluções anteriores ao período atual. Equipamentos adicionais vão em outra locação.
+- Uma devolução após a renovação deve ter data dentro ou depois do período atual. Se já houver
+  devoluções após o término anterior, a renovação retroativa é bloqueada para não reescrever o histórico.
+
+A migração `20261127120000_periodos_locacao` apenas adiciona a tabela de períodos; locações
+existentes seguem as regras anteriores até a primeira renovação.
+
 ### Como os dias são contados
 
 Contam o dia da retirada e o dia da devolução (21/08 → 19/09 = 30 dias), como na planilha. Em qualquer item ou devolução dá para informar os dias cobrados à mão.
@@ -89,3 +120,18 @@ src/app/(app)/              telas internas (painel, locações, estoque, cliente
 src/app/o/[token]/          orçamento público enviado ao cliente
 tests/                      testes do cálculo
 ```
+
+### Validação de renovação com banco
+
+Os testes puros rodam com `pnpm test`. Os testes de integração são opcionais e exigem um
+PostgreSQL **local e descartável**, com banco chamado `locacao_test`:
+
+```bash
+DATABASE_URL='postgresql://usuario:senha@127.0.0.1:5432/locacao_test' pnpm exec prisma migrate deploy
+DATABASE_URL='postgresql://usuario:senha@127.0.0.1:5432/locacao_test' RUN_DB_TESTS=1 pnpm test
+pnpm lint
+pnpm build:local
+```
+
+Os testes de integração criam e removem apenas seus próprios registros. Cobrem concorrência,
+estoque, preservação do histórico, pagamentos parciais, devoluções e validações da renovação.

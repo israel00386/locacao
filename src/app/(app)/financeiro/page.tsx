@@ -640,7 +640,7 @@ async function ReceberTab() {
   const rentals = await listRentals({ stage: { in: ["ATIVA", "ENCERRADA"] } });
   const receivable = rentals.filter((r) => r.calc.open > 0.009);
   const totalOpen = receivable.reduce((s, r) => s + r.calc.open, 0);
-  const overdueOpen = receivable.filter((r) => r.calc.overdue || r.stage === "ENCERRADA" || r.calc.allReturned).reduce((s, r) => s + r.calc.open, 0);
+  const overdueOpen = receivable.reduce((s, r) => s + r.calc.overdueOpen, 0);
   const onSiteOpen = totalOpen - overdueOpen;
 
   const byCustomer = new Map<string, { id: string; name: string; total: number; rentals: typeof receivable }>();
@@ -681,15 +681,15 @@ async function ReceberTab() {
               <NavyStat label="Cobrar primeiro" tone="red">
                 {money(overdueOpen)}
               </NavyStat>
-              <NavyStat label="Ainda na obra">{money(onSiteOpen)}</NavyStat>
+              <NavyStat label="A vencer">{money(onSiteOpen)}</NavyStat>
             </div>
           </div>
         )}
       </BalanceCard>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:col-span-5">
-        <MoneyStat label="Já devolvido e não pago" icon={<Receipt />} tone={overdueOpen > 0 ? "red" : undefined} amount={overdueOpen} hint="atrasadas, devolvidas ou encerradas" />
-        <MoneyStat label="Na obra, em aberto" icon={<Truck />} amount={onSiteOpen} hint="cobrar na devolução" />
+        <MoneyStat label="Pagamento atrasado" icon={<Receipt />} tone={overdueOpen > 0 ? "red" : undefined} amount={overdueOpen} hint="saldo vencido a receber" />
+        <MoneyStat label="A vencer" icon={<Truck />} amount={onSiteOpen} hint="saldo dentro do prazo" />
       </div>
 
       <div className="lg:col-span-12">
