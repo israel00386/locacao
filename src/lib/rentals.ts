@@ -2,9 +2,11 @@ import "server-only";
 import type { Prisma } from "@prisma/client";
 import { db } from "./db";
 import { calcRental, type RentalInput } from "./calc";
+import type { PeriodItem } from "./periods";
 import { today } from "./dates";
 
 export const rentalInclude = {
+  periods: { orderBy: { sequence: "asc" } },
   customer: true,
   items: { include: { equipment: true, returns: { orderBy: { date: "asc" } } }, orderBy: { id: "asc" } },
   extras: true,
@@ -17,6 +19,7 @@ const n = (v: Prisma.Decimal | number | null | undefined) => (v == null ? 0 : Nu
 
 export function toCalcInput(r: RentalFull): RentalInput {
   return {
+    periods: r.periods.map((p) => ({ ...p, amount: n(p.amount), items: p.items as unknown as PeriodItem[] })),
     stage: r.stage,
     startDate: r.startDate,
     expectedEndDate: r.expectedEndDate,
@@ -25,6 +28,7 @@ export function toCalcInput(r: RentalFull): RentalInput {
     extras: r.extras.map((e) => ({ amount: n(e.amount) })),
     payments: r.payments.map((p) => ({ amount: n(p.amount) })),
     items: r.items.map((i) => ({
+      id: i.id,
       qty: i.qty,
       unitPrice: n(i.unitPrice),
       daysOverride: i.daysOverride,

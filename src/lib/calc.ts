@@ -1,4 +1,5 @@
 // Regras de cálculo da locação. Funções puras (sem banco) para poder testar.
+import { calcPeriods, type PeriodInput } from "./periods";
 import { inclusiveDays, maxDate } from "./dates";
 
 const minDate = (a: Date, b: Date) => (a.getTime() <= b.getTime() ? a : b);
@@ -13,6 +14,7 @@ export interface ReturnInput {
 }
 
 export interface ItemInput {
+  id?: string;
   qty: number;
   unitPrice: number;
   daysOverride: number | null;
@@ -24,6 +26,7 @@ export interface ItemInput {
 }
 
 export interface RentalInput {
+  periods?: PeriodInput[];
   stage: Stage | string;
   startDate: Date;
   expectedEndDate: Date | null;
@@ -65,6 +68,10 @@ export interface ItemCalc {
 }
 
 export interface RentalCalc {
+  periods: ReturnType<typeof calcPeriods>;
+  financialOverdue: boolean;
+  overdueOpen: number;
+  attention: boolean;
   items: ItemCalc[];
   itemsTotal: number;
   extrasTotal: number;
@@ -183,7 +190,9 @@ export function calcRental(r: RentalInput, today: Date): RentalCalc {
   const itemsTotal = round2(items.reduce((s, i) => s + i.total, 0));
   const extrasTotal = round2(r.extras.reduce((s, e) => s + e.amount, 0));
   const discount = round2(r.discount || 0);
-  const total = round2(itemsTotal + extrasTotal - discount);
+  const periodCalcs = calcPeriods(r.periods ?? [], r.payments.reduce((s, p) => s + p.amount, 0), today, !!r.chargeOverdue,
+    r.items.flatMap((i) => i.returns.map((x) => ({ ...x, itemId: i.id ?? "" }))));
+  const total = periodCalcs.length ? round2(periodCalcs.reduce((s, p) => s + p.total, 0)) : round2(itemsTotal + extrasTotal - discount);
   const paid = round2(r.payments.reduce((s, p) => s + p.amount, 0));
   const open = round2(total - paid);
   const outstandingQty = items.reduce((s, i) => s + i.outstandingQty, 0);
@@ -203,14 +212,19 @@ export function calcRental(r: RentalInput, today: Date): RentalCalc {
   }
   const hasAdditions = items.some((i) => i.addition);
   const chargeOverdue = !!r.chargeOverdue;
-  const excessValue = round2(items.reduce((s, i) => s + i.excessValue, 0));
+  const excessValue = periodCalcs.length ? round2(periodCalcs.reduce((s, p) => s + p.excess, 0)) : round2(items.reduce((s, i) => s + i.excessValue, 0));
 
   let financial: RentalCalc["financial"] = "EM_ABERTO";
   if (total <= 0) financial = "SEM_VALOR";
   else if (open <= 0.009) financial = "PAGO";
   else if (paid > 0) financial = "PARCIAL";
 
-  return { items, itemsTotal, extrasTotal, discount, total, paid, open, outstandingQty, allReturned, overdue, overdueDays, days, nextExpectedEnd, hasAdditions, chargeOverdue, excessValue, financial };
+  const live = r.stage === "ATIVA" || r.stage === "ENCERRADA";
+  const overdueOpen = !live ? 0 : periodCalcs.length
+    ? round2(periodCalcs.filter((p) => p.overdue).reduce((s, p) => s + p.open, 0))
+    : (overdue || allReturned || r.stage === "ENCERRADA") ? Math.max(0, open) : 0;
+  const financialOverdue = overdueOpen > 0.009;
+  return { periods: periodCalcs, financialOverdue, overdueOpen, attention: live && (overdue || financialOverdue), items, itemsTotal, extrasTotal, discount, total, paid, open, outstandingQty, allReturned, overdue, overdueDays, days, nextExpectedEnd, hasAdditions, chargeOverdue, excessValue, financial };
 }
 
 /** Faixa de preço sugerida pela duração da locação. */
@@ -293,7 +307,7 @@ export type PaymentStatus = "A_VENCER" | "PAGO" | "ATRASADO" | "FINALIZADO" | "S
  */
 export function paymentStatus(
   stage: string,
-  c: Pick<RentalCalc, "financial" | "overdue" | "allReturned" | "paid" | "open">,
+  c: Pick<RentalCalc, "financial" | "overdue" | "allReturned" | "paid" | "open"> & Partial<Pick<RentalCalc, "financialOverdue">>,
 ): { status: PaymentStatus; label: string; tone: Tone; partial: boolean } {
   const partial = c.paid > 0 && c.open > 0.009;
   if (c.financial === "SEM_VALOR") return { status: "SEM_VALOR", label: "Sem valor", tone: "gray", partial: false };
@@ -302,7 +316,7 @@ export function paymentStatus(
       ? { status: "FINALIZADO", label: "Finalizado", tone: "blue", partial: false }
       : { status: "PAGO", label: "Pago", tone: "green", partial: false };
   }
-  if (stage === "ENCERRADA" || c.overdue || c.allReturned) {
+  if (c.financialOverdue ?? (stage === "ENCERRADA" || c.overdue || c.allReturned)) {
     return { status: "ATRASADO", label: partial ? "Atrasado · pago em parte" : "Atrasado", tone: "red", partial };
   }
   return { status: "A_VENCER", label: partial ? "A vencer · pago em parte" : "A vencer", tone: "gray", partial };

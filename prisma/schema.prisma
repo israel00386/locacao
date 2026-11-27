@@ -120,6 +120,7 @@ model Rental {
   extras          RentalExtra[]
   payments        Payment[]
   expenses        Expense[]
+  periods         RentalPeriod[]
 
   @@index([stage])
   @@index([customerId])
@@ -234,4 +235,20 @@ model CashEntry {
   createdAt   DateTime @default(now())
 
   @@index([date])
+}
+
+/// Períodos contratados: valores e equipamentos preservados, sem movimentação de estoque.
+model RentalPeriod {
+  id        String   @id @default(cuid())
+  rentalId  String
+  sequence  Int
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  dueDate   DateTime @db.Date
+  amount    Decimal  @db.Decimal(12, 2)
+  items     Json
+  createdAt DateTime @default(now())
+  rental    Rental   @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+
+  @@unique([rentalId, sequence])
 }

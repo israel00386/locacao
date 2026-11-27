@@ -35,7 +35,8 @@ export default async function LocacoesPage({ searchParams }: { searchParams: Pro
   const q = (sp.q ?? "").trim();
 
   const where: Prisma.RentalWhereInput = {};
-  if (tab === "ativas" || tab === "atrasadas") where.stage = "ATIVA";
+  if (tab === "ativas") where.stage = "ATIVA";
+  if (tab === "atrasadas") where.stage = { in: ["ATIVA", "ENCERRADA"] };
   if (tab === "orcamentos") where.stage = "ORCAMENTO";
   if (tab === "encerradas") where.stage = "ENCERRADA";
   if (tab === "receber") where.stage = { in: ["ATIVA", "ENCERRADA"] };
@@ -57,14 +58,14 @@ export default async function LocacoesPage({ searchParams }: { searchParams: Pro
     db.rental.count(),
   ]);
   let rows = list;
-  if (tab === "atrasadas") rows = rows.filter((r) => r.calc.overdue);
+  if (tab === "atrasadas") rows = rows.filter((r) => r.calc.attention);
   if (tab === "receber") rows = rows.filter((r) => r.calc.open > 0.009);
-  if (tab === "ativas") rows.sort((a, b) => Number(b.calc.overdue) - Number(a.calc.overdue));
+  if (tab === "ativas") rows.sort((a, b) => Number(b.calc.attention) - Number(a.calc.attention));
 
   const sum = rows.reduce((s, r) => s + (tab === "receber" ? r.calc.open : r.calc.total), 0);
 
   const active = live.filter((r) => r.stage === "ATIVA");
-  const overdue = active.filter((r) => r.calc.overdue).length;
+  const overdue = live.filter((r) => r.calc.attention).length;
   const receivableRows = live.filter((r) => r.calc.open > 0.009);
   const receivable = receivableRows.reduce((s, r) => s + r.calc.open, 0);
   const counts: Record<string, number> = {
@@ -76,7 +77,7 @@ export default async function LocacoesPage({ searchParams }: { searchParams: Pro
     todas: all,
   };
   const href = (key: string) => `/locacoes?aba=${key}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
-  const onTime = active.length - overdue;
+  const onTime = active.filter((r) => !r.calc.attention).length;
   const current = TABS.find((t) => t.key === tab)!;
 
   const searchForm = (
@@ -156,8 +157,8 @@ export default async function LocacoesPage({ searchParams }: { searchParams: Pro
               track="rgb(255 255 255 / .14)"
               className="w-[84px] sm:w-[92px]"
               ariaLabel={`${onTime} em dia, ${overdue} atrasadas, ${quotes} orçamentos`}
-              centerValue={active.length}
-              centerLabel="na obra"
+              centerValue={onTime + overdue + quotes}
+              centerLabel="em acompanhamento"
               segments={[
                 { value: onTime, color: "var(--data-sky)", label: "Em dia" },
                 { value: overdue, color: "var(--data-rose)", label: "Atrasadas" },

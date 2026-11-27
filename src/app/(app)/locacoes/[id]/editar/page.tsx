@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { TopBar } from "@/components/ui";
 import { RentalForm, type InitialRental } from "@/components/rental-form";
 import { rentalFormOptions } from "@/lib/form-options";
@@ -12,6 +12,7 @@ export default async function EditarLocacaoPage({ params }: { params: Promise<{ 
   const { id } = await params;
   const r = await getRental(id);
   if (!r) notFound();
+  if (r.periods.length) redirect(`/locacoes/${r.id}`);
   const { customers, equipment } = await rentalFormOptions(r);
   const initial: InitialRental = {
     id: r.id,

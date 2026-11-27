@@ -79,12 +79,14 @@ export function ReturnForm({
   todayISO,
   startISO,
   chargeOverdue = false,
+  fixedPeriods = false,
 }: {
   action: (form: FormData) => Promise<ActionResult>;
   items: ReturnRow[];
   todayISO: string;
   startISO: string;
   chargeOverdue?: boolean;
+  fixedPeriods?: boolean;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [qty, setQty] = useState<Record<string, string>>({});
@@ -160,7 +162,7 @@ export function ReturnForm({
                   <span className="tnum pr-3 text-xs text-slate-400">/ {i.outstanding}</span>
                 </div>
               </div>
-              <details className="group mt-1.5 text-xs text-slate-500">
+              {!fixedPeriods && <details className="group mt-1.5 text-xs text-slate-500">
                 <summary className="inline-flex min-h-8 cursor-pointer list-none items-center gap-1 select-none hover:text-slate-800 [&::-webkit-details-marker]:hidden">
                   <ChevronDown size={14} className="transition-transform group-open:rotate-180" aria-hidden />
                   Cobrar outro nº de dias
@@ -171,7 +173,7 @@ export function ReturnForm({
                   inputMode="numeric"
                   placeholder={retDate ? `auto: ${returnDaysFor(parseISODate(i.startISO)!, parseISODate(i.endISO), retDate, chargeOverdue)}` : "automático"}
                 />
-              </details>
+              </details>}
             </li>
           );
         })}

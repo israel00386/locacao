@@ -1,3 +1,5 @@
+import { RenewalForm } from "@/components/renewal-form";
+import { PeriodHistory } from "@/components/period-history";
 import { notFound } from "next/navigation";
 import {
   Ban,
@@ -50,6 +52,7 @@ import {
   deleteRental,
   deleteReturn,
   registerReturn,
+  renewRental,
   reopenRental,
   toggleChargeOverdue,
   toggleNegotiating,
@@ -81,11 +84,15 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
   const url = await quoteUrl(r);
   const text = quoteMessage(r, company.name, url);
   const wa = whatsappLink(r.customer.phone, text) ?? `https://wa.me/?text=${encodeURIComponent(text)}`;
-  const editable = r.stage === "ORCAMENTO" || r.stage === "ATIVA";
+  const renewed = r.periods.length > 0;
+  const lastPeriod = c.periods.at(-1);
+  const renewalDays = inclusiveDays(lastPeriod?.startDate ?? r.startDate, lastPeriod?.endDate ?? r.expectedEndDate ?? r.startDate);
+  const renewalAmount = r.items.reduce((sum, i, idx) => sum + c.items[idx].outstandingQty * (lastPeriod?.items.find((x) => x.itemId === i.id)?.dailyRate ?? Number(i.unitPrice)) * renewalDays, 0);
+  const editable = !renewed && (r.stage === "ORCAMENTO" || r.stage === "ATIVA");
   const isQuote = r.stage === "ORCAMENTO";
   const isActive = r.stage === "ATIVA";
   const isLive = r.stage !== "ORCAMENTO" && r.stage !== "CANCELADA";
-  const addOptions = isActive ? await addItemsOptions(r.customerId) : null;
+  const addOptions = isActive && !renewed ? await addItemsOptions(r.customerId) : null;
   const showExpenses = r.stage === "ATIVA" || r.stage === "ENCERRADA";
   const [expenses, expenseRentals] = showExpenses
     ? await Promise.all([getRentalExpenses(r.id), getExpenseRentalOptions([r.id])])
@@ -130,11 +137,11 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
               <div className="min-w-0">
                 <div className="text-[15px] leading-snug font-semibold text-brand-950">{it.equipment.name}</div>
                 <div className="tnum mt-0.5 text-[12.5px] text-slate-500">
-                  <span className="font-semibold text-slate-700">{it.qty} un.</span> × {unitMoney(Number(it.unitPrice))}/dia · {periodLabel(it.period)}
+                  <span className="font-semibold text-slate-700">{it.qty} un.</span> {renewed ? "· valores originais:" : "×"} {unitMoney(Number(it.unitPrice))}/dia · {periodLabel(it.period)}
                   {it.daysOverride ? ` · ${it.daysOverride} dias (manual)` : ""}
                 </div>
               </div>
-              <div className="tnum shrink-0 text-right text-[15px] font-bold tracking-[-0.01em] text-brand-950">{money(ic.total)}</div>
+              <div className="tnum shrink-0 text-right text-[15px] font-bold tracking-[-0.01em] text-brand-950">{!renewed && money(ic.total)}</div>
             </div>
             {ic.addition && (
               <div className="tnum mt-1.5 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-800">
@@ -165,7 +172,7 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
                 <span className="flex min-w-0 items-start gap-1.5">
                   <CornerDownRight size={13} className="mt-px shrink-0 text-slate-400" aria-hidden />
                   <span className="tnum">
-                    <strong className="font-semibold text-slate-800">{ret.qty}</strong> devolvidos em {fmtDate(ret.date)} · {c.items[idx].returnDays[ri]} dias
+                    <strong className="font-semibold text-slate-800">{ret.qty}</strong> devolvidos em {fmtDate(ret.date)}{!renewed && ` · ${c.items[idx].returnDays[ri]} dias`}
                     {ret.note ? <span className="text-slate-500"> · {ret.note}</span> : ""}
                   </span>
                 </span>
@@ -204,10 +211,11 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
       {isActive && hasOutstanding && (
         <QuickTile href="#devolucao" tone="accent" icon={<Undo2 />} label="Devolução" hint={`${c.outstandingQty} un. na obra`} />
       )}
+      {isActive && hasOutstanding && r.expectedEndDate && <QuickTile href="#renovacao" tone="violet" icon={<RotateCcw />} label="Renovar" hint="novo período" />}
       {isLive && (
         <QuickTile href="#pagamento" tone="sky" icon={<Wallet />} label="Pagamento" hint={open > 0.009 ? `falta ${money(open)}` : "quitado"} />
       )}
-      {isActive && (
+      {isActive && !renewed && (
         <AddItemsTile className={quickTileClass("amber")}>
           <QuickTileBody icon={PackagePlus} label="Acréscimo" hint="outra data" />
         </AddItemsTile>
@@ -352,6 +360,7 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
               </h2>
             </div>
             <dl className="mt-4 space-y-2.5 text-sm">
+              {renewed ? c.periods.map((p) => <Row key={p.id} label={`Período ${p.sequence}`}>{money(p.total)}</Row>) : <>
               <Row label="Equipamentos">{money(c.itemsTotal)}</Row>
               {r.extras.map((e) => (
                 <Row key={e.id} label={e.description}>
@@ -363,6 +372,7 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
                   <span className="text-emerald-700">− {money(c.discount)}</span>
                 </Row>
               )}
+              </>}
               <div className="flex items-baseline justify-between gap-3 border-t border-dashed border-slate-200 pt-3">
                 <dt className="font-semibold text-slate-700">Total</dt>
                 <dd className="tnum text-xl font-bold tracking-[-0.02em] text-brand-950">{money(c.total)}</dd>
@@ -515,7 +525,7 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
           {/* Equipamentos (breakdown) */}
           <section aria-labelledby="items-title">
             <SectionTitle
-              action={<span className="tnum text-[15px] font-bold text-brand-950">{money(c.itemsTotal)}</span>}
+              action={!renewed ? <span className="tnum text-[15px] font-bold text-brand-950">{money(c.itemsTotal)}</span> : undefined}
               title={
                 <>
                   <span id="items-title">Equipamentos</span>
@@ -539,7 +549,7 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
             ) : (
               <ul className="space-y-2.5">{r.items.map((_, idx) => renderItem(idx))}</ul>
             )}
-            {isActive && (
+            {isActive && !renewed && (
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <AddItemsButton
                   action={addItemsToRental.bind(null, r.id)}
@@ -553,12 +563,17 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
             )}
           </section>
 
+          <PeriodHistory periods={c.periods} />
+          {isActive && hasOutstanding && r.expectedEndDate && <RenewalForm action={renewRental.bind(null, r.id)} previousEnd={toISODate(r.expectedEndDate)} days={renewalDays} amount={renewalAmount} />}
+          {renewed && <p className="text-sm text-slate-600">Períodos preservados. Para acrescentar outros equipamentos, registre uma nova locação.</p>}
+
           {isActive && (
             <Panel id="devolucao" title="Devolução" subtitle="Total ou parcial — o material volta para o estoque" icon={Undo2} tone="accent">
               <ReturnForm
                 action={registerReturn.bind(null, r.id)}
                 todayISO={todayISO()}
-                startISO={toISODate(r.startDate)}
+                fixedPeriods={renewed}
+                startISO={toISODate(lastPeriod?.startDate ?? r.startDate)}
                 items={[...initialItems, ...additions].map((idx) => ({
                   id: r.items[idx].id,
                   name: r.items[idx].equipment.name,
@@ -573,7 +588,7 @@ export default async function LocacaoPage({ params }: { params: Promise<{ id: st
             </Panel>
           )}
 
-          {isActive && c.outstandingQty > 0 && (
+          {isActive && !renewed && c.outstandingQty > 0 && (
             <Panel id="na-obra" title="Material na obra sem pagar" subtitle="Cálculo automático até a data da busca" icon={Calculator} tone="sky">
               <OnSiteCalc
                 items={r.items.map((it, idx) => {

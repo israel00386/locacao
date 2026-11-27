@@ -1,3 +1,4 @@
+import { PeriodHistory } from "@/components/period-history";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { fmtDate, today } from "@/lib/dates";
@@ -41,6 +42,7 @@ export default async function DocumentoLocacao({ params }: { params: Promise<{ t
   const r = withCalc(raw);
   const company = await getCompany();
   const c = r.calc;
+  const renewed = c.periods.length > 0;
   const isQuote = r.stage === "ORCAMENTO";
   const title = docTitle(r.stage, c.paid);
   const emitted = today();
@@ -138,14 +140,14 @@ export default async function DocumentoLocacao({ params }: { params: Promise<{ t
                         </span>
                       </td>
                       <td className="px-2 py-2 text-right">{it.qty}</td>
-                      <td className="px-2 py-2 text-right">{unitMoney(Number(it.unitPrice))}</td>
+                      <td className="px-2 py-2 text-right">{renewed ? "—" : unitMoney(Number(it.unitPrice))}</td>
                       <td className="px-2 py-2 text-center">{fmtDate(ic.startDate)}</td>
                       <td className="px-2 py-2 text-center">
                         {fmtDate(end)}
                         {pending && <span className="block text-[10px] text-neutral-500">previsão</span>}
                       </td>
-                      <td className="px-2 py-2 text-right">{daysText}</td>
-                      <td className="py-2 pl-2 text-right font-medium text-neutral-900">{money(ic.total)}</td>
+                      <td className="px-2 py-2 text-right">{renewed ? "—" : daysText}</td>
+                      <td className="py-2 pl-2 text-right font-medium text-neutral-900">{renewed ? "por período" : money(ic.total)}</td>
                     </tr>
                   );
                 })}
@@ -153,15 +155,18 @@ export default async function DocumentoLocacao({ params }: { params: Promise<{ t
             </table>
           </div>
 
+          <PeriodHistory periods={c.periods} />
           {/* TOTAIS */}
           <div className="avoid-break mt-3 flex justify-end">
             <table className="tnum w-full max-w-[300px] text-[12px]">
               <tbody>
+                {renewed ? c.periods.map((p) => <TotalRow key={p.id} label={`Período ${p.sequence}`} value={money(p.total)} />) : <>
                 <TotalRow label="Subtotal dos equipamentos" value={money(c.itemsTotal)} />
                 {r.extras.map((e) => (
                   <TotalRow key={e.id} label={e.description} value={money(Number(e.amount))} />
                 ))}
                 {c.discount > 0 && <TotalRow label="Desconto" value={`− ${money(c.discount)}`} />}
+                </>}
                 <tr className="border-t-2 border-neutral-900">
                   <td className="py-2 font-bold text-neutral-950 uppercase">Total</td>
                   <td className="py-2 text-right text-[14px] font-bold text-neutral-950">{money(c.total)}</td>
